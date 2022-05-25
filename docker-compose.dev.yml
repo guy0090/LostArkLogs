@@ -1,0 +1,53 @@
+version: '3.7'
+
+services:
+  site:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development-build-stage
+    container_name: site
+    ports:
+      - "9797:9797"
+    volumes:
+      - ./frontend:/app
+    tty: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    restart: 'unless-stopped'
+    networks:
+      - frontend
+    depends_on:
+      - api
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development-build-stage
+    container_name: api
+    ports:
+      - "9898:9898"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: 'no'
+    networks:
+      - backend
+    links:
+      - mongo
+    depends_on:
+      - mongo
+  mongo:
+    image: mvertes/alpine-mongo
+    container_name: mongo
+    ports:
+      - '27016:27017'
+    networks:
+      - backend
+
+networks:
+  backend:
+  frontend:
+volumes:
+  data:
+    driver: local

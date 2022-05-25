@@ -1,0 +1,7 @@
+# baseURL
+@baseURL = http://base.url
+
+###
+# Find Yourself
+GET {{ baseURL }}/users/me
+

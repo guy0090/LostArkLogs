@@ -1,0 +1,10 @@
+# baseURL
+@baseURL = http://base.url
+
+###
+# User Login
+POST {{ baseURL }}/login
+
+###
+# User Logout
+POST {{ baseURL }}/revoke

@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  server:
+    build:
+      context: ./
+      target: development-build-stage
+      dockerfile: Dockerfile
+    container_name: server
+    ports:
+      - '9898:9898'
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    restart: 'unless-stopped'
+    networks:
+      - backend
+    links:
+      - mongo
+    depends_on:
+      - mongo
+  mongo:
+    image: mvertes/alpine-mongo
+    container_name: mongo
+    ports:
+      - '27016:27017'
+    networks:
+      - backend
+
+networks:
+  backend:
+
+volumes:
+  data:
+    driver: local

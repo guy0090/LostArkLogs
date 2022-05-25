@@ -1,0 +1,5 @@
+export const {
+  NODE_ENV,
+  VUE_APP_API_HOST: API_HOST,
+  VUE_APP_DISCORD_REDIRECT: DISCORD_REDIRECT,
+} = process.env;
