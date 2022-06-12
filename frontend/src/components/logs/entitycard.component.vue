@@ -1,18 +1,18 @@
 <template>
-  <v-col :cols="$props.entities" class="pt-3 pb-0">
+  <v-col :cols="entities" class="pt-3 pb-0">
     <v-card
       min-width="100%"
       max-width="100%"
       class="mx-auto"
       rounded="sm"
       hover
-      @click="clickTab('ent' + $props.entity?.id)"
+      @click="clickTab('ent' + entity?.id)"
     >
       <v-progress-linear
         :model-value="
           getPercentDamageDealt(
-            $props.totalDamageDealt || 0,
-            $props.entity?.damageDealt
+            totalDamageDealt || 0,
+            entity?.stats.damageDealt
           )
         "
         color="success"
@@ -25,22 +25,22 @@
             <img
               width="52"
               height="52"
-              :src="'/img/sprites/' + $props.entity?.class + '.png'"
+              :src="'/img/sprites/' + entity?.classId + '.png'"
             />
           </v-col>
           <v-col cols="auto" class="align-self-center ps-0">
             <v-badge
-              v-if="$props.mvp"
+              v-if="mvp"
               inline
               color="red-darken-3"
               rounded="sm"
               content="MVP"
               ><h3>
-                {{ $t(`classes.${$props.entity?.class}`).toUpperCase() }}&nbsp;
+                {{ $t(`classes.${entity?.classId}`).toUpperCase() }}&nbsp;
               </h3></v-badge
             >
             <h3 v-else>
-              {{ $t(`classes.${$props.entity?.class}`).toUpperCase() }}
+              {{ $t(`classes.${entity?.classId}`).toUpperCase() }}
             </h3>
           </v-col>
           <v-spacer></v-spacer>
@@ -55,14 +55,12 @@
             <v-row class="mt-1">
               <h4>
                 {{
-                  new Intl.NumberFormat().format(
-                    $props.entity?.damageDealt || 0
-                  )
+                  new Intl.NumberFormat().format(entity?.stats.damageDealt || 0)
                 }}
                 ({{
                   getPercentDamageDealt(
-                    $props.totalDamageDealt || 0,
-                    $props.entity?.damageDealt
+                    totalDamageDealt || 0,
+                    entity?.stats.damageDealt
                   )
                 }}%)
               </h4>
@@ -106,7 +104,7 @@ export default defineComponent({
     },
 
     getDamageDealtPerSecond() {
-      return this.entity?.damageDealt / (this.duration || 0);
+      return this.entity?.stats.damageDealt / (this.duration || 0);
     },
     clickTab(target: string) {
       const tab: any = document.querySelector(`#${target}`);

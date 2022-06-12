@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
-import { SECRET_KEY, NODE_ENV, CLIENT_DOMAIN, SERVER_DOMAIN } from '@config';
+import { SECRET_KEY, CLIENT_DOMAIN, SERVER_DOMAIN } from '@config';
 import AuthService from '@services/auth.service';
 import { HttpException } from '@/exceptions/HttpException';
 import { logger } from '@utils/logger';

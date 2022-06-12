@@ -6,7 +6,7 @@
     border="indigo"
     rounded="sm"
     hover
-    @click="openLog($props.session?.id)"
+    @click="openLog(session?.id)"
   >
     <v-card-content class="pa-3">
       <v-row style="background-image: url(/img/app-bar-loaders/0.jpg)">
@@ -15,21 +15,16 @@
         <v-col cols="5" class="bg-grey-darken-4">
           <v-row class="mt-1 mb-4">
             <span class="ms-2 mt-1 mb-0" style="font-size: 14pt">
-              <v-icon start icon="mdi-help"></v-icon
-              >{{
-                $props.session?.encounter !== "Unknown"
-                  ? $props.session?.encounter
-                  : "Unknown Encounter"
-              }}
+              <v-icon start icon="mdi-help"></v-icon>{{ bossName }}
             </span>
           </v-row>
-          <v-row justify="center" class="ps-2 pe-2 mb-1">
+          <v-row class="ps-2 pe-2 mb-1">
             <v-col cols="auto" class="pa-0">
               <span class="text-error d-flex">
                 <v-icon start icon="mdi-sword"></v-icon
                 >{{
                   new Intl.NumberFormat().format(
-                    $props.session?.damageStatistics?.totalDamageDealt
+                    session?.damageStatistics?.totalDamageDealt
                   )
                 }}
               </span>
@@ -38,16 +33,14 @@
             <v-col cols="auto" class="pa-0">
               <span class="text-success d-flex">
                 <v-icon start icon="mdi-timer-outline"></v-icon
-                >{{
-                  getDuration($props.session?.started, $props.session?.ended)
-                }}
+                >{{ getDuration(session?.started, session?.ended) }}
               </span>
             </v-col>
             <v-divider vertical class="mx-2"></v-divider>
             <v-col cols="auto" class="pa-0">
               <span class="text-info d-flex">
                 <v-icon start icon="mdi-cloud-upload-outline"></v-icon
-                >{{ timeSince($props.session?.createdAt) }}
+                >{{ timeSince(session?.createdAt) }}
               </span>
             </v-col>
           </v-row>
@@ -59,7 +52,7 @@
         >
           <v-row dense>
             <EntityCard
-              v-for="entity in $props.session?.entities"
+              v-for="entity in getPlayerEntities()"
               :key="entity.id"
               :entity="entity"
             ></EntityCard>
@@ -74,7 +67,7 @@
 import { defineComponent } from "vue";
 import EntityCard from "@/components/home/entity.component.vue";
 import dayjs from "dayjs";
-import { Session } from "@/interfaces/session.interface";
+import { Session, Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
 
 export default defineComponent({
   name: "EncounterCard",
@@ -85,6 +78,31 @@ export default defineComponent({
 
   components: {
     EntityCard,
+  },
+
+  data() {
+    // TODO: Switch this to NPC IDs asap
+    let abyssBosses =
+      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Albion|)?$/gi;
+    let legionRaidBosses =
+      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/gi;
+    let guardians =
+      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/g;
+
+    let bossName = "UNKNOWN BOSS";
+    let encounterName = "UNKNOIWN ENCOUNTER";
+
+    return {
+      abyssBosses,
+      legionRaidBosses,
+      guardians,
+      bossName,
+      encounterName,
+    };
+  },
+
+  mounted() {
+    this.getEncounter();
   },
 
   methods: {
@@ -114,6 +132,12 @@ export default defineComponent({
       const since = dayjs(date).fromNow(false);
       return since.replace("minutes", "min");
     },
+    getPlayerEntities() {
+      let clone = [...this.session?.entities] as Entity[];
+      return clone
+        .sort((a, b) => b.stats.damageDealt - a.stats.damageDealt)
+        .filter((e) => e.type === 3);
+    },
     duplicateEntities(session: Session) {
       return [
         ...session.entities,
@@ -124,6 +148,35 @@ export default defineComponent({
           };
         }),
       ];
+    },
+    getEncounter() {
+      const entities = [...this.session?.entities] as Entity[];
+      const bossEntities = entities.filter(
+        (e) => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN
+      );
+      const hasBoss = bossEntities.length > 0;
+      if (!hasBoss) return;
+
+      const boss = bossEntities.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+      console.log(boss);
+
+      let encounter = "UNKNOWN ENCOUNTER";
+      if (this.abyssBosses.test(boss.name)) {
+        console.log("Detected Abyss Boss");
+        encounter = "ABYSS DUNGEON";
+      } else if (this.legionRaidBosses.test(boss.name)) {
+        console.log("Detected Legion Raid Boss");
+        encounter = "LEGION RAID";
+      } else if (this.guardians.test(boss.name)) {
+        console.log("Detected Guardian");
+        encounter = "GUARDIAN RAID";
+      } else {
+        console.log("Detected Unknown Boss:", boss.name);
+        encounter = "UNKNOWN BOSS";
+      }
+
+      this.bossName = boss.name;
+      this.encounterName = encounter.toUpperCase();
     },
   },
 });

@@ -2,7 +2,9 @@ import { Exception } from '@/exceptions/Exception';
 import { Log } from '@/interfaces/logs.interface';
 import logsModel from '@/models/logs.model';
 import { LogObject } from '@/objects/log.object';
-import { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
+import { validate, ValidationError } from 'class-validator';
+import { NODE_ENV } from '@/config';
 
 class LogsService {
   public logs = logsModel;
@@ -15,6 +17,9 @@ class LogsService {
    */
   public async createLog(log: Log) {
     try {
+      const encounter = LogObject.getEncounterName(log.entities);
+      log.encounter = encounter;
+
       const created = await this.logs.create(log);
       if (!created) throw new Exception(500, 'Error creating log');
 
@@ -30,7 +35,7 @@ class LogsService {
    * @param id Get a log by its ID
    * @returns The log if found
    */
-  public async getLogById(id: ObjectId | string): Promise<LogObject> {
+  public async getLogById(id: mongoose.Types.ObjectId | string): Promise<LogObject> {
     try {
       const log = await this.logs.findById(id);
       if (!log) throw new Exception(500, 'Error finding log');
@@ -80,7 +85,7 @@ class LogsService {
    * @returns Logs between provided dates for the specified user
    */
   public async getRecentLogsByCreator(
-    userId: ObjectId,
+    userId: mongoose.Types.ObjectId,
     limit = 10,
     begin = +new Date(Date.now() - 1000 * 60 * 60 * 24),
     end = +new Date(),
@@ -105,7 +110,7 @@ class LogsService {
    * @param id The ID of the log to delete
    * @returns Nothing
    */
-  public async deleteLog(id: ObjectId | string): Promise<void> {
+  public async deleteLog(id: mongoose.Types.ObjectId | string): Promise<void> {
     try {
       await this.logs.findByIdAndDelete(id);
       return;
@@ -120,7 +125,7 @@ class LogsService {
    * @param userId The user to delete logs for
    * @returns Nothing
    */
-  public async deleteAllUserLogs(userId: ObjectId): Promise<void> {
+  public async deleteAllUserLogs(userId: mongoose.Types.ObjectId): Promise<void> {
     try {
       await this.logs.deleteMany({ creator: `${userId}` });
       return;
@@ -134,6 +139,41 @@ class LogsService {
       return false;
     }
     return true;
+  }
+
+  public async validateLog(log: LogObject) {
+    try {
+      const errors: ValidationError[] = await validate(log, { validationError: { target: false, value: false } });
+      if (errors.length > 0) {
+        if (NODE_ENV !== 'development') throw new Exception(400, 'Invalid log structure');
+        let allErrors = [];
+
+        errors.forEach(error => {
+          const transformed = this.transformError(error);
+          allErrors = [...allErrors, ...transformed];
+        });
+
+        throw new Exception(400, JSON.stringify(allErrors));
+      }
+      return;
+    } catch (err) {
+      throw new Exception(400, err.message);
+    }
+  }
+
+  private transformError(error: ValidationError) {
+    const errors = [];
+    if (error.constraints) {
+      errors.push(error.constraints);
+    }
+
+    if (error.children.length > 0) {
+      error.children.forEach(child => {
+        errors.push(...this.transformError(child));
+      });
+    }
+
+    return errors;
   }
 }
 

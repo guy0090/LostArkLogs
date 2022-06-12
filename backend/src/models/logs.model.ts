@@ -6,11 +6,11 @@ const logsSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     required: true,
   },
-  started: {
+  firstPacket: {
     type: Number,
     required: true,
   },
-  ended: {
+  lastPacket: {
     type: Number,
     required: true,
   },

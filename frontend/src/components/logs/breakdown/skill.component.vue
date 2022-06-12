@@ -13,8 +13,8 @@
     <v-col cols="auto" class="align-self-center"
       ><h4>
         {{
-          $props.skill?.id !== 0
-            ? $t(`skills.${$props.skill?.id}`).toUpperCase()
+          skill?.id !== 0
+            ? $t(`skills.${skill?.id}`).toUpperCase()
             : $t(`skills.0`).toUpperCase()
         }}
       </h4></v-col
@@ -22,7 +22,7 @@
     <v-spacer></v-spacer>
     <v-col cols="auto">
       <h3>
-        {{ new Intl.NumberFormat().format($props.skill?.totalDamage) }} ({{
+        {{ new Intl.NumberFormat().format(skill?.stats.damageDealt) }} ({{
           new Intl.NumberFormat().format(getSkillPercentDamage())
         }}%)
       </h3>
@@ -56,14 +56,14 @@ export default defineComponent({
 
   methods: {
     getSkillDamagePerSecond() {
-      const skillDamage = this.skill?.totalDamage;
-      const totalDamage = this.entity?.damageDealt;
+      const skillDamage = this.skill?.stats.damageDealt;
+      const totalDamage = this.entity?.stats.damageDealt;
 
       return skillDamage / totalDamage;
     },
     getSkillPercentDamage() {
-      const totalEntityDamage = this.entity?.damageDealt;
-      const totalSkillDamage = this.skill?.totalDamage;
+      const totalEntityDamage = this.entity?.stats.damageDealt;
+      const totalSkillDamage = this.skill?.stats.damageDealt;
 
       return Math.round((totalSkillDamage / totalEntityDamage) * 100);
     },

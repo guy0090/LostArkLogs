@@ -1,7 +1,7 @@
 import { HttpException } from '@exceptions/HttpException';
 import { User } from '@interfaces/users.interface';
 import userModel from '@/models/user.model';
-import { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 import { getRandomString } from '@/utils/crypto';
 import { DiscordUser } from '@/interfaces/discord.interface';
 
@@ -28,7 +28,7 @@ class UserService {
    * @param userId The id of the user to find
    * @returns The found user
    */
-  public async findUserById(userId: string | ObjectId): Promise<User> {
+  public async findUserById(userId: mongoose.Types.ObjectId | string): Promise<User> {
     try {
       const findUser: User = await this.users.findOne({ _id: userId });
       if (!findUser) throw new HttpException(404, 'Error finding user');
@@ -95,7 +95,7 @@ class UserService {
    * @param update The update object
    * @returns The updated user
    */
-  public async updateUser(userId: ObjectId, update: any): Promise<User> {
+  public async updateUser(userId: mongoose.Types.ObjectId, update: any): Promise<User> {
     try {
       if (update._id) delete update._id;
 

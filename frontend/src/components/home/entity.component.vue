@@ -1,18 +1,18 @@
 <template>
   <v-col cols="auto" class="mb-1">
-    <v-card :class="`c-${$props.entity?.class}`">
+    <v-card :class="`c-${entity?.classId}`">
       <v-row dense>
         <v-col cols="auto" class="ms-1 me-0">
           <v-avatar size="26">
             <img
               width="28"
               height="28"
-              :src="'/img/sprites/' + $props.entity?.class + '.png'"
+              :src="'/img/sprites/' + entity?.classId + '.png'"
             />
           </v-avatar>
         </v-col>
         <v-col cols="auto" class="align-self-center">
-          <span class="me-2">{{ $t(`classes.${$props.entity?.class}`) }} </span>
+          <span class="me-2">{{ $t(`classes.${entity?.classId}`) }} </span>
         </v-col>
       </v-row>
     </v-card>

@@ -3,7 +3,7 @@ import { Permissions } from '@/interfaces/permission.interface';
 import { Role } from '@/interfaces/role.interface';
 import permissionModel from '@/models/permission.model';
 import roleModel from '@/models/role.model';
-import { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 class PermissionsService {
   public roles = roleModel;
@@ -15,9 +15,9 @@ class PermissionsService {
    * @param userId The user's database ID
    * @param permissions The user's permissions
    * @param roles The user's roles
-   * @returns The created `Permissions`object
+   * @returns The created `Permissions` object
    */
-  public async createPermissions(userId: ObjectId, permissions = [], roles = []): Promise<Permissions> {
+  public async createPermissions(userId: mongoose.Types.ObjectId, permissions = [], roles = []): Promise<Permissions> {
     try {
       const createPermissions = await this.permissions.create({ _id: userId, permissions, roles });
       if (!createPermissions) throw new Error('Error creating permissions');
@@ -35,7 +35,7 @@ class PermissionsService {
    * @param newPermissions The new permissions to add. Duplicates are ignored.
    * @returns The updated `Permissions` object with new permissions
    */
-  public async addPermissions(userId: ObjectId, newPermissions: string[]): Promise<Permissions> {
+  public async addPermissions(userId: mongoose.Types.ObjectId, newPermissions: string[]): Promise<Permissions> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
       if (!findPermissions) throw new Error('Permissions not found');
@@ -58,7 +58,7 @@ class PermissionsService {
    * @param removePermissions The permissions to remove
    * @returns The new `Permissions` object with removed permissions
    */
-  public async removePermissions(userId: ObjectId, removePermissions: string[]): Promise<Permissions> {
+  public async removePermissions(userId: mongoose.Types.ObjectId, removePermissions: string[]): Promise<Permissions> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
       if (!findPermissions) throw new Error('Permissions not found');
@@ -84,7 +84,7 @@ class PermissionsService {
    * @param checkPermissions The permissions to check for
    * @returns {boolean} If the user has the permission or not
    */
-  public async userHasPermissions(userId: ObjectId, checkPermissions: string[]): Promise<boolean> {
+  public async userHasPermissions(userId: mongoose.Types.ObjectId, checkPermissions: string[]): Promise<boolean> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
       if (!findPermissions) throw new Error('Permissions not found');
@@ -109,7 +109,7 @@ class PermissionsService {
    * @param userId The user's database ID
    * @returns The user's permissions
    */
-  public async getPermissions(userId: ObjectId): Promise<string[]> {
+  public async getPermissions(userId: mongoose.Types.ObjectId): Promise<string[]> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
       if (!findPermissions) throw new Error('Permissions not found');

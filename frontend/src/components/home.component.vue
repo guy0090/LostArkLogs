@@ -35,8 +35,8 @@
         >
           <EncounterCard
             class="mb-2"
-            v-for="session in recentSessions"
-            :key="session.id"
+            v-for="(session, index) in recentSessions"
+            :key="index"
             :session="session"
           ></EncounterCard>
         </v-row>
@@ -65,7 +65,7 @@
             <v-btn
               color="success"
               :disabled="publicLoadingSessions"
-              @click="getRecentSessions(true)"
+              @click="getRecentSessions(100)"
             >
               <span v-if="publicLoadingSessions">Loading</span>
               <span v-else>Refresh</span>
@@ -79,8 +79,8 @@
         >
           <EncounterCard
             class="mb-2"
-            v-for="session in publicRecentSessions"
-            :key="session.id"
+            v-for="(session, index) in publicRecentSessions"
+            :key="index"
             :session="session"
           ></EncounterCard>
         </v-row>
@@ -123,9 +123,9 @@ export default defineComponent({
   },
   mounted() {
     setTimeout(() => {
-      if (this.store.getters.user) this.getUserRecentSessions();
-      this.getRecentSessions();
-    }, 1000);
+      if (this.store.getters.user) this.getUserRecentSessions(0);
+      this.getRecentSessions(0);
+    }, 100);
   },
   setup() {
     const store = useStore();
@@ -170,7 +170,7 @@ export default defineComponent({
           this.store.commit("setPageLoading", false);
         });
     },
-    getUserRecentSessions: function (timeout = false) {
+    getUserRecentSessions: function (timeout = 1000) {
       if (!this.loadingSessions) this.loadingSessions = true;
       this.store
         .dispatch("getUserRecentSessions")
@@ -179,10 +179,12 @@ export default defineComponent({
           setTimeout(
             // Make it seems like something is happening - requests can be very fast otherwise
             () => {
-              this.recentSessions = logs;
+              this.recentSessions = logs.sort(
+                (a: Session, b: Session) => b.createdAt - a.createdAt
+              );
               this.loadingSessions = false;
             },
-            timeout ? 1000 : 0
+            timeout
           );
         })
         .catch((error) => {
@@ -190,7 +192,7 @@ export default defineComponent({
           this.loadingSessions = false;
         });
     },
-    getRecentSessions: function (timeout = false) {
+    getRecentSessions: function (timeout = 1000) {
       if (!this.publicLoadingSessions) this.publicLoadingSessions = true;
       this.store
         .dispatch("getRecentSessions")
@@ -199,10 +201,12 @@ export default defineComponent({
           setTimeout(
             // Make it seems like something is happening - requests can be very fast otherwise
             () => {
-              this.publicRecentSessions = logs;
+              this.publicRecentSessions = logs.sort(
+                (a: Session, b: Session) => b.createdAt - a.createdAt
+              );
               this.publicLoadingSessions = false;
             },
-            timeout ? 1000 : 0
+            timeout
           );
         })
         .catch((error) => {

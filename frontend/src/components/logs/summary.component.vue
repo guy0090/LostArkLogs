@@ -10,9 +10,9 @@
           </v-col>
           <v-col class="align-self-center">
             <v-row>
-              <h2>UNKNOWN ENCOUNTER</h2>
+              <h2>{{ bossName }}</h2>
             </v-row>
-            <v-row>UNKNOWN BOSS</v-row>
+            <v-row>{{ encounterName }}</v-row>
           </v-col>
         </v-row>
       </v-card-content>
@@ -33,7 +33,7 @@
             </v-row>
             <v-row class="pt-2">
               CLEARED IN
-              {{ getDuration($props.session?.started, $props.session?.ended) }}
+              {{ getDuration(session?.started, session?.ended) }}
             </v-row>
           </v-col>
         </v-row>
@@ -56,7 +56,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      $props.session?.damageStatistics.totalDamageDealt
+                      session?.damageStatistics.totalDamageDealt
                     )
                   }}
                 </h3></v-row
@@ -81,7 +81,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      getTotalDPS($props.session?.entities)
+                      getTotalDPS(session?.entities)
                     )
                   }}/s
                 </h3></v-row
@@ -106,7 +106,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      getAverageDPS($props.session?.entities)
+                      getAverageDPS(session?.entities)
                     )
                   }}/s
                 </h3></v-row
@@ -158,7 +158,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      getAverageCritRate($props.session?.entities)
+                      getAverageCritRate(session?.entities)
                     )
                   }}%
                 </h3></v-row
@@ -185,9 +185,7 @@
               <v-row style="padding-top: 2px"
                 ><h3>
                   {{
-                    new Intl.NumberFormat().format(
-                      getTotalAttacks("frontAttacks")
-                    )
+                    new Intl.NumberFormat().format(getTotalAttacks("frontHits"))
                   }}
                 </h3></v-row
               >
@@ -213,9 +211,7 @@
               <v-row style="padding-top: 2px"
                 ><h3>
                   {{
-                    new Intl.NumberFormat().format(
-                      getTotalAttacks("backAttacks")
-                    )
+                    new Intl.NumberFormat().format(getTotalAttacks("backHits"))
                   }}
                 </h3></v-row
               >
@@ -251,7 +247,7 @@
 </template>
 
 <script lang="ts">
-import { SessionEntity } from "@/interfaces/session.interface";
+import { Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
 
@@ -260,6 +256,31 @@ export default defineComponent({
 
   props: {
     session: Object,
+  },
+
+  data() {
+    // TODO: Switch this to NPC IDs asap
+    let abyssBosses =
+      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Albion|)?$/gi;
+    let legionRaidBosses =
+      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/gi;
+    let guardians =
+      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/g;
+
+    let bossName = "UNKNOWN BOSS";
+    let encounterName = "UNKNOIWN ENCOUNTER";
+
+    return {
+      abyssBosses,
+      legionRaidBosses,
+      guardians,
+      bossName,
+      encounterName,
+    };
+  },
+
+  mounted() {
+    this.getEncounter();
   },
 
   methods: {
@@ -289,16 +310,16 @@ export default defineComponent({
       return dayjs(date).fromNow();
     },
 
-    isMVP(entity: SessionEntity) {
+    isMVP(entity: Entity) {
       return (
-        entity.damageDealt ===
-        this.$props.session?.damageStatistics?.topDamageDealt
+        entity.stats.damageDealt ===
+        this.session?.damageStatistics?.topDamageDealt
       );
     },
 
-    getTotalCrits(entities: SessionEntity[]) {
+    getTotalCrits(entities: Entity[]) {
       let totalCrits = 0;
-      entities.forEach((entity: SessionEntity) => {
+      entities.forEach((entity: Entity) => {
         totalCrits += entity.stats.crits;
       });
       return totalCrits;
@@ -306,20 +327,20 @@ export default defineComponent({
 
     getTotalAttacks(type: string) {
       let total = 0;
-      this.session?.entities?.forEach((entity: SessionEntity) => {
+      this.session?.entities?.forEach((entity: Entity) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         total += (entity.stats as any)[type];
       });
       return total;
     },
 
-    getDamageDealtPerSecond(entity: SessionEntity) {
+    getDamageDealtPerSecond(entity: Entity) {
       const duration = (this.session?.ended - this.session?.started) / 1000;
       // console.log(entity?.damageDealt, duration);
-      return entity?.damageDealt / (duration || 0);
+      return entity?.stats.damageDealt / (duration || 0);
     },
 
-    getTotalDPS(entities: SessionEntity[]) {
+    getTotalDPS(entities: Entity[]) {
       let total = 0;
       entities.forEach((entity) => {
         total += this.getDamageDealtPerSecond(entity);
@@ -328,7 +349,7 @@ export default defineComponent({
       return Math.round(total);
     },
 
-    getAverageDPS(entities: SessionEntity[]) {
+    getAverageDPS(entities: Entity[]) {
       let total = 0;
       entities.forEach((entity) => {
         total += this.getDamageDealtPerSecond(entity);
@@ -337,18 +358,48 @@ export default defineComponent({
       return Math.round(total / entities.length);
     },
 
-    getCritRate(entity: SessionEntity) {
-      const rate = (entity.stats.crits / entity.stats.totalHits) * 100;
+    getCritRate(entity: Entity) {
+      const rate = (entity.stats.crits / entity.stats.hits) * 100;
       return rate;
     },
 
-    getAverageCritRate(entities: SessionEntity[]) {
+    getAverageCritRate(entities: Entity[]) {
       let total = 0;
       entities.forEach((entity) => {
         total += this.getCritRate(entity);
       });
 
       return Math.round(total / entities.length);
+    },
+
+    getEncounter() {
+      const entities = [...this.session?.entities] as Entity[];
+      const bossEntities = entities.filter(
+        (e) => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN
+      );
+      const hasBoss = bossEntities.length > 0;
+      if (!hasBoss) return;
+
+      const boss = bossEntities.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+      console.log(boss);
+
+      let encounter = "UNKNOWN ENCOUNTER";
+      if (this.abyssBosses.test(boss.name)) {
+        console.log("Detected Abyss Boss");
+        encounter = "ABYSS DUNGEON";
+      } else if (this.legionRaidBosses.test(boss.name)) {
+        console.log("Detected Legion Raid Boss");
+        encounter = "LEGION RAID";
+      } else if (this.guardians.test(boss.name)) {
+        console.log("Detected Guardian");
+        encounter = "GUARDIAN RAID";
+      } else {
+        console.log("Detected Unknown Boss:", boss.name);
+        encounter = "UNKNOWN BOSS";
+      }
+
+      this.bossName = boss.name.toUpperCase();
+      this.encounterName = encounter.toUpperCase();
     },
   },
 });

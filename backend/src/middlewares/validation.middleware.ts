@@ -14,11 +14,15 @@ const validationMiddleware = (
 ): RequestHandler => {
   return (req, res, next) => {
     validate(plainToInstance(type, req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted }).then((errors: ValidationError[]) => {
-      if (errors.length > 0) {
-        const message = errors.map((error: ValidationError) => Object.values(error.constraints)).join(', ');
-        next(new HttpException(400, NODE_ENV === 'production' ? 'Invalid Request Structure' : message));
-      } else {
-        next();
+      try {
+        if (errors.length > 0) {
+          const message = errors.map((error: ValidationError) => Object.values(error.constraints)).join(', ');
+          next(new HttpException(400, NODE_ENV === 'production' ? 'Invalid Request Structure' : message));
+        } else {
+          next();
+        }
+      } catch (err) {
+        next(new HttpException(500, NODE_ENV === 'production' ? 'Internal Server Error' : err.message));
       }
     });
   };

@@ -1,8 +1,8 @@
-import { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 /**
  * @interface User
- * @property {ObjectId} _id - User's ID
+ * @property {mongoose.Types.ObjectId} _id - User's ID
  * @property {string} salt - User's salt string for credential hashing
  * @property {string} discordId - User's Discord ID
  * @property {boolean} banned - If the user is banned
@@ -15,7 +15,7 @@ import { ObjectId } from 'mongoose';
  * @description Interface for an app user
  */
 export interface User {
-  _id?: ObjectId;
+  _id?: mongoose.Types.ObjectId;
   salt: string;
   uploadKey: string;
   discordId: string;

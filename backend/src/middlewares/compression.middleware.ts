@@ -22,7 +22,7 @@ export const brotliDecompress = async (req: Request, res: Response, next: NextFu
     });
 
     req.on('error', error => {
-      logger.error(`Error decompressing gzip data: ${error}`);
+      logger.error(`Error decompressing brotli data: ${error}`);
       next(new HttpException(500, 'Bad Entity'));
     });
   } catch (error) {

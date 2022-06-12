@@ -16,7 +16,7 @@
           v-on:click="$router.push({ name: 'home' })"
         >
           <!-- <v-icon large>mdi-chart-box</v-icon> -->
-          <span>&nbsp;Lost Ark Logss2</span>
+          <span>&nbsp;Lost Ark Logs</span>
         </span>
       </v-toolbar-title>
 

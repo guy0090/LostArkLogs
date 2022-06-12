@@ -1,3 +1,4 @@
+import { NODE_ENV } from '@/config';
 import { Exception } from '@/exceptions/Exception';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { Log } from '@/interfaces/logs.interface';
@@ -18,20 +19,20 @@ class LogsController {
       res.status(200).json(findLog);
     } catch (error) {
       next(new Exception(500, 'Error getting log'));
-      // next(error);
     }
   };
 
   public uploadLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const log: Log = { createdAt: +new Date(), creator: req.user._id, ...req.body.data };
+      await this.logService.validateLog(new LogObject(log));
+
       const createdLog: LogObject = await this.logService.createLog(log);
       if (!createdLog) throw new Exception(500, 'Error creating log');
 
       res.status(200).json({ created: true, id: createdLog.id });
     } catch (error) {
-      next(new Exception(500, 'Error creating log'));
-      // next(error);
+      next(new Exception(400, NODE_ENV === 'production' ? 'Error creating log' : error.message));
     }
   };
 
@@ -43,7 +44,6 @@ class LogsController {
       res.status(200).json({ deleted: true });
     } catch (error) {
       next(new Exception(500, 'Error deleting log'));
-      // next(error);
     }
   };
 

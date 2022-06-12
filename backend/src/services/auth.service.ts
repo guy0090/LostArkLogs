@@ -9,7 +9,7 @@ import userModel from '@/models/user.model';
 import discordAuthModel from '@/models/discordAuth.model';
 import { logger } from '@/utils/logger';
 import { sha512 } from '@/utils/crypto';
-import { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 import UserService from './users.service';
 import { Permissions } from '@/interfaces/permission.interface';
 import PermissionsService from './permissions.service';
@@ -138,7 +138,7 @@ class AuthService {
    * @param {DiscordOAuthGrant} grant The `DiscordOAuthGrant` object received from Discord
    * @returns {Promise<DiscordOAuth>} The user's updated `DiscordOAuth` object
    */
-  private async updateGrant(id: ObjectId, grant: DiscordOAuthGrant): Promise<DiscordOAuth> {
+  private async updateGrant(id: mongoose.Types.ObjectId, grant: DiscordOAuthGrant): Promise<DiscordOAuth> {
     try {
       const update = {
         discordAccess: grant.access_token,
@@ -162,7 +162,7 @@ class AuthService {
    * @param {DiscordUser} user The `DiscordUser` object from Discord's API
    * @returns {Promise<User>} The updated `User` object
    */
-  private async updateUser(id: ObjectId, user: DiscordUser): Promise<User> {
+  private async updateUser(id: mongoose.Types.ObjectId, user: DiscordUser): Promise<User> {
     try {
       const updateUser = await this.UserService.updateUser(id, {
         discordId: user.id,

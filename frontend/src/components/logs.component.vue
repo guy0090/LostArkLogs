@@ -14,12 +14,10 @@
       <v-col sm="12" md="12" lg="9" xl="9">
         <v-row>
           <EntityCard
-            v-for="(entity, index) in session?.entities?.sort(
-              (a, b) => b.damageDealt - a.damageDealt
-            )"
+            v-for="(entity, index) in getPlayerEntities()"
             :key="index"
             :entity="entity"
-            :entities="session?.entities?.length > 4 ? 6 : 12"
+            :entities="getPlayerEntities().length > 4 ? 6 : 12"
             :totalDamageDealt="session?.damageStatistics.totalDamageDealt"
             :duration="(session?.ended - session?.started) / 1000"
             :mvp="isMVP(entity)"
@@ -46,7 +44,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
-import { Session, SessionEntity } from "@/interfaces/session.interface";
+import { Session, Entity } from "@/interfaces/session.interface";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -140,41 +138,36 @@ export default defineComponent({
 
       return `${minDiff === 0 ? "00" : minDiff}:${secDiff}`;
     },
-
     timeSince(date: number) {
       return dayjs(date).fromNow();
     },
-
-    isMVP(entity: SessionEntity) {
+    isMVP(entity: Entity) {
       return (
-        entity.damageDealt === this.session?.damageStatistics?.topDamageDealt
+        entity.stats.damageDealt ===
+        this.session?.damageStatistics?.topDamageDealt
       );
     },
-
-    getTotalCrits(entities: SessionEntity[]) {
+    getTotalCrits(entities: Entity[]) {
       let totalCrits = 0;
-      entities.forEach((entity: SessionEntity) => {
+      entities.forEach((entity: Entity) => {
         totalCrits += entity.stats.crits;
       });
       return totalCrits;
     },
-
     getTotalAttacks(type: string) {
       let total = 0;
-      this.session?.entities?.forEach((entity: SessionEntity) => {
+      this.session?.entities?.forEach((entity: Entity) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         total += (entity.stats as any)[type];
       });
       return total;
     },
-
-    getDamageDealtPerSecond(entity: SessionEntity) {
+    getDamageDealtPerSecond(entity: Entity) {
       const duration = (this.session?.ended - this.session?.started) / 1000;
       // console.log(entity?.damageDealt, duration);
-      return entity?.damageDealt / (duration || 0);
+      return entity?.stats.damageDealt / (duration || 0);
     },
-
-    getTotalDPS(entities: SessionEntity[]) {
+    getTotalDPS(entities: Entity[]) {
       let total = 0;
       entities.forEach((entity) => {
         total += this.getDamageDealtPerSecond(entity);
@@ -182,8 +175,7 @@ export default defineComponent({
 
       return Math.round(total);
     },
-
-    getAverageDPS(entities: SessionEntity[]) {
+    getAverageDPS(entities: Entity[]) {
       let total = 0;
       entities.forEach((entity) => {
         total += this.getDamageDealtPerSecond(entity);
@@ -191,19 +183,23 @@ export default defineComponent({
 
       return Math.round(total / entities.length);
     },
-
-    getCritRate(entity: SessionEntity) {
-      const rate = (entity.stats.crits / entity.stats.totalHits) * 100;
+    getCritRate(entity: Entity) {
+      const rate = (entity.stats.crits / entity.stats.hits) * 100;
       return rate;
     },
-
-    getAverageCritRate(entities: SessionEntity[]) {
+    getAverageCritRate(entities: Entity[]) {
       let total = 0;
       entities.forEach((entity) => {
         total += this.getCritRate(entity);
       });
 
       return Math.round(total / entities.length);
+    },
+    getPlayerEntities() {
+      let clone = [...this.session?.entities] as Entity[];
+      return clone
+        .sort((a, b) => b.stats.damageDealt - a.stats.damageDealt)
+        .filter((e) => e.type === 3);
     },
   },
 });

@@ -3,7 +3,7 @@ import { HttpException } from '@/exceptions/HttpException';
 import { DiscordOAuth, DiscordOAuthGrant, DiscordUser } from '@/interfaces/discord.interface';
 import discordAuthModel from '@/models/discordAuth.model';
 import axios from 'axios';
-import { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 /**
  * @class DiscordService
@@ -99,7 +99,7 @@ class DiscordService {
    * @param {DiscordOAuthGrant} grant The `DiscordOAuthGrant` object received from Discord
    * @returns The user's `DiscordOAuth` object
    */
-  public async createGrant(id: ObjectId, grant: DiscordOAuthGrant): Promise<DiscordOAuth> {
+  public async createGrant(id: mongoose.Types.ObjectId, grant: DiscordOAuthGrant): Promise<DiscordOAuth> {
     try {
       const createGrant = await this.grants.create({
         _id: id,
@@ -122,7 +122,7 @@ class DiscordService {
    * @param {any} update The update object
    * @returns {Promise<DiscordOAuth>} The user's updated `DiscordOAuth` object
    */
-  public async updateGrant(id: ObjectId, update: any): Promise<DiscordOAuth> {
+  public async updateGrant(id: mongoose.Types.ObjectId, update: any): Promise<DiscordOAuth> {
     try {
       const updateGrant = await this.grants.findByIdAndUpdate(id, { $set: update }, { returnDocument: 'after' });
       return updateGrant;

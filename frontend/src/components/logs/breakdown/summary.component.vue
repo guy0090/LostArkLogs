@@ -3,13 +3,13 @@
     <v-col>
       <v-card flat>
         <v-card-content>
-          <v-row justify="space-evenly">
+          <v-row class="justify-space-evenly">
             <v-col cols="auto">
               <v-row> DAMAGE DEALT </v-row>
               <v-row class="pt-1">
                 <h3>
                   {{
-                    new Intl.NumberFormat().format($props.entity?.damageDealt)
+                    new Intl.NumberFormat().format(entity?.stats.damageDealt)
                   }}
                   <small>({{ getPercentDamageDealt() }}%)</small>
                 </h3>
@@ -36,7 +36,7 @@
               <v-row class="pt-1">
                 <h3>
                   {{
-                    new Intl.NumberFormat().format($props.entity?.damageTaken)
+                    new Intl.NumberFormat().format(entity?.stats.damageTaken)
                   }}
                   <small>({{ getPercentDamageTaken() }}%)</small>
                 </h3>
@@ -46,7 +46,7 @@
               <v-row> ATTACKS </v-row>
               <v-row class="pt-1">
                 <h3>
-                  {{ $props.entity?.stats.totalHits }}
+                  {{ entity?.stats.hits }}
                 </h3>
               </v-row>
             </v-col>
@@ -54,11 +54,7 @@
               <v-row> FRONT ATTACKS </v-row>
               <v-row class="pt-1">
                 <h3>
-                  {{
-                    new Intl.NumberFormat().format(
-                      $props.entity?.stats.frontAttacks
-                    )
-                  }}
+                  {{ new Intl.NumberFormat().format(entity?.stats.frontHits) }}
                 </h3>
               </v-row>
             </v-col>
@@ -66,18 +62,14 @@
               <v-row> BACK ATTACKS </v-row>
               <v-row class="pt-1">
                 <h3>
-                  {{
-                    new Intl.NumberFormat().format(
-                      $props.entity?.stats.backAttacks
-                    )
-                  }}
+                  {{ new Intl.NumberFormat().format(entity?.stats.backHits) }}
                 </h3>
               </v-row>
             </v-col>
             <v-col cols="auto">
               <v-row> COUNTERS </v-row>
               <v-row class="pt-1">
-                <h3>{{ $props.entity?.stats.counters }}</h3>
+                <h3>{{ entity?.stats.counters }}</h3>
               </v-row>
             </v-col>
           </v-row>
@@ -88,12 +80,10 @@
   <v-row>
     <v-col>
       <BreakdownSkill
-        v-for="skill in $props.entity?.skills.sort(
-          (a, b) => b.totalDamage - a.totalDamage
-        )"
+        v-for="skill in sortedSkills()"
         :key="skill.id"
         :skill="skill"
-        :entity="$props.entity"
+        :entity="entity"
         >{{ skill.id }}</BreakdownSkill
       >
     </v-col>
@@ -103,6 +93,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import BreakdownSkill from "@/components/logs/breakdown/skill.component.vue";
+import { Skill } from "@/interfaces/session.interface";
 
 export default defineComponent({
   name: "BreakdownSummary",
@@ -118,12 +109,11 @@ export default defineComponent({
 
   methods: {
     getCritRate() {
-      const rate =
-        (this.entity?.stats?.crits / this.entity?.stats?.totalHits) * 100;
+      const rate = (this.entity?.stats?.crits / this.entity?.stats?.hits) * 100;
       return isNaN(rate) ? 0 : rate;
     },
     getPercentDamageDealt() {
-      const totalEntityDamage = this.entity?.damageDealt;
+      const totalEntityDamage = this.entity?.stats.damageDealt;
       const totalSessionDamage =
         this.session?.damageStatistics?.totalDamageDealt;
 
@@ -142,8 +132,12 @@ export default defineComponent({
 
     getDamageDealtPerSecond() {
       const duration = (this.session?.ended - this.session?.started) / 1000;
-      const dps = this.entity?.damageDealt / duration;
+      const dps = this.entity?.stats.damageDealt / duration;
       return isNaN(dps) ? 0 : dps;
+    },
+    sortedSkills() {
+      const clone = [...this.entity?.skills] as Skill[];
+      return clone.sort((a, b) => b.stats.damageDealt - a.stats.damageDealt);
     },
   },
 });
