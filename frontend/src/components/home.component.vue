@@ -21,7 +21,7 @@
             <v-btn
               color="success"
               :disabled="loadingSessions"
-              @click="getUserRecentSessions(true)"
+              @click="getUserRecentSessions(100)"
             >
               <span v-if="loadingSessions">Loading</span>
               <span v-else>Refresh</span>
