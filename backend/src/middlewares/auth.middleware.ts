@@ -71,19 +71,63 @@ export const httpAuthMiddleware = async (req: RequestWithUser, res: Response, ne
  *
  * @param keyLocation Optional: The location of the API key in the request (e.g. 'query', 'body', 'params')
  * @param permission Optional: the permission to check for the user
+ * @param cookieFallback Optional: Whether to fallback to the auth cookie if the API key is not provided
  */
-export const apiKeyMiddleware = (keyLocation: 'query' | 'body' | 'params' = 'query', permission?: string): RequestHandler => {
-  return async (req: RequestWithUser, res: Response, next: NextFunction) => {
+export const apiKeyMiddleware = (keyLocation: 'query' | 'body' | 'params' = 'query', permission?: string, cookieFallback = false): RequestHandler => {
+  return async (req: RequestWithUser, _res: Response, next: NextFunction) => {
     try {
       const access = req[keyLocation].key as string;
-      const user = await users.findByApiKey(access);
-      const hasPermission = permission ? await perms.userHasPermissions(user._id, [permission]) : true;
 
-      if (access === user.uploadKey && hasPermission) {
-        req.user = user;
-        next();
+      if (!access && cookieFallback) {
+        logger.debug('No API key found in request, falling back to cookie');
+        const refreshToken = req.cookies['Authorization'] || (req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null);
+        const accessToken = req.cookies['at'] || (req.header('at').split('Bearer ')[1] ? req.header('at') : null);
+
+        if (refreshToken) {
+          const secretKey: string = SECRET_KEY;
+          const refreshVerificationResponse = verify(refreshToken, secretKey) as DataStoredInToken;
+
+          if (refreshVerificationResponse.exp * 1000 <= Date.now()) {
+            next(new HttpException(401, 'Invalid Authorization'));
+          } else {
+            const userId = refreshVerificationResponse.i;
+            let findUser: User = await users.findUserById(userId);
+
+            let accessVerificationResponse: DataStoredInToken;
+            if (accessToken) {
+              accessVerificationResponse = verify(accessToken, secretKey) as DataStoredInToken;
+              const userSalt = findUser.salt;
+              const accessHash = accessVerificationResponse.h;
+
+              if (!hashMatch(userId, userSalt, accessHash)) findUser = undefined;
+            }
+
+            if (findUser) {
+              const hasPermission = permission ? await perms.userHasPermissions(findUser._id, [permission]) : true;
+              if (hasPermission) {
+                req.user = findUser;
+                next();
+              } else {
+                next(new HttpException(401, 'Unauthorized'));
+              }
+            } else {
+              next(new HttpException(401, 'Invalid Authorization'));
+            }
+          }
+        } else {
+          next(new HttpException(400, 'Authentication Missing'));
+        }
       } else {
-        next(new HttpException(401, 'Unauthorized'));
+        logger.debug('API key found in request, continuing');
+        const user = await users.findByApiKey(access);
+        const hasPermission = permission ? await perms.userHasPermissions(user._id, [permission]) : true;
+
+        if (access === user.uploadKey && hasPermission) {
+          req.user = user;
+          next();
+        } else {
+          next(new HttpException(401, 'Unauthorized'));
+        }
       }
     } catch (err) {
       next(new HttpException(401, 'Invalid Authorization'));

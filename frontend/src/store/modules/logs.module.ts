@@ -29,6 +29,7 @@ export const logs: Module<any, any> = {
         const request = {
           method: "POST",
           url: `${getters.apiUrl}/logs/recent`,
+          withCredentials: true,
           data: {
             key: key,
           },
