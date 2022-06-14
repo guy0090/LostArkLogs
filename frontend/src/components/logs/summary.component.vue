@@ -1,5 +1,5 @@
 <template>
-  <v-row class="pt-3">
+  <v-row class="pt-3 px-1">
     <v-card min-width="100%" max-width="100%" class="mx-auto" rounded="sm">
       <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
@@ -18,7 +18,7 @@
       </v-card-content>
     </v-card>
   </v-row>
-  <v-row class="pt-5">
+  <v-row class="pt-5 px-1">
     <v-card min-width="100%" max-width="100%" class="mx-auto" rounded="sm">
       <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
@@ -40,8 +40,8 @@
       </v-card-content>
     </v-card>
   </v-row>
-  <v-row class="pt-5" justify="center">
-    <v-col lg="12" xl="auto" class="pa-1">
+  <v-row class="pt-4" justify="center">
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -66,7 +66,7 @@
         </v-card-content>
       </v-card>
     </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -91,7 +91,7 @@
         </v-card-content>
       </v-card>
     </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -116,31 +116,7 @@
         </v-card-content>
       </v-card>
     </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
-      <v-card class="mx-auto summary-card" rounded="sm">
-        <v-progress-linear model-value="100" height="5" color="red-darken-4">
-        </v-progress-linear>
-        <v-card-content>
-          <v-row>
-            <v-col cols="auto">
-              <v-avatar
-                color="red-darken-4"
-                icon="mdi-lightning-bolt"
-              ></v-avatar>
-            </v-col>
-            <v-col class="align-self-center me-2">
-              <v-row>TOTAL CRITS</v-row>
-              <v-row style="padding-top: 2px"
-                ><h3>
-                  {{ new Intl.NumberFormat().format(getTotalAttacks("crits")) }}
-                </h3></v-row
-              >
-            </v-col>
-          </v-row>
-        </v-card-content>
-      </v-card>
-    </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -168,7 +144,28 @@
         </v-card-content>
       </v-card>
     </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
+    <v-col lg="12" xl="6" class="py-1 px-1">
+      <v-card class="mx-auto summary-card" rounded="sm">
+        <v-progress-linear model-value="100" height="5" color="red-darken-4">
+        </v-progress-linear>
+        <v-card-content>
+          <v-row>
+            <v-col cols="auto">
+              <v-avatar color="red-darken-4" icon="mdi-skull"></v-avatar>
+            </v-col>
+            <v-col class="align-self-center me-2">
+              <v-row>DEATHS</v-row>
+              <v-row style="padding-top: 2px"
+                ><h3>
+                  {{ new Intl.NumberFormat().format(getTotalDeaths()) }}
+                </h3></v-row
+              >
+            </v-col>
+          </v-row>
+        </v-card-content>
+      </v-card>
+    </v-col>
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -194,7 +191,7 @@
         </v-card-content>
       </v-card>
     </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -220,7 +217,7 @@
         </v-card-content>
       </v-card>
     </v-col>
-    <v-col lg="12" xl="auto" class="pa-1">
+    <v-col lg="12" xl="6" class="py-1 px-1">
       <v-card class="mx-auto summary-card" rounded="sm">
         <v-progress-linear model-value="100" height="5" color="red-darken-4">
         </v-progress-linear>
@@ -334,6 +331,14 @@ export default defineComponent({
       return total;
     },
 
+    getTotalDeaths() {
+      let total = 0;
+      this.session?.entities?.forEach((entity: Entity) => {
+        total += entity.stats.deaths;
+      });
+      return total;
+    },
+
     getDamageDealtPerSecond(entity: Entity) {
       const duration = (this.session?.ended - this.session?.started) / 1000;
       // console.log(entity?.damageDealt, duration);
@@ -381,20 +386,19 @@ export default defineComponent({
       if (!hasBoss) return;
 
       const boss = bossEntities.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
-      console.log(boss);
 
       let encounter = "UNKNOWN ENCOUNTER";
       if (this.abyssBosses.test(boss.name)) {
-        console.log("Detected Abyss Boss");
+        // console.log("Detected Abyss Boss");
         encounter = "ABYSS DUNGEON";
       } else if (this.legionRaidBosses.test(boss.name)) {
-        console.log("Detected Legion Raid Boss");
+        // console.log("Detected Legion Raid Boss");
         encounter = "LEGION RAID";
       } else if (this.guardians.test(boss.name)) {
-        console.log("Detected Guardian");
+        // console.log("Detected Guardian");
         encounter = "GUARDIAN RAID";
       } else {
-        console.log("Detected Unknown Boss:", boss.name);
+        // console.log("Detected Unknown Boss:", boss.name);
         encounter = "UNKNOWN BOSS";
       }
 

@@ -158,20 +158,19 @@ export default defineComponent({
       if (!hasBoss) return;
 
       const boss = bossEntities.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
-      console.log(boss);
 
       let encounter = "UNKNOWN ENCOUNTER";
       if (this.abyssBosses.test(boss.name)) {
-        console.log("Detected Abyss Boss");
+        // console.log("Detected Abyss Boss");
         encounter = "ABYSS DUNGEON";
       } else if (this.legionRaidBosses.test(boss.name)) {
-        console.log("Detected Legion Raid Boss");
+        // console.log("Detected Legion Raid Boss");
         encounter = "LEGION RAID";
       } else if (this.guardians.test(boss.name)) {
-        console.log("Detected Guardian");
+        // console.log("Detected Guardian");
         encounter = "GUARDIAN RAID";
       } else {
-        console.log("Detected Unknown Boss:", boss.name);
+        // console.log("Detected Unknown Boss:", boss.name);
         encounter = "UNKNOWN BOSS";
       }
 

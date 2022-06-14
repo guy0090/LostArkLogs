@@ -7,11 +7,39 @@ import { createVuexStore } from "./store";
 import vuetify from "./plugins/vuetify";
 import { loadFonts } from "./plugins/webfontloader";
 import io from "socket.io-client";
-import { NODE_ENV, API_HOST } from "@/config";
+import { API_HOST } from "@/config";
+
+import { theme } from "@/config/theme";
+
+import ECharts from "vue-echarts";
+import { use, registerTheme } from "echarts/core";
+import { CanvasRenderer } from "echarts/renderers";
+import { BarChart, LineChart } from "echarts/charts";
+import {
+  GridComponent,
+  TooltipComponent,
+  TitleComponent,
+  LegendComponent,
+  ToolboxComponent,
+} from "echarts/components";
+
+registerTheme("custom-dark", theme);
+
+use([
+  CanvasRenderer,
+  BarChart,
+  LineChart,
+  GridComponent,
+  TooltipComponent,
+  TitleComponent,
+  LegendComponent,
+  ToolboxComponent,
+]);
 
 loadFonts();
 
 const app = createApp(App);
+app.component("v-chart", ECharts);
 
 import en from "@/i18n/en";
 const i18n = createI18n({
@@ -21,8 +49,6 @@ const i18n = createI18n({
     en,
   },
 });
-
-console.log(NODE_ENV);
 
 const socket = io(API_HOST, {
   path: "/ws",

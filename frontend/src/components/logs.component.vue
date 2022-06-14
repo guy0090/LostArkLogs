@@ -1,35 +1,50 @@
 <template>
   <v-container fluid v-if="JSON.stringify(session) !== '{}'">
     <v-row id="title">
-      <v-col cols="auto" class="align-self-center">
-        <v-chip variant="contained-text" label color="success">
+      <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
+      <v-col cols="auto" class="align-self-center expand-sm">
+        <v-chip
+          variant="contained-text"
+          label
+          color="success"
+          rounded="sm"
+          style="margin-left: 6px !important"
+        >
           UPLOADED {{ timeSince(session.createdAt).toUpperCase() }}
         </v-chip>
       </v-col>
     </v-row>
     <v-row id="summary" class="ma-1" justify="center">
-      <v-col sm="12" md="12" lg="3" xl="3">
+      <v-col class="hide-on-sm px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
+      <v-col sm="12" md="12" lg="3" xl="3" class="expand-sm">
         <LogSummary :session="session"></LogSummary>
       </v-col>
-      <v-col sm="12" md="12" lg="9" xl="9">
-        <v-row>
-          <EntityCard
-            v-for="(entity, index) in getPlayerEntities()"
+      <v-col class="expand-sm" sm="12" md="12" lg="7" xl="7">
+        <v-row class="pt-1 mb-2">
+          <v-col cols="12" class="pt-2 pb-0 px-1 expand-sm">
+            <PartyDPSGraph
+              :entities="JSON.parse(JSON.stringify(players))"
+              :started="session.started"
+              :ended="session.ended"
+            ></PartyDPSGraph>
+          </v-col>
+        </v-row>
+        <v-row class="pt-1">
+          <EntityPanel
+            v-for="(entity, index) in players"
             :key="index"
+            :idx="index"
             :entity="entity"
-            :entities="getPlayerEntities().length > 4 ? 6 : 12"
+            :entities="12"
             :totalDamageDealt="session?.damageStatistics.totalDamageDealt"
             :duration="(session?.ended - session?.started) / 1000"
             :mvp="isMVP(entity)"
           >
-          </EntityCard>
+          </EntityPanel>
         </v-row>
-        <v-row class="mt-4">
-          <v-col>
-            <Breakdowns :session="session"></Breakdowns>
-          </v-col>
-        </v-row>
+        <v-row class="mt-4"> </v-row>
       </v-col>
+      <v-col class="px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
     </v-row>
   </v-container>
   <v-container v-else>
@@ -42,26 +57,27 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import { useStore } from "vuex";
 import { Session, Entity } from "@/interfaces/session.interface";
 
+import axios from "axios";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
+// Components
 import LogSummary from "@/components/logs/summary.component.vue";
-import EntityCard from "@/components/logs/entitycard.component.vue";
-import Breakdowns from "@/components/logs/breakdown.component.vue";
-import axios from "axios";
+import EntityPanel from "@/components/logs/entitypanel.component.vue";
+import PartyDPSGraph from "@/components/logs/graphs/partydps.component.vue";
 
 export default defineComponent({
   name: "LogsPage",
 
   components: {
     LogSummary,
-    EntityCard,
-    Breakdowns,
+    EntityPanel,
+    PartyDPSGraph,
   },
 
   mounted() {
@@ -71,7 +87,9 @@ export default defineComponent({
 
   setup() {
     const store = useStore();
-    return { store };
+    const players = ref([] as Entity[]);
+
+    return { store, players };
   },
 
   data() {
@@ -98,6 +116,8 @@ export default defineComponent({
           // session.entities = this.duplicateEntities(session);
 
           this.session = session;
+
+          this.players = this.getPlayerEntities(false);
         })
         .catch((err) => {
           this.store.dispatch("error", err.message);
@@ -195,12 +215,95 @@ export default defineComponent({
 
       return Math.round(total / entities.length);
     },
-    getPlayerEntities() {
+    getPlayerEntities(duplicate = false) {
       let clone = [...this.session?.entities] as Entity[];
+      if (duplicate) clone = this.duplicateEntities(this.session);
+
       return clone
         .sort((a, b) => b.stats.damageDealt - a.stats.damageDealt)
-        .filter((e) => e.type === 3);
+        .filter((e) => e.type === 3)
+        .map((e, idx) => {
+          return { ...e, iid: idx + 1 };
+        });
     },
   },
 });
 </script>
+
+<style scoped>
+@media only screen and (max-width: 519px) {
+  .hide-on-sm {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .expand-sm {
+    min-width: 100% !important;
+  }
+}
+
+.c-102 {
+  color: #ee2e48b7;
+}
+.c-103 {
+  color: #7b9aa2;
+}
+.c-104 {
+  color: #e1907e;
+}
+.c-105 {
+  color: #ff9900;
+}
+.c-202 {
+  color: #b38915;
+}
+.c-203 {
+  color: #22aa99;
+}
+.c-204 {
+  color: #674598;
+}
+.c-205 {
+  color: #66aa00;
+}
+.c-302 {
+  color: #aa5611;
+}
+.c-303 {
+  color: #990099;
+}
+.c-304 {
+  color: #316395;
+}
+.c-305 {
+  color: #1f21c5d3;
+}
+.c-312 {
+  color: #994499;
+}
+.c-402 {
+  color: #a91a16;
+}
+.c-403 {
+  color: #0099c6;
+}
+.c-404 {
+  color: #109618;
+}
+.c-502 {
+  color: #dd4477;
+}
+.c-503 {
+  color: #4442a8;
+}
+.c-504 {
+  color: #33670b;
+}
+.c-505 {
+  color: #3b4292;
+}
+.c-512 {
+  color: #6bcec2;
+}
+</style>
