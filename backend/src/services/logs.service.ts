@@ -205,7 +205,7 @@ class LogsService {
 
       const $match = {
         createdAt: {
-          $gte: +new Date() - 1000 * 3600 * 12,
+          $gte: +new Date() - 1000 * 3600 * 24, // TODO: 24hr for now
           $lte: +new Date(),
         },
         'entities.level': {
