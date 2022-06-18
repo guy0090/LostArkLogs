@@ -76,7 +76,6 @@ export const auth: Module<any, any> = {
       return new Promise((resolve, reject) => {
         const io = app.config.globalProperties.$io;
         const atCookie = getters.accessToken;
-        const atTimeout = getters.expiresAt;
 
         io.timeout(5000).emit(
           "tokens",
@@ -98,13 +97,7 @@ export const auth: Module<any, any> = {
                 const perms = res.p;
                 const uploadToken = res.ut;
 
-                if (!atTimeout || atTimeout < Date.now() || !atCookie) {
-                  dispatch("info", "[WS] Token is invalid, refreshing");
-                  commit("setAccessToken", newToken);
-                } else {
-                  dispatch("info", "[WS] Token is valid, not refreshing");
-                }
-
+                commit("setAccessToken", newToken);
                 commit("setUser", user);
                 commit("setPermissions", perms);
                 dispatch("parseDiscordAvatarHash", user).then((avatar) => {

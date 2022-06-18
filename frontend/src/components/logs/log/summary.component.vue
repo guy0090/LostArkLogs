@@ -6,7 +6,12 @@
       <v-card-content>
         <v-row>
           <v-col cols="auto">
-            <v-avatar color="indigo" icon="mdi-help"></v-avatar>
+            <v-avatar
+              color="indigo"
+              :icon="
+                bossName !== 'UNKNOWN BOSS' ? 'mdi-space-invaders' : 'mdi-help'
+              "
+            ></v-avatar>
           </v-col>
           <v-col class="align-self-center">
             <v-row>
@@ -157,7 +162,11 @@
               <v-row>DEATHS</v-row>
               <v-row style="padding-top: 2px"
                 ><h3>
-                  {{ new Intl.NumberFormat().format(getTotalDeaths()) }}
+                  {{
+                    new Intl.NumberFormat().format(
+                      getTotalDeaths(session?.entities)
+                    )
+                  }}
                 </h3></v-row
               >
             </v-col>
@@ -182,7 +191,9 @@
               <v-row style="padding-top: 2px"
                 ><h3>
                   {{
-                    new Intl.NumberFormat().format(getTotalAttacks("frontHits"))
+                    new Intl.NumberFormat().format(
+                      getTotalAttacks(session?.entities, "frontHits")
+                    )
                   }}
                 </h3></v-row
               >
@@ -208,7 +219,9 @@
               <v-row style="padding-top: 2px"
                 ><h3>
                   {{
-                    new Intl.NumberFormat().format(getTotalAttacks("backHits"))
+                    new Intl.NumberFormat().format(
+                      getTotalAttacks(session?.entities, "backHits")
+                    )
                   }}
                 </h3></v-row
               >
@@ -231,7 +244,9 @@
               <v-row style="padding-top: 2px"
                 ><h3>
                   {{
-                    new Intl.NumberFormat().format(getTotalAttacks("counters"))
+                    new Intl.NumberFormat().format(
+                      getTotalAttacks(session?.entities, "counters")
+                    )
                   }}
                 </h3></v-row
               >
@@ -258,14 +273,14 @@ export default defineComponent({
   data() {
     // TODO: Switch this to NPC IDs asap
     let abyssBosses =
-      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Albion|)?$/gi;
+      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Corrupted Albion|)?$/i;
     let legionRaidBosses =
-      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/gi;
+      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/i;
     let guardians =
-      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/g;
+      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/;
 
     let bossName = "UNKNOWN BOSS";
-    let encounterName = "UNKNOIWN ENCOUNTER";
+    let encounterName = "UNKNOWN ENCOUNTER";
 
     return {
       abyssBosses,
@@ -322,20 +337,21 @@ export default defineComponent({
       return totalCrits;
     },
 
-    getTotalAttacks(type: string) {
+    getTotalAttacks(entities: Entity[], type: string) {
       let total = 0;
-      this.session?.entities?.forEach((entity: Entity) => {
+
+      for (let entity of entities) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         total += (entity.stats as any)[type];
-      });
+      }
+
       return total;
     },
 
-    getTotalDeaths() {
+    getTotalDeaths(entities: Entity[]) {
       let total = 0;
-      this.session?.entities?.forEach((entity: Entity) => {
-        total += entity.stats.deaths;
-      });
+      for (let entity of entities) total += entity.stats.deaths;
+
       return total;
     },
 
@@ -347,18 +363,17 @@ export default defineComponent({
 
     getTotalDPS(entities: Entity[]) {
       let total = 0;
-      entities.forEach((entity) => {
+
+      for (let entity of entities)
         total += this.getDamageDealtPerSecond(entity);
-      });
 
       return Math.round(total);
     },
 
     getAverageDPS(entities: Entity[]) {
       let total = 0;
-      entities.forEach((entity) => {
+      for (let entity of entities)
         total += this.getDamageDealtPerSecond(entity);
-      });
 
       return Math.round(total / entities.length);
     },
@@ -370,15 +385,13 @@ export default defineComponent({
 
     getAverageCritRate(entities: Entity[]) {
       let total = 0;
-      entities.forEach((entity) => {
-        total += this.getCritRate(entity);
-      });
+      for (let entity of entities) total += this.getCritRate(entity);
 
       return Math.round(total / entities.length);
     },
 
     getEncounter() {
-      const entities = [...this.session?.entities] as Entity[];
+      const entities = this.session?.entities as Entity[];
       const bossEntities = entities.filter(
         (e) => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN
       );
@@ -390,7 +403,7 @@ export default defineComponent({
       let encounter = "UNKNOWN ENCOUNTER";
       if (this.abyssBosses.test(boss.name)) {
         // console.log("Detected Abyss Boss");
-        encounter = "ABYSS DUNGEON";
+        encounter = "ABYSSAL DUNGEON";
       } else if (this.legionRaidBosses.test(boss.name)) {
         // console.log("Detected Legion Raid Boss");
         encounter = "LEGION RAID";
@@ -411,6 +424,6 @@ export default defineComponent({
 
 <style scoped>
 .summary-card {
-  min-width: 225px !important;
+  min-width: 218px !important;
 }
 </style>

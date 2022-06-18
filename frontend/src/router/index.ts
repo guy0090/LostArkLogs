@@ -11,6 +11,9 @@ import LoginView from "@/views/login.view.vue";
 import LogsView from "@/views/logs.view.vue";
 import AdminView from "@/views/admin.view.vue";
 
+import LogsBase from "@/components/logs/base.component.vue";
+import Log from "@/components/logs/log.component.vue";
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -25,16 +28,22 @@ const routes: Array<RouteRecordRaw> = [
     props: true,
   },
   {
-    path: "/log/:id",
-    name: "log",
-    component: LogsView,
-    props: true,
-  },
-  {
-    path: "/logs/:id",
+    path: "/logs",
     name: "logs",
     component: LogsView,
     props: true,
+    children: [
+      {
+        path: "",
+        name: "logsBase",
+        component: LogsBase,
+      },
+      {
+        path: ":id",
+        name: "logs",
+        component: Log,
+      },
+    ],
   },
   {
     path: "/a",
@@ -100,10 +109,11 @@ const handleRouteChange = async (
 ) => {
   const store = app.config.globalProperties.$store as Store<any>;
   const cookie = store.getters.accessToken;
-  const user = store.getters.user;
 
   const comingFrom = from.name as string;
   const goingTo = to.name as string;
+
+  store.commit("setCurrentRoute", to?.matched[0].name ?? "home");
 
   if (!goingTo && !comingFrom) {
     store.dispatch("info", "[RG] Going to non-existant route");

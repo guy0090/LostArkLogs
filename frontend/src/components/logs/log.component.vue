@@ -67,12 +67,12 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
 // Components
-import LogSummary from "@/components/logs/summary.component.vue";
-import EntityPanel from "@/components/logs/entitypanel.component.vue";
-import PartyDPSGraph from "@/components/logs/graphs/partydps.component.vue";
+import LogSummary from "@/components/logs/log/summary.component.vue";
+import EntityPanel from "@/components/logs/log/entitypanel.component.vue";
+import PartyDPSGraph from "@/components/logs/log/graphs/partydps.component.vue";
 
 export default defineComponent({
-  name: "LogsPage",
+  name: "LogPage",
 
   components: {
     LogSummary,
@@ -104,20 +104,27 @@ export default defineComponent({
   methods: {
     getSession() {
       const id = this.$route.params.id;
-      axios({
-        method: "GET",
-        url: `${this.store.getters.apiUrl}/logs/${id}`,
-        withCredentials: true,
-        responseType: "json",
-      })
+
+      const exists = this.store.getters.getCached(id);
+      if (exists) {
+        this.store.commit("setPageLoading", false);
+        this.session = exists;
+        this.players = this.getPlayerEntities(false);
+        return;
+      }
+
+      axios
+        .post(`${this.store.getters.apiUrl}/logs`, { id })
         .then((response) => {
-          this.store.commit("setPageLoading", false);
-          let session: Session = response.data;
-          // session.entities = this.duplicateEntities(session);
+          setTimeout(() => {
+            this.store.commit("setPageLoading", false);
+            let session: Session = response.data;
 
-          this.session = session;
+            this.session = session;
 
-          this.players = this.getPlayerEntities(false);
+            this.store.commit("addCached", JSON.parse(JSON.stringify(session)));
+            this.players = this.getPlayerEntities(false);
+          }, 200);
         })
         .catch((err) => {
           this.store.dispatch("error", err.message);

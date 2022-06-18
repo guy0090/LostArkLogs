@@ -21,6 +21,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Max,
   Min,
   ValidateIf,
   ValidateNested,
@@ -233,9 +234,10 @@ export class LogEntityObject {
   @Min(0)
   public level: number;
 
-  @IsString()
-  @Length(1, 8)
-  public gearLevel: string;
+  @IsNumber()
+  @Min(0)
+  @Max(1625)
+  public gearLevel: number;
 
   @IsNumber()
   public currentHp: number;
@@ -266,7 +268,7 @@ export class LogEntityObject {
     this.class = entity.class;
     this.classId = entity.classId;
     this.level = entity.level;
-    this.gearLevel = entity.gearLevel || '0';
+    this.gearLevel = entity.gearLevel || 0;
     this.currentHp = entity.currentHp;
     this.maxHp = entity.maxHp;
     if (entity.skills && entity.type === ENTITY_TYPE.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
@@ -325,7 +327,7 @@ export class LogObject {
 
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(9) // 8 Players, 1 Boss, TODO: Maybe more?
   @ValidateNested({ each: true })
   @Type(() => LogEntityObject)
   public entities: LogEntityObject[];

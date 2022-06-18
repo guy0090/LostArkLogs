@@ -7,6 +7,7 @@ export enum ENTITY_TYPE {
 }
 
 export interface Session {
+  id: string;
   server?: string;
   region?: string;
   encounter?: string;

@@ -8,6 +8,15 @@ export enum ENTITY_TYPE {
   PLAYER = 3,
 }
 
+export interface LogFilter {
+  classes: number[];
+  bosses: number[];
+  gearLevel: [number, number];
+  level: [number, number];
+  server?: string;
+  region?: string;
+}
+
 export interface Log {
   _id: mongoose.Types.ObjectId;
   server?: string;
@@ -32,7 +41,7 @@ export interface LogEntity {
   class: string | undefined;
   classId: number;
   level: number;
-  gearLevel: string;
+  gearLevel: number;
   currentHp: number;
   maxHp: number;
   skills: LogEntitySkill[];

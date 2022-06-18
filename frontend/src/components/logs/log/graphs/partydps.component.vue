@@ -80,11 +80,12 @@ export default defineComponent({
         (e: Entity) => e.type === ENTITY_TYPE.PLAYER
       );
 
+      // console.time("Series creation");
       intervals.forEach((i) => {
         players.forEach((e) => {
           let entityName = `${this.$t(`classes.${e.classId}`)} (${e.iid})`;
           let damage = this.getEntityDamageInRange(started, started + i, e);
-          let dps = this.getEntityDPS(i / 1000, damage);
+          let dps = parseFloat(this.getEntityDPS(i / 1000, damage));
           let existingIndex = series.findIndex((s) => s.name === entityName);
 
           if (existingIndex >= 0) {
@@ -104,6 +105,7 @@ export default defineComponent({
           }
         });
       });
+      // console.timeEnd("Series creation");
 
       return series;
     },
@@ -116,10 +118,11 @@ export default defineComponent({
         return acc + skillDps.reduce((acc, d) => acc + d.damage, 0);
       }, 0);
 
+      if (!damageDealtInRange || isNaN(damageDealtInRange)) return 0;
       return damageDealtInRange;
     },
     getEntityDPS(duration: number, damage: number) {
-      return damage > 0 ? damage / duration : 0;
+      return damage > 0 ? (damage / duration).toFixed(2) : "0";
     },
     getTimeShortform(time: number) {
       const seconds = time / 1000;
@@ -141,7 +144,7 @@ export default defineComponent({
   },
 
   setup() {
-    let dataInterval = ref(10 * 1000); // 10s data interval
+    let dataInterval = ref(5 * 1000); // 5s data interval
     let legend = ref([] as string[]);
     let intervals = ref([] as string[]);
     let series = ref([] as SeriesOption[]);
@@ -160,6 +163,8 @@ export default defineComponent({
       },
       toolbox: {
         feature: {
+          restore: {},
+          dataZoom: {},
           saveAsImage: {},
         },
       },

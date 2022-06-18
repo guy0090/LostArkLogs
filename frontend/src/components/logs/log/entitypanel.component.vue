@@ -144,7 +144,7 @@
 import { defineComponent } from "vue";
 import { useStore } from "vuex";
 
-import EntitySkill from "@/components/logs/breakdown/skill.component.vue";
+import EntitySkill from "@/components/logs/log/breakdown/skill.component.vue";
 import { Skill } from "@/interfaces/session.interface";
 
 export default defineComponent({

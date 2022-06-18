@@ -83,14 +83,14 @@ export default defineComponent({
   data() {
     // TODO: Switch this to NPC IDs asap
     let abyssBosses =
-      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Albion|)?$/gi;
+      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Corrupted Albion|)?$/i;
     let legionRaidBosses =
-      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/gi;
+      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/i;
     let guardians =
-      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/g;
+      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/;
 
     let bossName = "UNKNOWN BOSS";
-    let encounterName = "UNKNOIWN ENCOUNTER";
+    let encounterName = "UNKNOWN ENCOUNTER";
 
     return {
       abyssBosses,
@@ -107,7 +107,7 @@ export default defineComponent({
 
   methods: {
     openLog(id: string) {
-      this.$router.push({ name: "logs", params: { id } });
+      this.$router.push({ path: `/logs/${id}` });
     },
     getDuration(start: number, end: number) {
       const beginDate = dayjs(start);
@@ -162,7 +162,7 @@ export default defineComponent({
       let encounter = "UNKNOWN ENCOUNTER";
       if (this.abyssBosses.test(boss.name)) {
         // console.log("Detected Abyss Boss");
-        encounter = "ABYSS DUNGEON";
+        encounter = "ABYSSAL DUNGEON";
       } else if (this.legionRaidBosses.test(boss.name)) {
         // console.log("Detected Legion Raid Boss");
         encounter = "LEGION RAID";

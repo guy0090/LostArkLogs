@@ -19,6 +19,7 @@ export const createVuexStore = (app: App<Element>) => {
       app: app,
       authenticated: false,
       pageLoading: false,
+      currentRoute: "home",
     },
     mutations: {
       setAuthenticated(state, value: boolean) {
@@ -26,6 +27,9 @@ export const createVuexStore = (app: App<Element>) => {
       },
       setPageLoading(state, value: boolean) {
         state.pageLoading = value;
+      },
+      setCurrentRoute(state, value: string) {
+        state.currentRoute = value;
       },
     },
     getters: {
@@ -37,6 +41,9 @@ export const createVuexStore = (app: App<Element>) => {
       },
       pageLoading(state) {
         return state.pageLoading;
+      },
+      currentRoute(state) {
+        return state.currentRoute;
       },
     },
     actions: {

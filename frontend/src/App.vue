@@ -47,27 +47,9 @@
         &nbsp;login
       </v-btn>
       <div v-else>
-        <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-cog"></v-btn>
-          </template>
-          <v-list density="comfortable">
-            <v-list-subheader>SETTINGS</v-list-subheader>
-            <v-list-item key="0" value="0">
-              <v-list-item-title
-                >{{ store.getters.user.username }}#{{
-                  store.getters.user.discriminator
-                }}</v-list-item-title
-              >
-            </v-list-item>
-            <v-list-item key="1" value="1" v-on:click="logout">
-              <v-list-item-title id="logout-btn">Logout</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
         <v-btn
           v-if="store.getters.permissions.includes('admin')"
-          color="red-darken-1"
+          class="bg-red-darken-3 me-3"
           variant="contained-text"
           v-on:click="$router.push({ name: 'admin' })"
           >ADMIN
@@ -75,16 +57,109 @@
         <v-btn
           v-else-if="store.getters.permissions.includes('verified')"
           prepend-icon="mdi-check"
-          class="bg-indigo-darken-1"
+          class="bg-indigo-darken-1 me-3"
           variant="contained-text"
           :disabled="true"
           >VERIFIED
         </v-btn>
-        &nbsp;&nbsp;
         <v-avatar :image="store.getters.avatar"></v-avatar>
         &nbsp;
       </div>
     </v-app-bar>
+
+    <v-navigation-drawer
+      v-model="navSettings.drawer"
+      rail
+      bottom
+      permanent
+      :expand-on-hover="navSettings.expand"
+      v-on:mouseenter="navEnter"
+      v-on:mouseleave="navLeave"
+    >
+      <v-list-item>
+        <v-list-item-avatar>
+          <v-fade-transition mode="out-in" v-if="navSettings.expand">
+            <v-icon
+              v-if="navSettings.hovering"
+              color="white"
+              v-on:click="navSettings.expand = !navSettings.expand"
+            >
+              mdi-menu
+            </v-icon>
+            <v-icon
+              v-else
+              color="white"
+              v-on:click="navSettings.expand = !navSettings.expand"
+            >
+              mdi-forwardburger
+            </v-icon>
+          </v-fade-transition>
+          <v-icon
+            v-else
+            color="white"
+            v-on:click="navSettings.expand = !navSettings.expand"
+          >
+            mdi-menu
+          </v-icon>
+        </v-list-item-avatar>
+        <v-list-item-title></v-list-item-title>
+      </v-list-item>
+      <v-divider></v-divider>
+
+      <v-list
+        density="compact"
+        nav
+        :selected="[store.getters.currentRoute]"
+        v-on:click:select="navSelect"
+      >
+        <v-list-item value="home" v-on:click="$router.push({ name: 'home' })">
+          <v-list-item-avatar>
+            <v-icon color="white"> mdi-home </v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title>Home</v-list-item-title>
+        </v-list-item>
+        <v-list-item disabled value="settings">
+          <v-list-item-avatar>
+            <v-icon color="white"> mdi-cog </v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title>Settings</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          value="logs"
+          v-on:click="$router.push({ name: 'logsBase' })"
+        >
+          <v-list-item-avatar>
+            <v-icon color="white"> mdi-sword </v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title>Encounters</v-list-item-title>
+        </v-list-item>
+        <v-list-item disabled value="stats">
+          <v-list-item-avatar>
+            <v-icon color="white"> mdi-poll </v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title>Stats</v-list-item-title>
+        </v-list-item>
+      </v-list>
+
+      <template v-slot:append>
+        <div class="pa-2">
+          <v-btn block rounded="sm" color="blue-darken-3" v-on:click="openGh">
+            <v-icon icon="mdi-github"></v-icon>
+            <span v-if="navSettings.hovering">&nbsp;Contribute</span>
+          </v-btn>
+        </div>
+        <div v-if="store.getters.user">
+          <v-divider></v-divider>
+          <div class="pa-2">
+            <v-btn block rounded="sm" color="red-darken-3" v-on:click="logout">
+              <v-icon icon="mdi-logout-variant"></v-icon>
+              <span v-if="navSettings.hovering">&nbsp;Logout</span>
+            </v-btn>
+          </div>
+        </div>
+      </template>
+    </v-navigation-drawer>
+
     <v-main>
       <v-progress-linear
         :active="store.getters.pageLoading"
@@ -129,13 +204,13 @@
           </v-alert>
         </v-col>
       </v-row>
-      <router-view :key="$route.fullPath" />
+      <router-view />
     </v-main>
   </v-app>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, reactive } from "vue";
 import { ref } from "vue";
 import { useCookies } from "vue3-cookies";
 import { useStore } from "vuex";
@@ -152,10 +227,18 @@ export default defineComponent({
       }
     }
   },
+
   setup() {
     const theme = ref("dark");
     const store = useStore();
     const { cookies } = useCookies();
+
+    const navSettings = reactive({
+      drawer: true,
+      hovering: false,
+      expand: true,
+      selected: "home",
+    });
 
     return {
       store,
@@ -164,6 +247,7 @@ export default defineComponent({
       toggleTheme() {
         theme.value = theme.value === "dark" ? "light" : "dark";
       },
+      navSettings,
     };
   },
   data() {
@@ -172,6 +256,15 @@ export default defineComponent({
     };
   },
   methods: {
+    navEnter: function () {
+      this.navSettings.hovering = true;
+    },
+    navLeave: function () {
+      this.navSettings.hovering = false;
+    },
+    navSelect: function (e: any) {
+      this.store.commit("setCurrentRoute", e.id);
+    },
     login: function () {
       const oAuthURL = this.store.getters.authUrl;
       window.location.href = oAuthURL;
@@ -205,6 +298,9 @@ export default defineComponent({
     },
     setVerifiedClicked: function () {
       this.store.commit("setVerifiedAlertAccepted", 1);
+    },
+    openGh() {
+      window.open(process.env.VUE_APP_GITHUB);
     },
   },
   computed: {

@@ -24,7 +24,6 @@ import {
 } from "echarts/components";
 
 registerTheme("custom-dark", theme);
-
 use([
   CanvasRenderer,
   BarChart,
