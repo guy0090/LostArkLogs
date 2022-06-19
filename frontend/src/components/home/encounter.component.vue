@@ -176,7 +176,7 @@ export default defineComponent({
       }
 
       this.bossName = boss.name;
-      this.encounterName = encounter.toUpperCase();
+      this.encounterName = encounter.toLowerCase();
     },
     getDamageDealtPerSecond(entity: Entity) {
       const duration = (this.session?.ended - this.session?.started) / 1000;

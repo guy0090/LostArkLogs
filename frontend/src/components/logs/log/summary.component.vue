@@ -7,9 +7,10 @@
         <v-row>
           <v-col cols="auto">
             <v-avatar
-              color="indigo"
-              :icon="
-                bossName !== 'UNKNOWN BOSS' ? 'mdi-space-invaders' : 'mdi-help'
+              :image="
+                encounterShort === 'ue'
+                  ? '/img/sprites/e400.png'
+                  : `/img/sprites/${encounterShort}.webp`
               "
             ></v-avatar>
           </v-col>
@@ -281,6 +282,7 @@ export default defineComponent({
 
     let bossName = "UNKNOWN BOSS";
     let encounterName = "UNKNOWN ENCOUNTER";
+    let encounterShort = "ue";
 
     return {
       abyssBosses,
@@ -288,6 +290,7 @@ export default defineComponent({
       guardians,
       bossName,
       encounterName,
+      encounterShort,
     };
   },
 
@@ -410,13 +413,14 @@ export default defineComponent({
       } else if (this.guardians.test(boss.name)) {
         // console.log("Detected Guardian");
         encounter = "GUARDIAN RAID";
-      } else {
-        // console.log("Detected Unknown Boss:", boss.name);
-        encounter = "UNKNOWN BOSS";
       }
 
       this.bossName = boss.name.toUpperCase();
       this.encounterName = encounter.toUpperCase();
+      this.encounterShort = encounter
+        .split(" ")
+        .map((w) => w[0].toLowerCase())
+        .join("");
     },
   },
 });
