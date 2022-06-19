@@ -44,6 +44,14 @@ export default defineComponent({
           // Reconnect socket to update new headers
           this.$io.disconnect().connect();
           setTimeout(() => {
+            this.store.dispatch("getTokensWS").catch((err) => {
+              this.store.dispatch(
+                "info",
+                `[WS] Refreshing auth tokens failed: ${err.message}`
+              );
+              this.store.dispatch("revokeTokens");
+            });
+
             this.$router.push({ name: "home" });
           }, 1500);
         })

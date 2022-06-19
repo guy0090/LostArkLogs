@@ -16,21 +16,28 @@ class LogsRoute implements Routes {
   }
 
   private initializeRoutes() {
+    // Get logs
     this.router.post(`${this.path}`, [limiterUsers, validationMiddleware(LogIdDTO, 'body')], this.logsController.getLog);
-    this.router.post(`${this.path}/recent`, [limiterUsers, apiKeyMiddleware('body', 'log.recents', true)], this.logsController.getUserRecentLogs);
-    this.router.post(`${this.path}/publicRecent`, limiterUsers, this.logsController.getRecentLogs);
+
+    // Get logs by filter
+    this.router.post(`${this.path}/filter`, [limiterUsers, validationMiddleware(LogFilterDTO, 'body')], this.logsController.getFilteredLogs);
+
+    // Upload log
     this.router.post(
       `${this.path}/upload`,
       [limiterUsers, validationMiddleware(LogUploadDTO, 'body'), apiKeyMiddleware('body', 'log.upload')],
       this.logsController.uploadLog,
     );
+
+    // Delete a log
     this.router.delete(
       `${this.path}/delete`,
       [limiterUsers, validationMiddleware(LogDeleteDTO, 'query'), apiKeyMiddleware('query', 'log.delete')],
       this.logsController.deleteLog,
     );
+
+    // Get currently tracked bosses (bosses that exist in logs)
     this.router.get(`${this.path}/bosses`, [limiterUsers], this.logsController.getUniqueBosses);
-    this.router.post(`${this.path}/filter`, [limiterUsers, validationMiddleware(LogFilterDTO, 'body')], this.logsController.getFilteredLogs);
   }
 }
 

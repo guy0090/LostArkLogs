@@ -15,7 +15,9 @@ export interface LogFilter {
   classes: number[];
   bosses: number[];
   gearLevel: [number, number];
+  range: [number, number];
   level: [number, number];
   server: string;
   region: string;
+  key?: string;
 }

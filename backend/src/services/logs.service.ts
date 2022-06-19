@@ -7,9 +7,13 @@ import { validate, ValidationError } from 'class-validator';
 import { NODE_ENV } from '@/config';
 import { bosses } from '@/config/supported-bosses';
 import { logger } from '@/utils/logger';
+import UserService from './users.service';
+import { User } from '@/interfaces/users.interface';
+import ms from 'ms';
 
 class LogsService {
   public logs = logsModel;
+  public users = new UserService();
 
   /**
    * Create a new DPS log.
@@ -39,68 +43,10 @@ class LogsService {
    */
   public getLogById = async (id: mongoose.Types.ObjectId | string): Promise<LogObject> => {
     try {
-      const log = await this.logs.findById(id);
+      const log = await this.logs.findById(id).lean();
       if (!log) throw new Exception(500, 'Error finding log');
 
       return new LogObject(log);
-    } catch (err) {
-      throw new Exception(400, err.message);
-    }
-  };
-
-  /**
-   * Get `limit` recent logs within the given time range.
-   *
-   * @param limit The limit of logs to return
-   * @param begin The begin date (default -1hr)
-   * @param end The end date
-   * @param extraFilters Any additional filters to apply, ie: region, server, etc.
-   * @returns Logs between provided dates
-   */
-  public getRecentLogs = async (
-    limit = 10,
-    begin = +new Date(Date.now() - 1000 * 60 * 60 * 24),
-    end = +new Date(),
-    extraFilters = undefined,
-  ): Promise<LogObject[]> => {
-    try {
-      let filter = { createdAt: { $gte: begin, $lte: end } };
-      if (extraFilters) filter = { ...extraFilters, ...filter };
-
-      const logs = await this.logs.find(filter).limit(limit);
-      if (!logs) throw new Exception(500, 'Error finding logs');
-
-      return logs.map(log => new LogObject(log));
-    } catch (err) {
-      throw new Exception(400, err.message);
-    }
-  };
-
-  /**
-   * Get `limit` recent logs within the given time range for a specified user.
-   *
-   * @param userId The user to get logs for
-   * @param limit The limit of logs to return
-   * @param begin The begin date
-   * @param end The end date
-   * @param extraFilters Any additional filters to apply, ie: region, server, etc.
-   * @returns Logs between provided dates for the specified user
-   */
-  public getRecentLogsByCreator = async (
-    userId: mongoose.Types.ObjectId,
-    limit = 10,
-    begin = +new Date(Date.now() - 1000 * 60 * 60 * 24),
-    end = +new Date(),
-    extraFilters = undefined,
-  ): Promise<LogObject[]> => {
-    try {
-      let filter = { creator: `${userId}`, createdAt: { $gte: begin, $lte: end } };
-      if (extraFilters) filter = { ...extraFilters, ...filter };
-
-      const logs = await this.logs.find(filter).limit(limit);
-      if (!logs) throw new Exception(500, 'Error finding log');
-
-      return logs.map(log => new LogObject(log));
     } catch (err) {
       throw new Exception(400, err.message);
     }
@@ -186,6 +132,9 @@ class LogsService {
 
   public getFilteredLogs = async (filter: LogFilter): Promise<LogObject[]> => {
     try {
+      let user: User | undefined = undefined;
+      if (filter.key) user = await this.users.findByApiKey(filter.key);
+
       const aggrQuery = [
         {
           $unwind: {
@@ -204,10 +153,6 @@ class LogsService {
       ];
 
       const $match = {
-        createdAt: {
-          $gte: +new Date() - 1000 * 3600 * 24, // TODO: 24hr for now
-          $lte: +new Date(),
-        },
         'entities.level': {
           $gte: filter.level[0],
           $lte: filter.level[1],
@@ -217,6 +162,22 @@ class LogsService {
           $lte: filter.gearLevel[1],
         },
       };
+
+      if (user) {
+        $match['creator'] = user._id;
+      }
+
+      if (filter.range.length > 0) {
+        $match['createdAt'] = {
+          $gte: filter.range[0],
+          $lte: filter.range[1],
+        };
+      } else {
+        $match['createdAt'] = {
+          $gte: +new Date() - ms('24h'),
+          $lte: +new Date(),
+        };
+      }
 
       if (filter.classes.length > 0) {
         $match['entities.classId'] = { $in: filter.classes };
@@ -231,7 +192,7 @@ class LogsService {
           findQuery['entities.npcId'] = { $in: filter.bosses };
         }
 
-        const foundLogs = await this.logs.find(findQuery);
+        const foundLogs = await this.logs.find(findQuery).lean();
         return foundLogs.map(log => new LogObject(log));
       }
 

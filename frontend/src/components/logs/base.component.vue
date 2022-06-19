@@ -230,18 +230,38 @@
               </v-row>
               <v-row :justify="$vuetify.display.xs ? 'center' : 'end'">
                 <v-col cols="auto" class="px-1">
-                  <v-btn color="red-darken-3" v-on:click="resetFilter"
-                    ><v-icon icon="mdi-refresh"></v-icon>Reset</v-btn
+                  <v-btn
+                    color="red-darken-3"
+                    v-on:click="resetFilter"
+                    prepend-icon="mdi-refresh"
                   >
+                    <span>Reset</span>
+                  </v-btn>
                 </v-col>
                 <v-col hidden cols="auto" class="px-1">
-                  <v-btn color="blue-darken-3" v-on:click="saveFilter"
-                    ><v-icon icon="mdi-floppy"></v-icon>Save Filter</v-btn
+                  <v-btn
+                    color="blue-darken-3"
+                    v-on:click="saveFilter"
+                    prepend-icon="mdi-floppy"
                   >
+                    <span>Save Filter</span>
+                  </v-btn>
                 </v-col>
                 <v-col cols="auto" class="ps-1">
-                  <v-btn color="green-darken-3" v-on:click="filterForLogs">
-                    <v-icon icon="mdi-magnify"></v-icon>Search
+                  <v-btn
+                    color="green-darken-3"
+                    @click="filterForLogs"
+                    :loading="loading"
+                    :disabled="loading"
+                    :prepend-icon="!loading ? 'mdi-magnify' : ''"
+                  >
+                    <span v-if="!loading">Search</span>
+                    <v-progress-circular
+                      v-else
+                      indeterminate
+                      color="white"
+                      :size="25"
+                    ></v-progress-circular>
                   </v-btn>
                 </v-col>
               </v-row>
@@ -258,7 +278,7 @@
             </v-row>
           </v-col>
         </v-row>
-        <v-row class="mt-3 mx-0" v-else>
+        <v-row class="mt-3 mx-0 px-0" v-else>
           <EncounterCard
             class="mb-2"
             v-for="(session, index) in filtered"
@@ -285,9 +305,10 @@ import {
   SupportedRaid,
   TrackedBosses,
 } from "@/interfaces/util.interface";
-import axios from "axios";
 import { defineComponent, reactive, ref } from "vue";
 import { useStore } from "vuex";
+import axios from "axios";
+import ms from "ms";
 
 import EncounterCard from "@/components/home/encounter.component.vue";
 
@@ -296,6 +317,12 @@ export default defineComponent({
 
   components: {
     EncounterCard,
+  },
+
+  data() {
+    return {
+      loading: false,
+    };
   },
 
   setup() {
@@ -308,6 +335,7 @@ export default defineComponent({
       classes: [] as number[],
       bosses: [] as number[],
       gearLevel: [302, 1625],
+      range: [+new Date() - ms("23h"), +new Date()],
       level: [50, 60],
       server: "any",
       region: "any",
@@ -359,11 +387,13 @@ export default defineComponent({
       this.filter.bosses = [];
       this.filter.classes = [];
       this.filter.gearLevel = [302, 1625];
+      this.filter.range = [+new Date() - ms("1d"), +new Date()];
       this.filter.level = [50, 60];
       this.filter.region = "any";
       this.filter.server = "any";
 
       this.filtered = [];
+      this.lastFilter = {} as LogFilter;
     },
     getClasses() {
       const classes: any[] = [];
@@ -537,8 +567,13 @@ export default defineComponent({
       const last = JSON.stringify(this.lastFilter);
 
       // Order of keys is consistent
-      if (last === JSON.stringify(filter)) return;
-      else this.lastFilter = filter;
+      if (last === JSON.stringify(filter)) {
+        this.loading = false;
+        return;
+      } else {
+        this.lastFilter = filter;
+        this.loading = true;
+      }
 
       try {
         const logs = await axios.post(
@@ -548,10 +583,16 @@ export default defineComponent({
           }
         );
 
-        this.filtered = logs.data;
+        setTimeout(() => {
+          this.filtered = logs.data.sort(
+            (a: Session, b: Session) => b.createdAt - a.createdAt
+          );
+          this.loading = false;
+        }, 250);
       } catch (err) {
         console.error(err);
         this.filtered = [];
+        this.loading = false;
       }
     },
   },

@@ -13,8 +13,10 @@ export interface LogFilter {
   bosses: number[];
   gearLevel: [number, number];
   level: [number, number];
+  range: [number, number];
   server?: string;
   region?: string;
+  key?: string;
 }
 
 export interface Log {

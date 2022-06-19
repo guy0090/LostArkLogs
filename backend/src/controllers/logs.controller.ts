@@ -4,7 +4,6 @@ import { RequestWithUser } from '@/interfaces/auth.interface';
 import { LogFilter } from '@/interfaces/logs.interface';
 import { Log } from '@/interfaces/logs.interface';
 import { LogObject } from '@/objects/log.object';
-import { TimeRangeQuery } from '@/objects/util.object';
 import LogsService from '@/services/logs.service';
 import { NextFunction, Request, Response } from 'express';
 
@@ -45,32 +44,6 @@ class LogsController {
       res.status(200).json({ deleted: true });
     } catch (error) {
       next(new Exception(500, 'Error deleting log'));
-    }
-  };
-
-  public getUserRecentLogs = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      let logs: LogObject[] = [];
-
-      const timeRange = req.body.range;
-      if (timeRange) {
-        const range = new TimeRangeQuery(timeRange.begin, timeRange.end);
-        logs = await this.logService.getRecentLogsByCreator(req.user._id, 10, range.begin, range.end);
-      } else {
-        logs = await this.logService.getRecentLogsByCreator(req.user._id);
-      }
-      res.status(200).json(logs);
-    } catch (err) {
-      next(new Exception(500, 'Error getting logs'));
-    }
-  };
-
-  public getRecentLogs = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const logs: LogObject[] = await this.logService.getRecentLogs();
-      res.status(200).json(logs);
-    } catch (err) {
-      next(new Exception(500, 'Error getting logs'));
     }
   };
 

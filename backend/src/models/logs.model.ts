@@ -1,4 +1,5 @@
 import { model, Document, Schema } from 'mongoose';
+
 import { Log } from '@interfaces/logs.interface';
 
 const logsSchema: Schema = new Schema({

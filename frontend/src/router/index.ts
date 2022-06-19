@@ -121,11 +121,22 @@ const handleRouteChange = async (
   }
 
   store.dispatch("info", `[RG] To ${goingTo} from ${comingFrom}`);
-  if (!comingFrom)
+  if (!comingFrom) {
     store.dispatch(
       "info",
       "[RG] Coming from non-site page (or manually navigating?)"
     );
+
+    if (goingTo !== "login") {
+      store.dispatch("getTokensWS").catch((err) => {
+        store.dispatch(
+          "info",
+          `[WS] Refreshing auth tokens failed: ${err.message}`
+        );
+        store.dispatch("revokeTokens");
+      });
+    }
+  }
 
   if (cookie && goingTo === "login") {
     console.log("[RG] User is already logged in, redirecting from login");
@@ -135,14 +146,6 @@ const handleRouteChange = async (
   // If the user is coming from login and going to home, dont refresh tokens
   if (goingTo && goingTo === "login" && !comingFrom) {
     store.dispatch("info", "[RG] User is going to login, not refreshing");
-  } else {
-    store.dispatch("getTokensWS").catch((err) => {
-      store.dispatch(
-        "info",
-        `[WS] Refreshing auth tokens failed: ${err.message}`
-      );
-      store.dispatch("revokeTokens");
-    });
   }
 
   if (to.meta.authorization) {
