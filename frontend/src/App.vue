@@ -145,7 +145,9 @@
         <div class="pa-2">
           <v-btn block rounded="sm" color="blue-darken-3" v-on:click="openGh">
             <v-icon icon="mdi-github"></v-icon>
-            <span v-if="navSettings.hovering">&nbsp;Contribute</span>
+            <span v-if="navSettings.hovering && navSettings.expand"
+              >&nbsp;Contribute</span
+            >
           </v-btn>
         </div>
         <div v-if="store.getters.user">
@@ -153,7 +155,9 @@
           <div class="pa-2">
             <v-btn block rounded="sm" color="red-darken-3" v-on:click="logout">
               <v-icon icon="mdi-logout-variant"></v-icon>
-              <span v-if="navSettings.hovering">&nbsp;Logout</span>
+              <span v-if="navSettings.hovering && navSettings.expand"
+                >&nbsp;Logout</span
+              >
             </v-btn>
           </div>
         </div>
@@ -166,7 +170,7 @@
         :indeterminate="store.getters.pageLoading"
         absolute
         bottom
-        color="indigo  accent-4"
+        color="indigo-accent-4"
       ></v-progress-linear>
       <v-row
         v-if="
@@ -257,10 +261,10 @@ export default defineComponent({
   },
   methods: {
     navEnter: function () {
-      this.navSettings.hovering = true;
+      if (this.navSettings.expand) this.navSettings.hovering = true;
     },
     navLeave: function () {
-      this.navSettings.hovering = false;
+      if (this.navSettings.expand) this.navSettings.hovering = false;
     },
     navSelect: function (e: any) {
       this.store.commit("setCurrentRoute", e.id);
@@ -277,7 +281,7 @@ export default defineComponent({
         })
         .catch((err) => {
           this.$router.push({ name: "home" });
-          console.error(err);
+          this.store.dispatch("error", err);
         });
     },
     revoke: function () {
@@ -287,7 +291,7 @@ export default defineComponent({
           this.$router.push({ name: "home" });
         })
         .catch((err) => {
-          console.error(err);
+          this.store.dispatch("error", err);
         });
     },
     getUser: function () {

@@ -380,7 +380,6 @@ export default defineComponent({
     },
     saveFilter() {
       const newFilter = JSON.parse(JSON.stringify(this.filter));
-      console.log(newFilter);
       return newFilter;
     },
     resetFilter() {
@@ -439,7 +438,8 @@ export default defineComponent({
           this.filter[key][1] = newVal;
         }
       } catch (err) {
-        console.log(err);
+        this.store.dispatch("error", err);
+
         if (type === "min") this.filter[key][0] = defaults.min;
         else this.filter[key][1] = defaults.max;
       }
@@ -449,7 +449,8 @@ export default defineComponent({
         const res = await axios.get(`${this.store.getters.apiUrl}/logs/bosses`);
         return res.data as TrackedBosses[];
       } catch (err) {
-        console.error(err);
+        this.store.dispatch("error", err);
+
         return [];
       }
     },
@@ -486,7 +487,7 @@ export default defineComponent({
           case "guardians":
             for (const boss of values as number[]) {
               let name = this.$t(`monsters.${boss}`);
-              console.log(name, boss);
+
               if (argosRgx.test(name)) {
                 reformatted.push({
                   name: name,
@@ -550,7 +551,7 @@ export default defineComponent({
         }
         return supported;
       } catch (err) {
-        console.log(err);
+        this.store.dispatch("error", err);
         return [];
       }
     },
@@ -590,7 +591,7 @@ export default defineComponent({
           this.loading = false;
         }, 250);
       } catch (err) {
-        console.error(err);
+        this.store.dispatch("error", err);
         this.filtered = [];
         this.loading = false;
       }

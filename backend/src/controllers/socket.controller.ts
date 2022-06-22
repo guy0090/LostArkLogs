@@ -128,7 +128,7 @@ class SocketController {
 
   /**
    * Register events for a socket.
-   * @param socket The socket register events for
+   * @param socket The socket to register events for
    */
   public static async registerEvents(socket: Socket): Promise<void> {
     if (!socket) throw new WsException(500, 'Socket is not defined');

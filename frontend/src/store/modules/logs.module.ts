@@ -15,7 +15,6 @@ export const logs: Module<any, any> = {
       state.tab = value;
     },
     addCached(state, value: any) {
-      console.log("Cached", value.id);
       const find = state.cached.findIndex(
         (cached: Session) => cached.id === value.id
       );

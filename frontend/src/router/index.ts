@@ -139,7 +139,10 @@ const handleRouteChange = async (
   }
 
   if (cookie && goingTo === "login") {
-    console.log("[RG] User is already logged in, redirecting from login");
+    store.dispatch(
+      "info",
+      "[RG] User is already logged in, redirecting from login"
+    );
     return { name: "home" };
   }
 

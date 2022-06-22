@@ -62,17 +62,21 @@
             :colors="colors"
           ></EncounterCard>
         </v-row>
-        <v-row v-else-if="!loadingSessions && recentSessions.length === 0">
-          <v-col>NO RECENT ENCOUNTERS</v-col>
+        <v-row
+          v-else-if="!loadingSessions && recentSessions.length === 0"
+          justify="center"
+        >
+          <v-col cols="auto">NO RECENT ENCOUNTERS</v-col>
         </v-row>
-        <v-row v-else-if="loadingSessions">
-          <v-col cols="5">
+        <v-row v-else-if="loadingSessions" justify="center">
+          <v-col cols="6" class="text-center">
             <v-progress-linear
               indeterminate
               color="indigo darken-2"
-            ></v-progress-linear
-            >LOADING ENCOUNTERS</v-col
-          >
+              class="mb-2"
+            ></v-progress-linear>
+            <span>LOADING ENCOUNTERS</span>
+          </v-col>
         </v-row>
       </v-col>
       <v-col v-else lg="7" md="12" sm="12" align="center">
@@ -153,14 +157,30 @@ export default defineComponent({
     EncounterCard,
   },
   mounted() {
-    setTimeout(() => {
-      if (this.store.getters.user) {
-        setTimeout(() => {
+    if (this.store.getters.user) {
+      let retries = 10;
+      const loader = setInterval(() => {
+        if (retries === 0) {
+          this.store.dispatch("info", "Maxed out retries; Clearing interval");
+          clearInterval(loader);
+          this.recentSessions = [];
+          this.loadingSessions = false;
+        }
+
+        if (this.store.getters.uploadToken !== null) {
+          this.store.dispatch(
+            "info",
+            "Got upload token; Requesting recent sessions"
+          );
+          clearInterval(loader);
           this.getUserRecentSessions(0);
-        }, 200);
-      }
-      this.getRecentSessions(0);
-    }, 100);
+        }
+
+        retries--;
+      }, 200);
+    }
+
+    this.getRecentSessions(500);
   },
   setup() {
     const store = useStore();
@@ -183,55 +203,48 @@ export default defineComponent({
   methods: {
     emit: function (event: string) {
       this.$io.emit(event, {}, (res: unknown) => {
-        if (res) console.log(res);
+        if (res) this.store.dispatch("info", res);
       });
     },
     getUserRecentSessions: function (timeout = 1000) {
       if (!this.loadingSessions) this.loadingSessions = true;
-      this.store
-        .dispatch("getUserRecentSessions")
-        .then((logs) => {
-          this.store.dispatch("info", `Got ${logs.length} recent logs`);
-          setTimeout(
-            // Make it seems like something is happening - requests can be very fast otherwise
-            () => {
-              this.recentSessions = logs.sort(
-                (a: Session, b: Session) => b.createdAt - a.createdAt
-              );
-              this.loadingSessions = false;
-            },
-            timeout
-          );
-        })
-        .catch((error) => {
-          console.error(error);
-          this.loadingSessions = false;
-        });
+      setTimeout(() => {
+        this.store
+          .dispatch("getUserRecentSessions")
+          .then((logs) => {
+            this.store.dispatch("info", `Got ${logs.length} recent logs`);
+
+            this.recentSessions = logs.sort(
+              (a: Session, b: Session) => b.createdAt - a.createdAt
+            );
+            this.loadingSessions = false;
+          })
+          .catch((error) => {
+            this.store.dispatch("error", error);
+            this.loadingSessions = false;
+          });
+      }, timeout);
     },
     getRecentSessions: function (timeout = 1000) {
       if (!this.publicLoadingSessions) this.publicLoadingSessions = true;
-      this.store
-        .dispatch("getRecentSessions")
-        .then((logs) => {
-          this.store.dispatch("info", `Got ${logs.length} public recent logs`);
-          setTimeout(
-            // Make it seems like something is happening - requests can be very fast otherwise
-            () => {
-              this.publicRecentSessions = logs.sort(
-                (a: Session, b: Session) => b.createdAt - a.createdAt
-              );
-              this.publicLoadingSessions = false;
-            },
-            timeout
-          );
-        })
-        .catch((error) => {
-          console.error(error);
-          this.publicLoadingSessions = false;
-        });
-    },
-    log: function (text: object | string) {
-      console.log(text);
+      setTimeout(() => {
+        this.store
+          .dispatch("getRecentSessions")
+          .then((logs) => {
+            this.store.dispatch(
+              "info",
+              `Got ${logs.length} public recent logs`
+            );
+            this.publicRecentSessions = logs.sort(
+              (a: Session, b: Session) => b.createdAt - a.createdAt
+            );
+            this.publicLoadingSessions = false;
+          })
+          .catch((error) => {
+            this.store.dispatch("error", error);
+            this.publicLoadingSessions = false;
+          });
+      }, timeout);
     },
   },
 });

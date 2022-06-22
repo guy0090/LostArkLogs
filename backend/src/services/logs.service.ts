@@ -75,18 +75,11 @@ class LogsService {
    */
   public deleteAllUserLogs = async (userId: mongoose.Types.ObjectId): Promise<void> => {
     try {
-      await this.logs.deleteMany({ creator: `${userId}` });
+      await this.logs.deleteMany({ creator: userId });
       return;
     } catch (err) {
       throw new Exception(400, err.message);
     }
-  };
-
-  public validateTimeRange = (begin: number, end: number, maxRange = 604800000): boolean => {
-    if ((begin && !end) || typeof begin !== 'number' || typeof end !== 'number' || begin > end || begin < 0 || end < 0 || end - begin > maxRange) {
-      return false;
-    }
-    return true;
   };
 
   public getUniqueEntities = async (type?: ENTITY_TYPE[] | undefined): Promise<any[]> => {
@@ -98,7 +91,6 @@ class LogsService {
         {
           $unwind: {
             path: '$entities',
-            includeArrayIndex: 'index',
             preserveNullAndEmptyArrays: false,
           },
         },

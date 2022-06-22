@@ -191,7 +191,6 @@ export default defineComponent({
     },
     getDamageDealtPerSecond(entity: Entity) {
       const duration = (this.session?.ended - this.session?.started) / 1000;
-      // console.log(entity?.damageDealt, duration);
       return entity?.stats.damageDealt / (duration || 0);
     },
     getTotalDPS(entities: Entity[]) {

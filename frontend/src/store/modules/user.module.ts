@@ -50,6 +50,7 @@ export const user: Module<any, any> = {
       { dispatch },
       user: {
         id: string;
+        discordId: string;
         username: string;
         discriminator: number;
         avatar: string;
@@ -64,7 +65,7 @@ export const user: Module<any, any> = {
         avatar = `${baseURL}/embed/avatars/${user.discriminator % 5}.png`;
       } else {
         const isGIF = user.avatar.startsWith("a_");
-        avatar = `${baseURL}avatars/${user.id}/${user.avatar}${
+        avatar = `${baseURL}avatars/${user.discordId}/${user.avatar}${
           isGIF ? ".gif" : ".png"
         }`;
       }
