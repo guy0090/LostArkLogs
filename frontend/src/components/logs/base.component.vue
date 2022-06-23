@@ -511,7 +511,7 @@ export default defineComponent({
       const supported = [];
       if (onlyTracked === "0") return this.reformatStoreBosses();
 
-      const argosRgx = /^(argos)?$/i;
+      const argosRgx = /(argos)/i;
       try {
         const tracked = await this.getTrackedBosses();
         for (const boss of tracked) {
@@ -555,12 +555,16 @@ export default defineComponent({
         return [];
       }
     },
+    isAbyssRaid(id: number) {
+      const abyssRaids = this.store.getters.supportedBosses.abyssRaids;
+      return abyssRaids.find((r: SupportedRaid) => r.bosses.includes(id));
+    },
     isLegionRaidBoss(id: number) {
-      const legionRaids = this.store.getters.supportedBosses.legionRaid;
+      const legionRaids = this.store.getters.supportedBosses.legionRaids;
       return legionRaids.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     isAbyssalDungeon(id: number) {
-      const abyssals = this.store.getters.supportedBosses.abyssal;
+      const abyssals = this.store.getters.supportedBosses.abyssalDungeons;
       return abyssals.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     async filterForLogs() {

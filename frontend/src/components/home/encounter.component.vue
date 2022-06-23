@@ -50,7 +50,7 @@
                 >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
               >
             </v-chip>
-            <v-chip v-if="getPlayerEntities().length > 4" label
+            <v-chip v-if="getPlayerEntities().length > 4" label class="mx-1"
               >+{{ getPlayerEntities().length - 4 }} more</v-chip
             >
           </v-col>
@@ -75,21 +75,10 @@ export default defineComponent({
   },
 
   data() {
-    // TODO: Switch this to NPC IDs asap
-    let abyssBosses =
-      /^(Frenzied Cicerra|Lost Seto|Angry Moguro Captain|Corrupted Albion|)?$/i;
-    let legionRaidBosses =
-      /(Demon Beast Commander Valtan|Leader Lugaru|Destroyer Lucas|Ravaged Tyrant of Beasts|Vykas)/i;
-    let guardians =
-      /^(Argos|Ur'nil|Lumerus|Icy Legoros|Vertus|Chromanium|Nacrasena|Flame Fox Yoho|Tytalos|Dark Legoros|Helgaia|Calventus|Achates|Frost Helgaia|Lava Chromanium|Levanos|Alberhastic|Armored Nacrasena|Igrexion|Night Fox Yoho|Velganos|Deskaluda)[+]?$/;
-
     let bossName = "UNKNOWN BOSS";
     let encounterName = "UNKNOWN ENCOUNTER";
 
     return {
-      abyssBosses,
-      legionRaidBosses,
-      guardians,
       bossName,
       encounterName,
     };
@@ -124,7 +113,9 @@ export default defineComponent({
         secDiff = "0" + Math.round(secDiff);
       }
 
-      return `${minDiff === 0 ? "00" : minDiff}:${secDiff}`;
+      return `${minDiff === 0 ? "00" : minDiff}:${
+        secDiff < 10 ? `0${secDiff}` : secDiff
+      }`;
     },
 
     timeSince(date: number) {
@@ -159,23 +150,24 @@ export default defineComponent({
       if (!hasBoss) return;
 
       const boss = bossEntities.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+      const bossName = this.$t(`monsters.${boss.npcId}`);
 
-      let encounter = "UNKNOWN ENCOUNTER";
-      if (this.abyssBosses.test(boss.name)) {
-        // console.log("Detected Abyss Boss");
+      let encounter = "ue";
+      if (this.store.getters.isSupportedBoss(boss.npcId, "abyssRaids")) {
+        encounter = "ar";
+      } else if (
+        this.store.getters.isSupportedBoss(boss.npcId, "abyssalDungeons")
+      ) {
         encounter = "ad";
-      } else if (this.legionRaidBosses.test(boss.name)) {
-        // console.log("Detected Legion Raid Boss");
+      } else if (
+        this.store.getters.isSupportedBoss(boss.npcId, "legionRaids")
+      ) {
         encounter = "lr";
-      } else if (this.guardians.test(boss.name)) {
-        // console.log("Detected Guardian");
+      } else if (this.store.getters.isSupportedBoss(boss.npcId, "guardians")) {
         encounter = "gr";
-      } else {
-        // console.log("Detected Unknown Boss:", boss.name);
-        encounter = "0";
       }
 
-      this.bossName = boss.name;
+      this.bossName = bossName;
       this.encounterName = encounter.toLowerCase();
     },
     getDamageDealtPerSecond(entity: Entity) {

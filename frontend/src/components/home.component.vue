@@ -21,7 +21,7 @@
             </h2>
           </v-col>
           <v-spacer></v-spacer>
-          <v-col cols="auto" align="right" class="px-1">
+          <v-col hidden cols="auto" align="right" class="px-1">
             <v-btn
               :color="globalLogs ? 'blue-darken-3' : ''"
               @click="globalLogs = !globalLogs"

@@ -18,6 +18,10 @@ export const bosses = [
   // Vykas Legion Raid
   480210, // Covetous Devourer Vykas (?)
   480211, // Covetous Legion Commander Vykas
+  /* Argos */
+  634000, // P1?
+  634010, // P2?
+  634020, // P3?
   /* Guardians */
   509006,
   512002,

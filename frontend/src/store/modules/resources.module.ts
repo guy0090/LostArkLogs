@@ -1,3 +1,5 @@
+import { Entity } from "@/interfaces/session.interface";
+import { SupportedRaid } from "@/interfaces/util.interface";
 import { Module } from "vuex";
 
 /**
@@ -6,7 +8,14 @@ import { Module } from "vuex";
 export const resources: Module<any, any> = {
   state: () => ({
     supportedBosses: {
-      abyssal: [
+      abyssRaids: [
+        {
+          dungeonName: "Argos",
+          disabled: false,
+          bosses: [634000, 634010, 634020], // P1, P2, P3
+        },
+      ],
+      abyssalDungeons: [
         {
           dungeonName: "Aira's Oculus (HM)",
           disabled: false,
@@ -24,7 +33,7 @@ export const resources: Module<any, any> = {
           ],
         },
       ],
-      legionRaid: [
+      legionRaids: [
         {
           dungeonName: "Valtan",
           disabled: false,
@@ -80,5 +89,24 @@ export const resources: Module<any, any> = {
     classes(state) {
       return state.classes;
     },
+    isSupportedBoss:
+      (state) =>
+      (
+        id: number,
+        type: "abyssRaids" | "abyssalDungeons" | "legionRaids" | "guardians"
+      ) => {
+        if (type === "guardians")
+          return state.supportedBosses.guardians.includes(id);
+
+        const raids: SupportedRaid[] = state.supportedBosses[type];
+
+        const bossIds = raids
+          .map((d) => d.bosses)
+          .reduce((acc, cur) => {
+            return [...cur, ...acc];
+          });
+
+        return bossIds.includes(id);
+      },
   },
 };
