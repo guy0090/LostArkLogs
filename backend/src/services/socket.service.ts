@@ -1,6 +1,6 @@
 import { DataStoredInToken, TokenData } from '@/interfaces/auth.interface';
 import { Socket } from 'socket.io';
-import AuthService from './auth.service';
+import AuthService from '@/services/auth.service';
 import cookie from 'cookie';
 import { WsException } from '@/exceptions/WsException';
 import { SECRET_KEY } from '@/config';

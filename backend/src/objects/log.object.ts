@@ -9,6 +9,7 @@ import {
   LogEntityStats,
 } from '@/interfaces/logs.interface';
 import { getRandomString } from '@/utils/crypto';
+import { logger } from '@/utils/logger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -44,11 +45,16 @@ export class LogDamageStatisticsObject {
   @Min(0)
   public topDamageTaken: number;
 
+  @IsNumber()
+  @Min(0)
+  public dps: number;
+
   constructor(stat: LogDamageStatistics) {
     this.totalDamageDealt = stat.totalDamageDealt;
     this.topDamageDealt = stat.topDamageDealt;
     this.totalDamageTaken = stat.totalDamageTaken;
     this.topDamageTaken = stat.topDamageTaken;
+    this.dps = stat.dps;
   }
 }
 
@@ -189,6 +195,10 @@ export class LogEntityStatObject {
   @Min(0)
   public deaths: number;
 
+  @IsNumber()
+  @Min(0)
+  public dps: number;
+
   constructor(stat: LogEntityStats) {
     this.hits = stat.hits;
     this.crits = stat.crits;
@@ -199,10 +209,12 @@ export class LogEntityStatObject {
     this.healing = stat.healing;
     this.damageTaken = stat.damageTaken;
     this.deaths = stat.deaths;
+    this.dps = stat.dps;
   }
 }
 
 export class LogEntityObject {
+  @IsOptional()
   @IsNumber()
   @Min(0)
   public lastUpdate: number; // Epoch timestamp
@@ -232,6 +244,7 @@ export class LogEntityObject {
 
   @IsNumber()
   @Min(0)
+  @Max(60)
   public level: number;
 
   @IsNumber()
@@ -258,11 +271,9 @@ export class LogEntityObject {
   @Type(() => LogEntityStatObject)
   public stats: LogEntityStatObject;
 
-  constructor(entity: LogEntity) {
-    this.lastUpdate = entity.lastUpdate;
+  constructor(entity: LogEntity, removeEntityBreakdowns = false) {
     this.id = getRandomString(32);
-    // this.id = entity.id; Don't use game-provided identifier
-    this.name = entity.type !== ENTITY_TYPE.PLAYER ? entity.name : undefined;
+    // this.lastUpdate = entity.lastUpdate;
     this.npcId = entity.npcId;
     this.type = entity.type;
     this.class = entity.class;
@@ -271,7 +282,8 @@ export class LogEntityObject {
     this.gearLevel = entity.gearLevel || 0;
     this.currentHp = entity.currentHp;
     this.maxHp = entity.maxHp;
-    if (entity.skills && entity.type === ENTITY_TYPE.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
+    if (entity.skills && entity.type === ENTITY_TYPE.PLAYER && !removeEntityBreakdowns)
+      this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
     else this.skills = [];
     this.stats = new LogEntityStatObject(entity.stats);
   }
@@ -336,7 +348,7 @@ export class LogObject {
   @Type(() => LogDamageStatisticsObject)
   public damageStatistics: LogDamageStatisticsObject;
 
-  constructor(log: Log) {
+  constructor(log: Log, removeEntityBreakdowns = false) {
     try {
       this.id = log._id ? `${log._id}` : undefined;
       this.creator = `${log.creator}`;
@@ -346,10 +358,10 @@ export class LogObject {
       this.region = log.region ?? 'Unknown';
       this.encounter = log.encounter ?? 'Unknown';
       this.createdAt = log.createdAt;
-      this.entities = log.entities.map(entity => new LogEntityObject(entity));
+      this.entities = log.entities.map(entity => new LogEntityObject(entity, removeEntityBreakdowns));
       this.damageStatistics = new LogDamageStatisticsObject(log.damageStatistics);
     } catch (err) {
-      console.log(err.message);
+      logger.error(err.message);
       throw err;
     }
   }
@@ -359,7 +371,7 @@ export class LogObject {
     let encounterName = 'Unknown';
     if (bosses.length > 0) {
       encounterName = bosses.sort((a, b) => b.lastUpdate - a.lastUpdate)[0].name;
-      console.log("Set encounter to boss's name: ", encounterName);
+      logger.log("Set encounter to boss's name: ", encounterName);
     }
     return encounterName;
   }

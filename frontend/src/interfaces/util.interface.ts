@@ -17,6 +17,7 @@ export interface LogFilter {
   gearLevel: [number, number];
   range: [number, number];
   level: [number, number];
+  partyDps: number;
   server: string;
   region: string;
   key?: string;

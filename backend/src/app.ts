@@ -17,9 +17,9 @@ import { Routes } from '@interfaces/routes.interface';
 import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
 import { Server } from 'socket.io';
-import SocketController from './controllers/socket.controller';
-import RoleService from './services/roles.service';
-import PageService from './services/pages.service';
+import SocketController from '@/controllers/socket.controller';
+import RoleService from '@/services/roles.service';
+import PageService from '@/services/pages.service';
 
 class App {
   public app: express.Application;

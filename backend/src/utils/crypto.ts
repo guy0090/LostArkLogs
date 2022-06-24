@@ -1,4 +1,5 @@
 import { randomBytes, createHmac } from 'crypto';
+import { logger } from '@/utils/logger';
 
 /**
  * @method getRandomString
@@ -11,7 +12,7 @@ export const getRandomString = (length = 16): string => {
     const token = buffer.toString('hex').slice(0, length);
     return token;
   } catch (err) {
-    console.log(err.message);
+    logger.error(err.message);
     throw err;
   }
 };

@@ -14,9 +14,11 @@ export interface LogFilter {
   gearLevel: [number, number];
   level: [number, number];
   range: [number, number];
+  partyDps: number;
   server?: string;
   region?: string;
   key?: string;
+  removeBreakdowns?: boolean;
 }
 
 export interface Log {
@@ -87,6 +89,7 @@ export interface LogEntityStats {
   healing: number;
   damageTaken: number;
   deaths: number;
+  dps: number;
 }
 
 export interface LogDamageStatistics {
@@ -94,4 +97,5 @@ export interface LogDamageStatistics {
   topDamageDealt: number;
   totalDamageTaken: number;
   topDamageTaken: number;
+  dps: number;
 }

@@ -7,7 +7,7 @@ import { validate, ValidationError } from 'class-validator';
 import { NODE_ENV } from '@/config';
 import { bosses } from '@/config/supported-bosses';
 import { logger } from '@/utils/logger';
-import UserService from './users.service';
+import UserService from '@/services/users.service';
 import { User } from '@/interfaces/users.interface';
 import ms from 'ms';
 
@@ -153,6 +153,9 @@ class LogsService {
           $gte: filter.gearLevel[0],
           $lte: filter.gearLevel[1],
         },
+        'damageStatistics.dps': {
+          $gte: filter.partyDps,
+        },
       };
 
       if (user) {
@@ -184,8 +187,8 @@ class LogsService {
           findQuery['entities.npcId'] = { $in: filter.bosses };
         }
 
-        const foundLogs = await this.logs.find(findQuery).lean();
-        return foundLogs.map(log => new LogObject(log));
+        const foundLogs = await this.logs.find(findQuery).lean().limit(20);
+        return foundLogs.map(log => new LogObject(log, filter.removeBreakdowns ?? true));
       }
 
       return [];

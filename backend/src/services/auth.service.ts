@@ -4,15 +4,15 @@ import { HttpException } from '@exceptions/HttpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { DiscordOAuthGrant, DiscordOAuth, DiscordUser } from '@interfaces/discord.interface';
-import DiscordService from './discord.service';
+import DiscordService from '@/services/discord.service';
 import userModel from '@/models/user.model';
 import discordAuthModel from '@/models/discordAuth.model';
 import { logger } from '@/utils/logger';
 import { sha512 } from '@/utils/crypto';
 import mongoose from 'mongoose';
-import UserService from './users.service';
+import UserService from '@/services/users.service';
 import { Permissions } from '@/interfaces/permission.interface';
-import PermissionsService from './permissions.service';
+import PermissionsService from '@/services/permissions.service';
 
 /**
  * @class AuthService

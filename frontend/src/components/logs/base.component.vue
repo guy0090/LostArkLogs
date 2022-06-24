@@ -138,7 +138,9 @@
                           :image="`/img/sprites/${boss.type}.webp`"
                           style="user-select: none"
                         ></v-avatar>
-                        <span style="user-select: none">{{ boss.name }}</span>
+                        <span style="user-select: none">{{
+                          $t(`monsters.${boss.id}`)
+                        }}</span>
                       </v-chip>
                     </v-col>
                   </v-row>
@@ -189,6 +191,25 @@
                 <v-col cols="12" sm="12" md="3" lg="3" xl="3">
                   <v-row class="my-1">
                     <h3>
+                      <v-icon icon="mdi-sword"></v-icon>&nbsp;Min. Party DPS
+                    </h3>
+                  </v-row>
+                  <v-row class="pt-2">
+                    <v-col cols="12" class="px-0 pb-0">
+                      <v-text-field
+                        variant="outlined"
+                        density="comfortable"
+                        label="Minimum DPS"
+                        class="pe-2"
+                        :model-value="filter.partyDps"
+                        v-on:update:model-value="(v) => updateDpsFilter(v)"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-col>
+                <v-col cols="12" sm="12" md="3" lg="3" xl="3">
+                  <v-row class="my-1">
+                    <h3>
                       <v-icon icon="mdi-arrow-up-bold"></v-icon>&nbsp;Level
                     </h3>
                   </v-row>
@@ -209,12 +230,13 @@
                         "
                       ></v-text-field>
                     </v-col>
+
                     <v-col cols="6" class="px-0 pb-0">
                       <v-text-field
                         variant="outlined"
                         density="comfortable"
                         label="Max"
-                        class="pe-2"
+                        class="pe-0"
                         :model-value="filter.level[1]"
                         v-on:update:model-value="
                           (v) =>
@@ -337,6 +359,7 @@ export default defineComponent({
       gearLevel: [302, 1625],
       range: [+new Date() - ms("23h"), +new Date()],
       level: [50, 60],
+      partyDps: 0,
       server: "any",
       region: "any",
     } as LogFilter);
@@ -388,6 +411,7 @@ export default defineComponent({
       this.filter.gearLevel = [302, 1625];
       this.filter.range = [+new Date() - ms("1d"), +new Date()];
       this.filter.level = [50, 60];
+      this.filter.partyDps = 0;
       this.filter.region = "any";
       this.filter.server = "any";
 
@@ -442,6 +466,16 @@ export default defineComponent({
 
         if (type === "min") this.filter[key][0] = defaults.min;
         else this.filter[key][1] = defaults.max;
+      }
+    },
+    updateDpsFilter(value: string) {
+      try {
+        let newVal = parseFloat(value);
+        if (isNaN(newVal) || newVal < 0) newVal = 0;
+        this.filter.partyDps = newVal;
+      } catch (err) {
+        this.store.dispatch("error", err);
+        this.filter.partyDps = 0;
       }
     },
     async getTrackedBosses() {
@@ -507,7 +541,9 @@ export default defineComponent({
       }
       return reformatted;
     },
-    async getSupportedBosses(onlyTracked = "1") {
+    async getSupportedBosses(
+      onlyTracked = "1"
+    ): Promise<{ name: string; id: number; type: string; typeId?: number }[]> {
       const supported = [];
       if (onlyTracked === "0") return this.reformatStoreBosses();
 
@@ -523,12 +559,14 @@ export default defineComponent({
                   name: name,
                   id: boss.id,
                   type: "ar",
+                  typeId: boss.type,
                 });
               } else {
                 supported.push({
                   name: name,
                   id: boss.id,
                   type: "gr",
+                  typeId: boss.type,
                 });
               }
               break;
@@ -538,12 +576,14 @@ export default defineComponent({
                   name: this.$t(`monsters.${boss.id}`),
                   id: boss.id,
                   type: "lr",
+                  typeId: boss.type,
                 });
               } else if (this.isAbyssalDungeon(boss.id)) {
                 supported.push({
                   name: this.$t(`monsters.${boss.id}`),
                   id: boss.id,
                   type: "ad",
+                  typeId: boss.type,
                 });
               }
               break;

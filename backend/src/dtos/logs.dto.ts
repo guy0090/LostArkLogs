@@ -10,6 +10,9 @@ import {
   IsString,
   Length,
   ValidateIf,
+  IsNumber,
+  Min,
+  IsBoolean,
 } from 'class-validator';
 import ms from 'ms';
 
@@ -77,6 +80,11 @@ export class LogFilterDTO {
   @MaxRangeDifference('24h')
   public range!: [number, number];
 
+  @IsDefined()
+  @IsNumber()
+  @Min(0)
+  public partyDps!: number;
+
   @IsOptional()
   @IsString()
   @Length(0, 30)
@@ -91,6 +99,10 @@ export class LogFilterDTO {
   @IsString()
   @Length(32, 32)
   public key?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  public removeBreakdowns?: boolean;
 }
 
 export function MaxRangeDifference(maxDifference: number | string) {

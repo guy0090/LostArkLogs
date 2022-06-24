@@ -48,6 +48,7 @@ export const logs: Module<any, any> = {
             gearLevel: [0, 1625],
             level: [0, 60],
             range: [],
+            partyDps: 0,
             key: key,
           },
           headers: {
@@ -77,6 +78,7 @@ export const logs: Module<any, any> = {
             gearLevel: [0, 1625],
             level: [0, 60],
             range: [],
+            partyDps: 0,
           },
           headers: {
             "Content-Type": "application/json",
