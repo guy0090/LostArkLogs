@@ -1,6 +1,6 @@
 <template>
   <v-app overflow-y-auto :theme="theme">
-    <v-app-bar app :image="`/img/app-bar-loaders/0.jpg`">
+    <v-app-bar app :image="`/img/app-bar-loaders/0.webp`">
       <v-img
         class="mx-1"
         src="/img/icons/mokoko.png"

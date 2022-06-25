@@ -77,7 +77,7 @@
                       >
                         <v-avatar
                           class="me-1"
-                          :image="`/img/sprites/${c.id}.png`"
+                          :image="`/img/sprites/${c.id}.webp`"
                           style="user-select: none"
                         ></v-avatar>
                         <span class="hide-on-sm" style="user-select: none">{{
@@ -293,7 +293,7 @@
         <v-row class="mt-3" v-if="filtered.length === 0" justify="center">
           <v-col cols="auto">
             <v-row>
-              <img src="/img/sprites/e404.png" />
+              <img src="/img/sprites/e404.webp" />
             </v-row>
             <v-row justify="center" class="mt-1">
               <strong>NO RESULTS</strong>

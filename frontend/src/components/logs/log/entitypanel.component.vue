@@ -26,7 +26,7 @@
               <img
                 width="52"
                 height="52"
-                :src="'/img/sprites/' + entity?.classId + '.png'"
+                :src="'/img/sprites/' + entity?.classId + '.webp'"
               />
             </v-col>
             <v-col cols="auto" class="align-self-center">

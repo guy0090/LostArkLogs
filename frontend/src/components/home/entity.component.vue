@@ -7,7 +7,7 @@
             <img
               width="28"
               height="28"
-              :src="'/img/sprites/' + entity?.classId + '.png'"
+              :src="'/img/sprites/' + entity?.classId + '.webp'"
             />
           </v-avatar>
         </v-col>

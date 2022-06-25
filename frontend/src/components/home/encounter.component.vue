@@ -45,7 +45,7 @@
               }`"
               :style="i >= 4 ? 'display: none' : ''"
             >
-              <v-avatar :image="`/img/sprites/${entity.classId}.png`" />
+              <v-avatar :image="`/img/sprites/${entity.classId}.webp`" />
               <span v-if="!$vuetify.display.xs"
                 >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
               >

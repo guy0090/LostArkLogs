@@ -9,7 +9,7 @@
             <v-avatar
               :image="
                 encounterShort === 'ue'
-                  ? '/img/sprites/e400.png'
+                  ? '/img/sprites/e400.webp'
                   : `/img/sprites/${encounterShort}.webp`
               "
             ></v-avatar>

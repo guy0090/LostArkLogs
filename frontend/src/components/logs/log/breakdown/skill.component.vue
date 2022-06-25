@@ -94,8 +94,8 @@ export default defineComponent({
   computed: {
     skillIcon: function () {
       return this.missingImage
-        ? "/img/sprites/unknown.png"
-        : `/img/sprites/${this.skill?.id}.png`;
+        ? "/img/sprites/unknown.webp"
+        : `/img/sprites/${this.skill?.id}.webp`;
     },
   },
 

@@ -3,7 +3,7 @@
     <v-row class="text-center">
       <v-col class="mb-0">
         <h1 class="display-2 font-weight-bold mb-3">
-          <v-avatar image="/img/sprites/ewip.png" /> SOON&trade;
+          <v-avatar image="/img/sprites/ewip.webp" /> SOON&trade;
         </h1>
       </v-col>
     </v-row>
