@@ -100,7 +100,7 @@
                 </v-col>
               </v-row>
             </v-col>
-            <v-spacer></v-spacer>
+            <v-spacer class="hide-on-sm"></v-spacer>
             <v-col class="align-self-center me-4">
               <v-row class="text-right pb-3">
                 <h3 class="flex-grow-1">{{ getDamageDealtPerSecond() }}/s</h3>

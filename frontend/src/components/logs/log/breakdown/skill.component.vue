@@ -33,7 +33,7 @@
         >
       </v-row>
     </v-col>
-    <v-spacer></v-spacer>
+    <v-spacer class="hide-on-sm"></v-spacer>
     <v-col>
       <v-row class="text-right">
         <h4 class="flex-grow-1">{{ getSkillDps() }}/s</h4>
