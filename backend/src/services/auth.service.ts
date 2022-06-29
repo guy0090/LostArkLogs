@@ -79,7 +79,7 @@ class AuthService {
      * The access token has a lifespan of 1 hour.
      * */
     const refresh: TokenData = this.createJWT(user, 'refresh');
-    const access: TokenData = this.createJWT(user, 'access', ms('1hr'));
+    const access: TokenData = this.createJWT(user, 'access', ms('1hr') / 1000);
 
     return { refresh, access, user };
   }
@@ -99,7 +99,7 @@ class AuthService {
 
     // Generate new tokens
     const refresh: TokenData = this.createJWT(user, 'refresh');
-    const access: TokenData = this.createJWT(user, 'access', ms('1hr'));
+    const access: TokenData = this.createJWT(user, 'access', ms('1hr') / 1000);
 
     // Make sure the user has stored Discord auth tokens
     const discordAuth: DiscordOAuth = await this.discordGrants.findOne({ _id: user._id }).lean();
@@ -188,7 +188,7 @@ class AuthService {
    * @param {User} user The user to create a JWT for
    * @returns The authorization token and expiration time in seconds
    */
-  public createJWT(user: User, type: string, expiresIn = ms('0.5y')): TokenData {
+  public createJWT(user: User, type: string, expiresIn = ms('0.5y') / 1000): TokenData {
     const dataStoredInToken: DataStoredInToken = type === 'refresh' ? { i: `${user._id}` } : { h: sha512(`${user._id}`, user.salt).hash };
     const secretKey: string = SECRET_KEY;
 
