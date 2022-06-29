@@ -31,15 +31,13 @@
             </v-col>
             <v-col cols="auto" class="align-self-center">
               <!-- Class & GS/MVP -->
-              <v-row>
+              <v-row v-if="!isXS()">
                 <v-col
                   cols="auto"
                   class="align-self-center ps-0 pe-1 py-0 hide-on-sm"
                 >
                   <h3 class="hide-on-sm">
-                    <span style="color: grey; font-size: 9pt">{{
-                      entity?.iid
-                    }}</span>
+                    <span class="detail-percent">{{ entity?.iid }}</span>
                     {{ $t(`classes.${entity?.classId}`) }}
                   </h3>
                 </v-col>
@@ -69,6 +67,28 @@
                     <h3></h3> </v-badge
                 ></v-col>
               </v-row>
+              <div v-else>
+                <v-row v-if="mvp" class="mb-3"
+                  ><v-badge
+                    inline
+                    color="red-darken-3"
+                    :rounded="0"
+                    content="MVP"
+                    class="badge-pad"
+                  >
+                    <h3></h3> </v-badge
+                ></v-row>
+                <v-row
+                  ><v-badge
+                    inline
+                    color="red-darken-3"
+                    :rounded="0"
+                    :content="entity?.gearLevel"
+                    class="badge-pad"
+                  >
+                    <h3></h3> </v-badge
+                ></v-row>
+              </div>
               <!-- Crits & Counters -->
               <v-row class="hide-on-sm">
                 <v-col cols="auto" class="px-0 pb-1">
@@ -85,16 +105,16 @@
                 <v-col cols="auto" class="px-0 pt-2 pb-0">
                   <span class="stat-details">
                     B. Hits: {{ entity?.stats?.backHits }}
-                    <span class="percent-detail" style="font-size: 8pt"
-                      >({{ getEntityBackAttackRate() }}%)</span
+                    <span class="detail-percent"
+                      >{{ getEntityBackAttackRate() }}%</span
                     >
                   </span>
                 </v-col>
                 <v-col cols="auto" class="px-2 pt-2 pb-0">
                   <span class="stat-details">
                     F. Hits: {{ entity?.stats?.frontHits }}
-                    <span class="percent-detail" style="font-size: 8pt"
-                      >({{ getEntityFrontAttackRate() }}%)</span
+                    <span class="detail-percent"
+                      >{{ getEntityFrontAttackRate() }}%</span
                     >
                   </span>
                 </v-col>
@@ -108,12 +128,14 @@
               <v-row class="mt-1 text-right pb-2">
                 <h4 class="flex-grow-1">
                   {{ getDamageDealt() }}
-                  ({{
-                    getPercentDamageDealt(
-                      totalDamageDealt || 0,
-                      entity?.stats.damageDealt
-                    )
-                  }}%)
+                  <span class="detail-percent"
+                    >{{
+                      getPercentDamageDealt(
+                        totalDamageDealt || 0,
+                        entity?.stats.damageDealt
+                      )
+                    }}%</span
+                  >
                 </h4>
               </v-row>
               <v-row class="text-right pt-2">
@@ -180,12 +202,12 @@ export default defineComponent({
     getDamageDealt(abbreviate = true) {
       const damageDealt = this.entity?.stats.damageDealt;
       if (!abbreviate) return new Intl.NumberFormat().format(damageDealt);
-      return this.abbrNum(damageDealt, 2);
+      return this.abbrNum(damageDealt);
     },
     getDamageDealtPerSecond(abbreviate = true) {
       const damageDealt = this.entity?.stats.damageDealt / (this.duration || 0);
       if (!abbreviate) return new Intl.NumberFormat().format(damageDealt);
-      return this.abbrNum(damageDealt, 2);
+      return this.abbrNum(damageDealt);
     },
     clickTab(target: string) {
       const tab: any = document.querySelector(`#${target}`);
@@ -233,7 +255,7 @@ export default defineComponent({
 
       if (healing) {
         if (!abbreviate) return Intl.NumberFormat().format(healing);
-        return this.abbrNum(healing, 2);
+        return this.abbrNum(healing);
       } else {
         return 0;
       }
@@ -243,7 +265,7 @@ export default defineComponent({
 
       if (damageTaken) {
         if (!abbreviate) return Intl.NumberFormat().format(damageTaken);
-        return this.abbrNum(damageTaken, 2);
+        return this.abbrNum(damageTaken);
       } else {
         return 0;
       }
@@ -252,8 +274,12 @@ export default defineComponent({
       const clone = [...this.entity?.skills] as Skill[];
       return clone.sort((a, b) => b.stats.damageDealt - a.stats.damageDealt);
     },
-    abbrNum(number: number, decPlaces: number) {
+    abbrNum(number: number, decPlaces = 2) {
+      if (this.isXS()) decPlaces = 1;
       return this.store.getters.abbrNum(number, decPlaces);
+    },
+    isXS() {
+      return this.$vuetify.display.xs;
     },
   },
 });
@@ -270,6 +296,11 @@ export default defineComponent({
   .expand-sm {
     min-width: 100% !important;
   }
+}
+
+.detail-percent {
+  color: grey;
+  font-size: 10.5pt;
 }
 
 .badge-pad {

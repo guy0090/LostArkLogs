@@ -13,6 +13,7 @@ import mongoose from 'mongoose';
 import UserService from '@/services/users.service';
 import { Permissions } from '@/interfaces/permission.interface';
 import PermissionsService from '@/services/permissions.service';
+import ms from 'ms';
 
 /**
  * @class AuthService
@@ -78,7 +79,7 @@ class AuthService {
      * The access token has a lifespan of 1 hour.
      * */
     const refresh: TokenData = this.createJWT(user, 'refresh');
-    const access: TokenData = this.createJWT(user, 'access', 3600);
+    const access: TokenData = this.createJWT(user, 'access', ms('1hr'));
 
     return { refresh, access, user };
   }
@@ -93,23 +94,22 @@ class AuthService {
     const userId = refreshJWT.i;
 
     // Check if the user exists
-    let user: User = await this.users.findOne({ _id: userId });
+    let user: User = await this.users.findOne({ _id: userId }).lean();
     if (!user || `${user._id}` !== `${userId}`) throw new HttpException(409, `Invalid ID: ${userId}`);
 
     // Generate new tokens
     const refresh: TokenData = this.createJWT(user, 'refresh');
-    const access: TokenData = this.createJWT(user, 'access', 3600);
+    const access: TokenData = this.createJWT(user, 'access', ms('1hr'));
 
     // Make sure the user has stored Discord auth tokens
-    const discordAuth: DiscordOAuth = await this.discordGrants.findOne({ _id: user._id });
+    const discordAuth: DiscordOAuth = await this.discordGrants.findOne({ _id: user._id }).lean();
     if (!discordAuth) throw new HttpException(409, `Missing Discord Auth: ${userId}`);
 
-    // eslint-disable-next-line prefer-const
     const { discordRefresh, expires } = discordAuth;
     let discordAccess: string = discordAuth.discordAccess;
 
     // If the user's Discord token is close to expiring (<=24hrs) we refresh it.
-    if (expires.getTime() <= Date.now() - 86400000) {
+    if (expires.getTime() <= Date.now() - ms('24h')) {
       // Refresh Discord tokens if they're expired
       const grant: DiscordOAuthGrant = await this.Discord.refreshToken(discordRefresh);
       if (!grant) throw new HttpException(409, 'Invalid Token Refresh');
@@ -188,7 +188,7 @@ class AuthService {
    * @param {User} user The user to create a JWT for
    * @returns The authorization token and expiration time in seconds
    */
-  public createJWT(user: User, type: string, expiresIn = (60 * 60 * 24 * 365) / 2): TokenData {
+  public createJWT(user: User, type: string, expiresIn = ms('0.5y')): TokenData {
     const dataStoredInToken: DataStoredInToken = type === 'refresh' ? { i: `${user._id}` } : { h: sha512(`${user._id}`, user.salt).hash };
     const secretKey: string = SECRET_KEY;
 

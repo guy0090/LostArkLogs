@@ -4,36 +4,46 @@
       ><v-avatar class="skill-icon"
         ><v-img :src="skillIcon" v-on:error="onImgMissing" /></v-avatar
     ></v-col>
-    <v-col cols="auto" class="align-self-center ms-2">
+    <v-col cols="6" class="align-self-center ms-2">
       <v-row>
         <h4 class="d-inline-block text-truncate">
           {{ getSkillName() }}
-          <small style="color: grey">{{ skill?.id }}</small>
+          <small v-if="!isXS()" style="color: grey">{{ skill?.id }}</small>
         </h4>
       </v-row>
       <v-row class="pt-1">
-        <span> Hits: {{ skill?.stats.hits }} </span>&nbsp;
-        <span>
-          Crits: {{ skill?.stats.crits }}
-          <span style="font-size: 9pt">({{ getSkillCritRate() }}%)</span>
+        <span class="detail">
+          <span v-if="!isXS()">Hits:</span>
+          <span v-else>H:</span>
+          {{ skill?.stats.hits }}&nbsp;
+        </span>
+        <span class="detail">
+          <span v-if="!isXS()"
+            >Crits: {{ skill?.stats.crits }}
+            <span class="detail-percent">{{ getSkillCritRate() }}%</span></span
+          >
+          <span v-else>C.R: {{ getSkillCritRate(0) }}%</span>
         </span>
       </v-row>
       <v-row class="pt-1">
-        <span
-          >Back Hits: {{ skill?.stats.backHits }}
-          <span class="hide-on-sm" style="font-size: 10pt"
-            >({{ getSkillBackHitRate() }}%)</span
-          ></span
-        >&nbsp;
-        <span
-          >Front Hits: {{ skill?.stats.frontHits }}
-          <span class="hide-on-sm" style="font-size: 10pt"
-            >({{ getSkillFrontHitRate() }}%)</span
-          ></span
-        >
+        <span class="detail">
+          <span v-if="!isXS()">B. Hits:</span>
+          <span v-else>B.H:</span>
+          {{ skill?.stats.backHits }}
+          <span class="hide-on-sm detail-percent"
+            >{{ getSkillBackHitRate() }}%</span
+          >&nbsp;
+        </span>
+        <span class="detail">
+          <span v-if="!isXS()">F. Hits:</span>
+          <span v-else>F.H:</span>
+          {{ skill?.stats.frontHits }}
+          <span class="hide-on-sm detail-percent"
+            >{{ getSkillFrontHitRate() }}%</span
+          >
+        </span>
       </v-row>
     </v-col>
-    <v-spacer class="hide-on-sm"></v-spacer>
     <v-col>
       <v-row class="text-right">
         <h4 class="flex-grow-1">{{ getSkillDps() }}/s</h4>
@@ -41,16 +51,17 @@
       <v-row class="pt-1 text-right">
         <span class="flex-grow-1">
           {{ abbrNum(skill?.stats.damageDealt, 2) }}
-          <span style="font-size: 10pt"
-            >({{
+          <span class="hide-on-sm detail-percent"
+            >{{
               new Intl.NumberFormat().format(getSkillPercentDamage())
-            }}%)</span
+            }}%</span
           >
         </span>
       </v-row>
-      <v-row class="pt-2 text-right">
-        <span class="flex-grow-1">
-          Max:
+      <v-row class="pt-1 text-right">
+        <span class="flex-grow-1 detail">
+          <span v-if="!isXS()">Max:</span>
+          <span v-else>M:</span>
           {{ abbrNum(skill?.stats.topDamage, 2) }}
         </span>
       </v-row>
@@ -119,14 +130,14 @@ export default defineComponent({
 
       return Math.round((totalSkillDamage / totalEntityDamage) * 100);
     },
-    getSkillCritRate() {
+    getSkillCritRate(toFixed = 1) {
       const skill = this.skill as Skill;
       const crits = skill.stats.crits;
       const hits = skill.stats.hits;
 
       if (crits && hits) {
         const critRate = (crits / hits) * 100;
-        return critRate.toFixed(1);
+        return critRate.toFixed(toFixed);
       } else {
         return "0";
       }
@@ -166,8 +177,12 @@ export default defineComponent({
       if (skillName.includes("skills.")) skillName = skill.name;
       return skillName;
     },
-    abbrNum(number: number, decPlaces: number) {
+    abbrNum(number: number, decPlaces = 2) {
+      if (this.isXS()) decPlaces = 1;
       return this.store.getters.abbrNum(number, decPlaces);
+    },
+    isXS() {
+      return this.$vuetify.display.xs;
     },
   },
 });
@@ -178,6 +193,15 @@ export default defineComponent({
   .hide-on-sm {
     display: none;
   }
+}
+
+.detail {
+  font-size: 11pt;
+}
+
+.detail-percent {
+  color: grey;
+  font-size: 9pt;
 }
 
 .skill-icon {
