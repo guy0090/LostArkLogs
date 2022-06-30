@@ -4,6 +4,8 @@ import userModel from '@/models/user.model';
 import mongoose from 'mongoose';
 import { getRandomString } from '@/utils/crypto';
 import { DiscordUser } from '@/interfaces/discord.interface';
+import RedisService from '@/services/redis.service';
+import ms from 'ms';
 
 /**
  * @class UserService
@@ -28,33 +30,56 @@ class UserService {
    * @param userId The id of the user to find
    * @returns The found user
    */
-  public async findUserById(userId: mongoose.Types.ObjectId | string): Promise<User> {
+  public async findUserById(userId: mongoose.Types.ObjectId | string, byPassCache = false): Promise<User> {
     try {
-      const findUser: User = await this.users.findOne({ _id: userId });
-      if (!findUser) throw new HttpException(404, 'Error finding user');
+      let user: User = undefined;
+      const cached = await RedisService.get(`${userId}`);
+      if (cached && !byPassCache) {
+        user = JSON.parse(cached);
+      } else {
+        user = await this.users.findById(userId);
+        if (!user) throw new HttpException(404, 'Error finding user');
 
-      return findUser;
+        await RedisService.set(`user:${userId}`, JSON.stringify(user), 'PX', ms('10m'));
+      }
+
+      return user;
     } catch (err) {
       throw new HttpException(400, err.message);
     }
   }
 
-  public async findUserByDiscordId(discordId: string): Promise<User> {
+  // TODO: Caching by discord ID AND user ID will lead to duplicates
+  public async findUserByDiscordId(discordId: string, byPassCache = false): Promise<User> {
     try {
-      const findUser: User = await this.users.findOne({ discordId });
-      if (!findUser) throw new HttpException(404, 'Error finding user');
+      let user: User = undefined;
+      const cached = await RedisService.get(discordId);
+      if (cached && !byPassCache) {
+        user = JSON.parse(cached);
+      } else {
+        user = await this.users.findOne({ discordId });
+        if (!user) throw new HttpException(404, 'Error finding user');
 
-      return findUser;
+        await RedisService.set(`user:${discordId}`, JSON.stringify(user), 'PX', ms('10m'));
+      }
+      return user;
     } catch (err) {
       throw new HttpException(400, err.message);
     }
   }
 
-  public async findByApiKey(apiKey: string): Promise<User> {
+  public async findByApiKey(uploadKey: string, byPassCache = false): Promise<User> {
     try {
-      const user = await this.users.findOne({ uploadKey: apiKey });
-      if (!user) throw new HttpException(404, 'Error finding user');
+      let user: User = undefined;
+      const cached = await RedisService.get(uploadKey);
+      if (cached && !byPassCache) {
+        user = JSON.parse(cached);
+      } else {
+        user = await this.users.findOne({ uploadKey });
+        if (!user) throw new HttpException(404, 'Error finding user');
 
+        await RedisService.set(`user:${uploadKey}`, JSON.stringify(user), 'PX', ms('10m'));
+      }
       return user;
     } catch (err) {
       throw new HttpException(400, err.message);
@@ -82,6 +107,7 @@ class UserService {
         avatar: user.avatar,
       });
 
+      RedisService.set(`user:${newUser._id}`, JSON.stringify(newUser), 'PX', ms('10m'));
       return newUser;
     } catch (err) {
       throw new HttpException(500, 'Error creating user');
@@ -102,6 +128,9 @@ class UserService {
       const updateUserById: User = await this.users.findByIdAndUpdate(userId, { $set: update }, { returnDocument: 'after' });
       if (!updateUserById) throw new HttpException(400, 'Error updating user');
 
+      const cached = await RedisService.get(`user:${userId}`);
+      if (cached) await RedisService.set(`user:${userId}`, JSON.stringify(updateUserById), 'PX', ms('10m'));
+
       return updateUserById;
     } catch (err) {
       throw new HttpException(400, err.message);
@@ -116,6 +145,9 @@ class UserService {
    */
   public async deleteUser(userId: string): Promise<void> {
     try {
+      const cached = await RedisService.get(`user:${userId}`);
+      if (cached) RedisService.del(`user:${userId}`);
+
       await this.users.findByIdAndDelete(userId);
 
       return;

@@ -26,7 +26,7 @@
               &nbsp;
               <v-chip label density="comfortable" color="success px-2">
                 <v-icon icon="mdi-timer-outline" class="pe-1" />
-                {{ getDuration(session?.started, session?.ended) }}
+                {{ getDuration(session?.duration) }}
               </v-chip>
               &nbsp;
               <v-chip label density="comfortable" color="info">
@@ -97,7 +97,10 @@ export default defineComponent({
     openLog(id: string) {
       this.$router.push({ path: `/logs/${id}` });
     },
-    getDuration(start: number, end: number) {
+    getDuration(duration: number) {
+      const start = new Date(0);
+      const end = new Date(duration);
+
       const beginDate = dayjs(start);
       const endDate = dayjs(end);
 
@@ -149,7 +152,7 @@ export default defineComponent({
       const hasBoss = bossEntities.length > 0;
       if (!hasBoss) return;
 
-      const boss = bossEntities.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+      const boss = bossEntities[0];
       const bossName = this.$t(`monsters.${boss.npcId}`);
 
       let encounter = "ue";
@@ -171,7 +174,7 @@ export default defineComponent({
       this.encounterName = encounter.toLowerCase();
     },
     getDamageDealtPerSecond(entity: Entity) {
-      const duration = (this.session?.ended - this.session?.started) / 1000;
+      const duration = this.session?.duration / 1000;
       return entity?.stats.damageDealt / (duration || 0);
     },
     getTotalDPS(entities: Entity[]) {

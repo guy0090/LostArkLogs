@@ -32,8 +32,18 @@ services:
       - backend
     links:
       - mongo
+      - redis
     depends_on:
       - mongo
+      - redis
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: 'unless-stopped'
+    ports:
+      - '6378:6379'
+    networks:
+      - backend
   mongo:
     image: mongo:latest
     container_name: mongo

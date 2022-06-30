@@ -28,9 +28,8 @@ export interface Log {
   encounter?: string;
   creator: mongoose.Types.ObjectId;
   firstPacket?: number;
-  started?: number;
   lastPacket?: number;
-  ended?: number;
+  duration?: number;
   createdAt: number;
   entities: LogEntity[];
   damageStatistics: LogDamageStatistics;
@@ -55,18 +54,7 @@ export interface LogEntity {
 export interface LogEntitySkill {
   id: number;
   name: string;
-  breakdown: LogEntitySkillBreakdown[];
   stats: LogEntitySkillStats;
-}
-
-export interface LogEntitySkillBreakdown {
-  timestamp: number;
-  damage: number;
-  isCrit: boolean;
-  isBackHit: boolean;
-  isFrontHit: boolean;
-  targetEntity: string;
-  isCounter: boolean;
 }
 
 export interface LogEntitySkillStats {
@@ -90,6 +78,7 @@ export interface LogEntityStats {
   damageTaken: number;
   deaths: number;
   dps: number;
+  dpsOverTime: number[];
 }
 
 export interface LogDamageStatistics {
@@ -98,4 +87,5 @@ export interface LogDamageStatistics {
   totalDamageTaken: number;
   topDamageTaken: number;
   dps: number;
+  dpsIntervals: number[];
 }

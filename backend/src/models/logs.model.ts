@@ -7,11 +7,7 @@ const logsSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     required: true,
   },
-  firstPacket: {
-    type: Number,
-    required: true,
-  },
-  lastPacket: {
+  duration: {
     type: Number,
     required: true,
   },
@@ -21,11 +17,6 @@ const logsSchema: Schema = new Schema({
     default: 'Unknown',
   },
   region: {
-    type: String,
-    required: false,
-    default: 'Unknown',
-  },
-  encounter: {
     type: String,
     required: false,
     default: 'Unknown',

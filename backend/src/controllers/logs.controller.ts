@@ -24,10 +24,11 @@ class LogsController {
 
   public uploadLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const log: Log = { createdAt: +new Date(), creator: req.user._id, ...req.body.data };
-      await this.logService.validateLog(new LogObject(log));
+      const log: Log = { ...req.body.data, creator: req.user._id, createdAt: +new Date() };
+      const toValidate = new LogObject(log);
+      await this.logService.validateLog(toValidate);
 
-      const createdLog: LogObject = await this.logService.createLog(log);
+      const createdLog: LogObject = await this.logService.createLog(toValidate);
       if (!createdLog) throw new Exception(500, 'Error creating log');
 
       res.status(200).json({ created: true, id: createdLog.id });

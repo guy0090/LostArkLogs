@@ -10,27 +10,20 @@ export interface Session {
   id: string;
   server?: string;
   region?: string;
-  encounter?: string;
   creator: string;
-  started: number;
-  ended: number;
+  duration: number;
   createdAt: number;
   entities: Entity[];
   damageStatistics: DamageStatistics;
 }
 
 export interface Entity {
-  lastUpdate: number; // Epoch timestamp
   id: string;
   npcId: number | undefined;
-  name: string;
   type: ENTITY_TYPE;
-  class: string | undefined;
   classId: number;
   level: number;
   gearLevel: number;
-  currentHp: number;
-  maxHp: number;
   skills: Skill[];
   stats: Stats;
   iid?: number;
@@ -38,7 +31,6 @@ export interface Entity {
 
 export interface Skill {
   id: number;
-  name: string;
   breakdown: SkillBreakdown[];
   stats: SkillStats;
 }
@@ -73,6 +65,8 @@ export interface Stats {
   healing: number;
   damageTaken: number;
   deaths: number;
+  dps: number;
+  dpsOverTime: number[];
 }
 
 export interface DamageStatistics {
@@ -80,4 +74,6 @@ export interface DamageStatistics {
   topDamageDealt: number;
   totalDamageTaken: number;
   topDamageTaken: number;
+  dps: number;
+  dpsIntervals: number[];
 }

@@ -1,13 +1,4 @@
-import {
-  ENTITY_TYPE,
-  Log,
-  LogDamageStatistics,
-  LogEntity,
-  LogEntitySkill,
-  LogEntitySkillBreakdown,
-  LogEntitySkillStats,
-  LogEntityStats,
-} from '@/interfaces/logs.interface';
+import { ENTITY_TYPE, Log, LogDamageStatistics, LogEntity, LogEntitySkill, LogEntitySkillStats, LogEntityStats } from '@/interfaces/logs.interface';
 import { getRandomString } from '@/utils/crypto';
 import { logger } from '@/utils/logger';
 import { Type } from 'class-transformer';
@@ -15,7 +6,6 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
-  IsBoolean,
   IsEnum,
   IsNumber,
   IsObject,
@@ -23,6 +13,7 @@ import {
   IsString,
   Length,
   Max,
+  MaxLength,
   Min,
   ValidateIf,
   ValidateNested,
@@ -49,47 +40,19 @@ export class LogDamageStatisticsObject {
   @Min(0)
   public dps: number;
 
+  @IsArray()
+  @ArrayMinSize(0)
+  @ArrayMaxSize(200) // TODO: Decide on this properly
+  @IsNumber({}, { each: true })
+  public dpsIntervals: number[];
+
   constructor(stat: LogDamageStatistics) {
     this.totalDamageDealt = stat.totalDamageDealt;
     this.topDamageDealt = stat.topDamageDealt;
     this.totalDamageTaken = stat.totalDamageTaken;
     this.topDamageTaken = stat.topDamageTaken;
     this.dps = stat.dps;
-  }
-}
-
-export class LogEntitySkillBreakdownObject {
-  @IsNumber()
-  @Min(0)
-  public timestamp: number;
-
-  @IsNumber()
-  public damage: number;
-
-  @IsBoolean()
-  public isCrit: boolean;
-
-  @IsBoolean()
-  public isBackHit: boolean;
-
-  @IsBoolean()
-  public isFrontHit: boolean;
-
-  @IsOptional()
-  @IsString()
-  public targetEntity: string | undefined;
-
-  @IsBoolean()
-  public isCounter: boolean;
-
-  constructor(breakdown: LogEntitySkillBreakdown) {
-    this.timestamp = breakdown.timestamp;
-    this.damage = breakdown.damage;
-    this.isCrit = breakdown.isCrit;
-    this.isBackHit = breakdown.isBackHit;
-    this.isFrontHit = breakdown.isFrontHit;
-    // this.targetEntity = breakdown.targetEntity;
-    this.isCounter = breakdown.isCounter;
+    this.dpsIntervals = stat.dpsIntervals;
   }
 }
 
@@ -138,13 +101,9 @@ export class LogEntitySkillObject {
   @Min(0)
   public id: number;
 
+  @IsOptional()
   @IsString()
   public name: string;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => LogEntitySkillBreakdownObject)
-  public breakdown: LogEntitySkillBreakdownObject[];
 
   @IsObject()
   @Type(() => LogEntitySkillStatsObject)
@@ -152,8 +111,7 @@ export class LogEntitySkillObject {
 
   constructor(skill: LogEntitySkill) {
     this.id = skill.id;
-    this.name = skill.name;
-    this.breakdown = skill.breakdown.map((breakdown: LogEntitySkillBreakdown) => new LogEntitySkillBreakdownObject(breakdown));
+    // this.name = skill.name;
     this.stats = new LogEntitySkillStatsObject(skill.stats);
   }
 }
@@ -199,6 +157,12 @@ export class LogEntityStatObject {
   @Min(0)
   public dps: number;
 
+  @IsArray()
+  @ArrayMinSize(0)
+  @ArrayMaxSize(200) // TODO: Decide on this properly; always same length as dpsIntervals
+  @IsNumber({}, { each: true })
+  dpsOverTime: number[];
+
   constructor(stat: LogEntityStats) {
     this.hits = stat.hits;
     this.crits = stat.crits;
@@ -210,15 +174,11 @@ export class LogEntityStatObject {
     this.damageTaken = stat.damageTaken;
     this.deaths = stat.deaths;
     this.dps = stat.dps;
+    this.dpsOverTime = stat.dpsOverTime;
   }
 }
 
 export class LogEntityObject {
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  public lastUpdate: number; // Epoch timestamp
-
   @IsString()
   @Length(1, 32)
   public id: string;
@@ -234,10 +194,6 @@ export class LogEntityObject {
   @IsEnum(ENTITY_TYPE)
   public type: ENTITY_TYPE;
 
-  @IsOptional()
-  @IsString()
-  public class: string | undefined;
-
   @IsNumber()
   @Min(0)
   public classId: number;
@@ -252,13 +208,6 @@ export class LogEntityObject {
   @Max(1625)
   public gearLevel: number;
 
-  @IsNumber()
-  public currentHp: number;
-
-  @IsNumber()
-  @Min(0)
-  public maxHp: number;
-
   @ValidateIf(o => o.type === ENTITY_TYPE.PLAYER)
   @IsArray()
   @ArrayMinSize(1)
@@ -271,19 +220,14 @@ export class LogEntityObject {
   @Type(() => LogEntityStatObject)
   public stats: LogEntityStatObject;
 
-  constructor(entity: LogEntity, removeEntityBreakdowns = false) {
+  constructor(entity: LogEntity) {
     this.id = getRandomString(32);
-    // this.lastUpdate = entity.lastUpdate;
     this.npcId = entity.npcId;
     this.type = entity.type;
-    this.class = entity.class;
     this.classId = entity.classId;
     this.level = entity.level;
     this.gearLevel = entity.gearLevel || 0;
-    this.currentHp = entity.currentHp;
-    this.maxHp = entity.maxHp;
-    if (entity.skills && entity.type === ENTITY_TYPE.PLAYER && !removeEntityBreakdowns)
-      this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
+    if (entity.skills && entity.type === ENTITY_TYPE.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
     else this.skills = [];
     this.stats = new LogEntityStatObject(entity.stats);
   }
@@ -306,20 +250,17 @@ export class LogEntityObject {
 }
 
 export class LogObject {
-  @IsOptional()
+  @ValidateIf(o => o.id !== undefined)
   @IsString()
+  @MaxLength(0) // Don't let the uploader set ID; DTO validation is only performed when uploading
   public id?: string;
 
-  @IsString()
+  @IsString() // Cannot be set by user upload; only generated by server
   public creator: string;
 
   @IsNumber()
   @Min(0)
-  public started: number;
-
-  @IsNumber()
-  @Min(0)
-  public ended: number;
+  public duration: number;
 
   @IsOptional()
   @IsString()
@@ -328,10 +269,6 @@ export class LogObject {
   @IsOptional()
   @IsString()
   public region?: string;
-
-  @IsOptional()
-  @IsString()
-  public encounter?: string;
 
   @IsNumber()
   @Min(0)
@@ -348,31 +285,19 @@ export class LogObject {
   @Type(() => LogDamageStatisticsObject)
   public damageStatistics: LogDamageStatisticsObject;
 
-  constructor(log: Log, removeEntityBreakdowns = false) {
+  constructor(log: Log) {
     try {
       this.id = log._id ? `${log._id}` : undefined;
       this.creator = `${log.creator}`;
-      this.started = log.firstPacket ?? log.started;
-      this.ended = log.lastPacket ?? log.ended;
+      this.duration = log.firstPacket && log.lastPacket ? log.lastPacket - log.firstPacket : log.duration;
       this.server = log.server ?? 'Unknown';
       this.region = log.region ?? 'Unknown';
-      this.encounter = log.encounter ?? 'Unknown';
       this.createdAt = log.createdAt;
-      this.entities = log.entities.map(entity => new LogEntityObject(entity, removeEntityBreakdowns));
+      this.entities = log.entities.map(entity => new LogEntityObject(entity));
       this.damageStatistics = new LogDamageStatisticsObject(log.damageStatistics);
     } catch (err) {
       logger.error(err.message);
       throw err;
     }
-  }
-
-  static getEncounterName(entities: LogEntity[]) {
-    const bosses = entities.filter(entity => entity.type === ENTITY_TYPE.BOSS || entity.type === ENTITY_TYPE.GUARDIAN);
-    let encounterName = 'Unknown';
-    if (bosses.length > 0) {
-      encounterName = bosses.sort((a, b) => b.lastUpdate - a.lastUpdate)[0].name;
-      logger.log("Set encounter to boss's name: ", encounterName);
-    }
-    return encounterName;
   }
 }

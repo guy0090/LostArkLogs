@@ -174,7 +174,7 @@ export default defineComponent({
       let skillName =
         skill.id !== 0 ? this.$t(`skills.${skill.id}`) : this.$t(`skills.0`);
 
-      if (skillName.includes("skills.")) skillName = skill.name;
+      if (skillName.includes("skills.")) skillName = "???";
       return skillName;
     },
     abbrNum(number: number, decPlaces = 2) {

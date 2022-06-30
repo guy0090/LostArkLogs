@@ -9,6 +9,7 @@ import { bosses } from '@/config/supported-bosses';
 import { logger } from '@/utils/logger';
 import UserService from '@/services/users.service';
 import { User } from '@/interfaces/users.interface';
+import RedisService from '@/services/redis.service';
 import ms from 'ms';
 
 class LogsService {
@@ -21,13 +22,12 @@ class LogsService {
    * @param log The log to create
    * @returns The created log
    */
-  public createLog = async (log: Log) => {
+  public createLog = async (log: LogObject) => {
     try {
-      const encounter = LogObject.getEncounterName(log.entities);
-      log.encounter = encounter;
-
       const created = await this.logs.create(log);
       if (!created) throw new Exception(500, 'Error creating log');
+
+      RedisService.set(`log:${created._id}`, JSON.stringify(created), 'PX', ms('5m'));
 
       return new LogObject(created);
     } catch (err) {
@@ -41,10 +41,17 @@ class LogsService {
    * @param id Get a log by its ID
    * @returns The log if found
    */
-  public getLogById = async (id: mongoose.Types.ObjectId | string): Promise<LogObject> => {
+  public getLogById = async (id: mongoose.Types.ObjectId | string, byPassCache = false): Promise<LogObject> => {
     try {
-      const log = await this.logs.findById(id).lean();
-      if (!log) throw new Exception(500, 'Error finding log');
+      let log: Log = null;
+      const cached = await RedisService.get(`log:${id}`);
+      if (cached && !byPassCache) {
+        log = JSON.parse(cached);
+      } else {
+        log = await this.logs.findById(id).lean();
+        if (!log) throw new Exception(500, 'Error finding log');
+        await RedisService.set(`log:${id}`, JSON.stringify(log), 'PX', ms('5m'));
+      }
 
       return new LogObject(log);
     } catch (err) {
@@ -60,6 +67,9 @@ class LogsService {
    */
   public deleteLog = async (id: mongoose.Types.ObjectId | string): Promise<void> => {
     try {
+      const logged = await RedisService.get(`log:${id}`);
+      if (logged) RedisService.del(`log:${id}`);
+
       await this.logs.findByIdAndDelete(id);
       return;
     } catch (err) {
@@ -188,7 +198,7 @@ class LogsService {
         }
 
         const foundLogs = await this.logs.find(findQuery).lean().limit(20);
-        return foundLogs.map(log => new LogObject(log, filter.removeBreakdowns ?? true));
+        return foundLogs.map(log => new LogObject(log));
       }
 
       return [];

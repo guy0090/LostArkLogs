@@ -24,8 +24,8 @@
           <v-col cols="12" class="pt-2 pb-0 px-1 expand-sm">
             <PartyDPSGraph
               :entities="JSON.parse(JSON.stringify(players))"
-              :started="session.started"
-              :ended="session.ended"
+              :duration="session.duration"
+              :dpsIntervals="session.damageStatistics.dpsIntervals"
             ></PartyDPSGraph>
           </v-col>
         </v-row>
@@ -37,7 +37,7 @@
             :entity="entity"
             :entities="12"
             :totalDamageDealt="session?.damageStatistics.totalDamageDealt"
-            :duration="(session?.ended - session?.started) / 1000"
+            :duration="session.duration / 1000"
             :mvp="isMVP(entity)"
           >
           </EntityPanel>
@@ -190,7 +190,7 @@ export default defineComponent({
       return total;
     },
     getDamageDealtPerSecond(entity: Entity) {
-      const duration = (this.session?.ended - this.session?.started) / 1000;
+      const duration = this.session?.duration / 1000;
       return entity?.stats.damageDealt / (duration || 0);
     },
     getTotalDPS(entities: Entity[]) {

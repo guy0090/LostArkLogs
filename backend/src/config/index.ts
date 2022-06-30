@@ -10,6 +10,8 @@ export const {
   DB_HOST,
   DB_PORT,
   DB_DATABASE,
+  REDIS_HOST,
+  REDIS_PORT,
   SECRET_KEY,
   LOG_FORMAT,
   LOG_DIR,

@@ -36,9 +36,9 @@ export default defineComponent({
   name: "PartyDpsGraph",
 
   props: {
+    dpsIntervals: Object,
     entities: [Object],
-    started: Number,
-    ended: Number,
+    duration: Number,
   },
 
   mounted() {
@@ -49,80 +49,36 @@ export default defineComponent({
 
     entities.sort((a, b) => a.stats.damageDealt - b.stats.damageDealt);
 
-    const intervals = this.generateIntervals();
-    this.intervals = intervals.map((i) => this.getTimeShortform(i));
-    const series = this.generateSeries(intervals);
+    this.intervals = this.dpsIntervals?.map((i: number) =>
+      this.getTimeShortform(i)
+    );
+    const series = this.generateSeries(entities);
     this.series = series;
   },
 
   methods: {
-    generateIntervals() {
-      const interval = this.dataInterval;
-      const started = this.started as number;
-      const ended = this.ended as number;
-
-      const duration = ended - started;
-      const intervals = [];
-
-      const parts = duration / interval;
-      for (let i = 0; i <= Math.floor(parts); i++) {
-        if (i === Math.floor(parts)) intervals.push(parts * interval);
-        else intervals.push(i * interval);
-      }
-      return intervals;
-    },
-    generateSeries(intervals: number[]) {
-      const entities = this.entities as Entity[];
-      const started = this.started as number;
+    generateSeries(entities: Entity[]) {
       const series: SeriesOption[] = [];
-
       const players = entities?.filter(
         (e: Entity) => e.type === ENTITY_TYPE.PLAYER
       );
 
-      // console.time("Series creation");
-      intervals.forEach((i) => {
-        players.forEach((e) => {
-          let entityName = `${this.$t(`classes.${e.classId}`)} (${e.iid})`;
-          let damage = this.getEntityDamageInRange(started, started + i, e);
-          let dps = parseFloat(this.getEntityDPS(i / 1000, damage));
-          let existingIndex = series.findIndex((s) => s.name === entityName);
-
-          if (existingIndex >= 0) {
-            (series[existingIndex].data as number[]).push(dps);
-          } else {
-            series.push({
-              name: entityName,
-              type: "line",
-              stack: "Total",
-              color: this.classColors[e.classId],
-              areaStyle: {},
-              emphasis: {
-                focus: "series",
-              },
-              data: [dps],
-            } as SeriesOption);
-          }
-        });
+      players.forEach((e) => {
+        let entityName = `${this.$t(`classes.${e.classId}`)} (${e.iid})`;
+        series.push({
+          name: entityName,
+          type: "line",
+          stack: "Total",
+          color: this.classColors[e.classId],
+          areaStyle: {},
+          emphasis: {
+            focus: "series",
+          },
+          data: e.stats.dpsOverTime,
+        } as SeriesOption);
       });
-      // console.timeEnd("Series creation");
 
       return series;
-    },
-    getEntityDamageInRange(begin: number, end: number, entity: Entity) {
-      const skills = entity.skills;
-      const damageDealtInRange = skills.reduce((acc, skill) => {
-        const skillDps = skill.breakdown.filter(
-          (d) => d.timestamp >= begin && d.timestamp <= end
-        );
-        return acc + skillDps.reduce((acc, d) => acc + d.damage, 0);
-      }, 0);
-
-      if (!damageDealtInRange || isNaN(damageDealtInRange)) return 0;
-      return damageDealtInRange;
-    },
-    getEntityDPS(duration: number, damage: number) {
-      return damage > 0 ? (damage / duration).toFixed(2) : "0";
     },
     getTimeShortform(time: number) {
       const seconds = time / 1000;

@@ -9,6 +9,8 @@ const validateEnv = () => {
     DB_HOST: str(),
     DB_PORT: port(),
     DB_DATABASE: str(),
+    REDIS_HOST: str(),
+    REDIS_PORT: port(),
     CLIENT_ID: str(),
     CLIENT_SECRET: str(),
     REDIRECT_URI: url(),

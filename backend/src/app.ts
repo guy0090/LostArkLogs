@@ -12,7 +12,7 @@ import { connect, set } from 'mongoose';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { NODE_ENV, PORT, LOG_FORMAT, ORIGIN, CREDENTIALS, SSL_KEY, SSL_CERT } from '@config';
-import { dbConnection } from '@databases';
+import { dbConnection, redisConnection } from '@databases';
 import { Routes } from '@interfaces/routes.interface';
 import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
@@ -20,6 +20,7 @@ import { Server } from 'socket.io';
 import SocketController from '@/controllers/socket.controller';
 import RoleService from '@/services/roles.service';
 import PageService from '@/services/pages.service';
+import RedisService from '@/services/redis.service';
 
 class App {
   public app: express.Application;
@@ -32,6 +33,7 @@ class App {
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
 
+    this.connectToRedis();
     this.connectToDatabase();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
@@ -77,6 +79,10 @@ class App {
 
   public getServer() {
     return this.app;
+  }
+
+  private connectToRedis() {
+    RedisService.connect(redisConnection.port, redisConnection.host);
   }
 
   private connectToDatabase() {

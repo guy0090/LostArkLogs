@@ -4,6 +4,8 @@ import { Role } from '@/interfaces/role.interface';
 import permissionModel from '@/models/permission.model';
 import roleModel from '@/models/role.model';
 import mongoose from 'mongoose';
+import RedisService from './redis.service';
+import ms from 'ms';
 
 class PermissionsService {
   public roles = roleModel;
@@ -45,6 +47,9 @@ class PermissionsService {
       const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $set: { permissions: Array.from(update) } });
       if (!updatePermissions) throw new Error('Error adding permissions');
 
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) RedisService.set(`permissions:${userId}`, JSON.stringify(update), 'PX', ms('10m'));
+
       return updatePermissions;
     } catch (err) {
       throw new Exception(500, err.message);
@@ -70,6 +75,9 @@ class PermissionsService {
       const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $set: { permissions: Array.from(update) } });
       if (!updatePermissions) throw new Error('Error removing permissions');
 
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) RedisService.set(`permissions:${userId}`, JSON.stringify(update), 'PX', ms('10m'));
+
       return updatePermissions;
     } catch (err) {
       throw new Exception(500, err.message);
@@ -86,18 +94,7 @@ class PermissionsService {
    */
   public async userHasPermissions(userId: mongoose.Types.ObjectId, checkPermissions: string[]): Promise<boolean> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error('Permissions not found');
-
-      const roles = await this.roles.find({ _id: { $in: findPermissions.roles } });
-      if (!roles) throw new Error('Roles not found');
-
-      let inheritedPermissions = [];
-      for (const role of roles) inheritedPermissions = [...inheritedPermissions, ...(await this.getInheritedPermissions(role._id))];
-
-      const rolePermissions = roles.reduce((acc, role) => [...acc, ...role.permissions], []);
-      const userPermissions = new Set([...findPermissions.permissions, ...rolePermissions, ...inheritedPermissions]);
-
+      const userPermissions = new Set(await this.getPermissions(userId));
       return checkPermissions.every(permission => userPermissions.has(permission));
     } catch (err) {
       throw new Exception(500, err.message);
@@ -109,21 +106,27 @@ class PermissionsService {
    * @param userId The user's database ID
    * @returns The user's permissions
    */
-  public async getPermissions(userId: mongoose.Types.ObjectId): Promise<string[]> {
+  public async getPermissions(userId: mongoose.Types.ObjectId, byPassCache = false): Promise<string[]> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error('Permissions not found');
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached && !byPassCache) {
+        return JSON.parse(cached);
+      } else {
+        const findPermissions = await this.permissions.findOne({ _id: userId });
+        if (!findPermissions) throw new Error('Permissions not found');
 
-      const roles = await this.roles.find({ _id: { $in: findPermissions.roles } });
-      if (!roles) throw new Error('Roles not found');
+        const roles = await this.roles.find({ _id: { $in: findPermissions.roles } });
+        if (!roles) throw new Error('Roles not found');
 
-      let inheritedPermissions = [];
-      for (const role of roles) inheritedPermissions = [...inheritedPermissions, ...(await this.getInheritedPermissions(role._id))];
+        let inheritedPermissions = [];
+        for (const role of roles) inheritedPermissions = [...inheritedPermissions, ...(await this.getInheritedPermissions(role._id))];
 
-      const rolePermissions = roles.reduce((acc, role) => [...acc, ...role.permissions], []);
-      const userPermissions: Set<string> = new Set([...findPermissions.permissions, ...rolePermissions, ...inheritedPermissions]);
+        const rolePermissions = roles.reduce((acc, role) => [...acc, ...role.permissions], []);
+        const userPermissions: Set<string> = new Set([...findPermissions.permissions, ...rolePermissions, ...inheritedPermissions]);
 
-      return Array.from(userPermissions);
+        await RedisService.set(`permissions:${userId}`, JSON.stringify(Array.from(userPermissions)), 'PX', ms('10m'));
+        return Array.from(userPermissions);
+      }
     } catch (err) {
       throw new Exception(500, err.message);
     }
