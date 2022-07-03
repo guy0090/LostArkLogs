@@ -2,13 +2,13 @@ import { Exception } from '@/exceptions/Exception';
 import { Permissions } from '@/interfaces/permission.interface';
 import { Role } from '@/interfaces/role.interface';
 import permissionModel from '@/models/permission.model';
-import roleModel from '@/models/role.model';
 import mongoose from 'mongoose';
 import RedisService from './redis.service';
 import ms from 'ms';
+import RoleService from './roles.service';
 
 class PermissionsService {
-  public roles = roleModel;
+  public roles = new RoleService();
   public permissions = permissionModel;
 
   /**
@@ -22,9 +22,19 @@ class PermissionsService {
   public async createPermissions(userId: mongoose.Types.ObjectId, permissions = [], roles = []): Promise<Permissions> {
     try {
       const createPermissions = await this.permissions.create({ _id: userId, permissions, roles });
-      if (!createPermissions) throw new Error('Error creating permissions');
+      if (!createPermissions) throw new Error(`Could not create permissions for user: ${userId}`);
 
       return createPermissions;
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  public async deletePermissions(userId: mongoose.Types.ObjectId): Promise<void> {
+    try {
+      await this.permissions.findByIdAndDelete(userId);
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) await RedisService.del(`permissions:${userId}`);
     } catch (err) {
       throw new Exception(500, err.message);
     }
@@ -40,15 +50,13 @@ class PermissionsService {
   public async addPermissions(userId: mongoose.Types.ObjectId, newPermissions: string[]): Promise<Permissions> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error('Permissions not found');
+      if (!findPermissions) throw new Error(`Permissions document not found for user: ${userId}`);
 
-      const update = new Set([...findPermissions.permissions, ...newPermissions]);
-
-      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $set: { permissions: Array.from(update) } });
-      if (!updatePermissions) throw new Error('Error adding permissions');
+      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $addToSet: { permissions: { $each: newPermissions } } });
+      if (!updatePermissions) throw new Error('Error adding permissions: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
-      if (cached) RedisService.set(`permissions:${userId}`, JSON.stringify(update), 'PX', ms('10m'));
+      if (cached) await RedisService.del(`permissions:${userId}`);
 
       return updatePermissions;
     } catch (err) {
@@ -66,17 +74,13 @@ class PermissionsService {
   public async removePermissions(userId: mongoose.Types.ObjectId, removePermissions: string[]): Promise<Permissions> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error('Permissions not found');
+      if (!findPermissions) throw new Error(`Permissions document not found for user: ${userId}`);
 
-      // Filter out all permissions not included in `removePermissions`
-      const update = findPermissions.permissions.filter(permission => !removePermissions.includes(permission));
-
-      // Set the new permissions to the previously filtered
-      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $set: { permissions: Array.from(update) } });
-      if (!updatePermissions) throw new Error('Error removing permissions');
+      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $pull: { permissions: { $in: removePermissions } } });
+      if (!updatePermissions) throw new Error('Error removing permissions: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
-      if (cached) RedisService.set(`permissions:${userId}`, JSON.stringify(update), 'PX', ms('10m'));
+      if (cached) await RedisService.del(`permissions:${userId}`);
 
       return updatePermissions;
     } catch (err) {
@@ -85,17 +89,26 @@ class PermissionsService {
   }
 
   /**
-   * Check if the user has the provided permission. Checks all user role permissions
-   * as well as their own personal permissions.
+   * Get permissions from a role and all inherited roles recursively.
    *
-   * @param userId The user's database ID
-   * @param checkPermissions The permissions to check for
-   * @returns {boolean} If the user has the permission or not
+   * @param inherit ID of the inherited role
+   * @returns All permissions from all roles
    */
-  public async userHasPermissions(userId: mongoose.Types.ObjectId, checkPermissions: string[]): Promise<boolean> {
+  private async getInheritedPermissions(inherit: number): Promise<string[]> {
     try {
-      const userPermissions = new Set(await this.getPermissions(userId));
-      return checkPermissions.every(permission => userPermissions.has(permission));
+      const rolePermission: Role = await this.roles.getRole(inherit);
+      if (!rolePermission) throw new Error(`Failed getting inherited permissions: role "${inherit}" not found`);
+
+      let perms = rolePermission.permissions;
+      const inherits = rolePermission.inherits;
+      if (inherits.length > 0) {
+        for (const role of inherits) {
+          perms = [...perms, ...(await this.getInheritedPermissions(role))];
+        }
+      }
+
+      const allPerms = new Set(perms);
+      return Array.from(allPerms);
     } catch (err) {
       throw new Exception(500, err.message);
     }
@@ -106,17 +119,17 @@ class PermissionsService {
    * @param userId The user's database ID
    * @returns The user's permissions
    */
-  public async getPermissions(userId: mongoose.Types.ObjectId, byPassCache = false): Promise<string[]> {
+  public async getUserPermissions(userId: mongoose.Types.ObjectId, byPassCache = false): Promise<string[]> {
     try {
       const cached = await RedisService.get(`permissions:${userId}`);
       if (cached && !byPassCache) {
         return JSON.parse(cached);
       } else {
         const findPermissions = await this.permissions.findOne({ _id: userId });
-        if (!findPermissions) throw new Error('Permissions not found');
+        if (!findPermissions) throw new Error(`Permissions document not found for user ${userId}`);
 
-        const roles = await this.roles.find({ _id: { $in: findPermissions.roles } });
-        if (!roles) throw new Error('Roles not found');
+        const roles = await this.roles.getRoles(findPermissions.roles);
+        if (!roles) throw new Error(`Error getting user's (${userId}) permissions: getting roles failed`);
 
         let inheritedPermissions = [];
         for (const role of roles) inheritedPermissions = [...inheritedPermissions, ...(await this.getInheritedPermissions(role._id))];
@@ -133,26 +146,80 @@ class PermissionsService {
   }
 
   /**
-   * Get permissions from a role and all inherited roles recursively.
+   * Check if the user has the provided permission. Checks all user role permissions
+   * as well as their own personal permissions.
    *
-   * @param inherit ID of the inherited role
-   * @returns All permissions from all roles
+   * @param userId The user's database ID
+   * @param checkPermissions The permissions to check for
+   * @returns {boolean} If the user has the permission or not
    */
-  private async getInheritedPermissions(inherit: number): Promise<string[]> {
+  public async userHasPermissions(userId: mongoose.Types.ObjectId, checkPermissions: string[]): Promise<boolean> {
     try {
-      const rolePermission: Role = await this.roles.findOne({ _id: inherit });
-      if (!rolePermission) throw new Error('Role not found');
+      const userPermissions = new Set(await this.getUserPermissions(userId));
+      return checkPermissions.every(permission => userPermissions.has(permission));
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
 
-      let perms = rolePermission.permissions;
-      const inherits = rolePermission.inherits;
-      if (inherits.length > 0) {
-        for (const role of inherits) {
-          perms = [...perms, ...(await this.getInheritedPermissions(role))];
-        }
-      }
+  public async getUserRoles(userId: mongoose.Types.ObjectId): Promise<Role[]> {
+    try {
+      const findPermissions = await this.permissions.findOne({ _id: userId });
+      if (!findPermissions) throw new Error(`Permissions document not found for user ${userId}`);
 
-      const allPerms = new Set([...perms]);
-      return Array.from(allPerms);
+      const roles = await this.roles.getRoles(findPermissions.roles);
+      return roles;
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  public async setUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
+    try {
+      const findPermissions = await this.permissions.findOne({ _id: userId });
+      if (!findPermissions) throw new Error(`Failed setting user roles: permissions document not found for user: ${userId}`);
+
+      const update = await this.permissions.findByIdAndUpdate(userId, { $set: { roles } });
+      if (!update) throw new Error('Error setting roles: update failed');
+
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) await RedisService.del(`permissions:${userId}`);
+
+      return roles;
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  public async addUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
+    try {
+      const findPermissions = await this.permissions.findOne({ _id: userId });
+      if (!findPermissions) throw new Error(`Failed adding user roles: permissions document not found for user: ${userId}`);
+
+      const update = await this.permissions.findByIdAndUpdate(userId, { $addToSet: { roles: { $each: roles } } }, { returnDocument: 'after' });
+      if (!update) throw new Error('Error adding roles: update failed');
+
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) await RedisService.del(`permissions:${userId}`);
+
+      return update.roles;
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  public async removeUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
+    try {
+      const findPermissions = await this.permissions.findOne({ _id: userId });
+      if (!findPermissions) throw new Error(`Failed removing user roles: permissions document not found for user: ${userId}`);
+
+      const update = await this.permissions.findByIdAndUpdate(userId, { $pull: { roles: { $in: roles } } }, { returnDocument: 'after' });
+      if (!update) throw new Error('Error removing roles: update failed');
+
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) await RedisService.del(`permissions:${userId}`);
+
+      return update.roles;
     } catch (err) {
       throw new Exception(500, err.message);
     }

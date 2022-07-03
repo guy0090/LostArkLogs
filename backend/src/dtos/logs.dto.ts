@@ -31,8 +31,15 @@ export class LogDeleteDTO {
 
   @IsDefined()
   @IsString()
-  @Length(32, 32)
-  public id!: string;
+  @Length(24, 24)
+  public logId!: string;
+}
+
+export class LogDeleteAdminDTO {
+  @IsDefined()
+  @IsString()
+  @Length(24, 24)
+  public logId!: string;
 }
 
 export class LogUploadDTO {

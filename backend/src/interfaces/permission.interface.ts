@@ -1,5 +1,5 @@
 export interface Permissions {
   _id: string;
-  roles: string[];
+  roles: number[];
   permissions: string[];
 }

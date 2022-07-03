@@ -68,7 +68,7 @@ class LogsService {
   public deleteLog = async (id: mongoose.Types.ObjectId | string): Promise<void> => {
     try {
       const logged = await RedisService.get(`log:${id}`);
-      if (logged) RedisService.del(`log:${id}`);
+      if (logged) await RedisService.del(`log:${id}`);
 
       await this.logs.findByIdAndDelete(id);
       return;

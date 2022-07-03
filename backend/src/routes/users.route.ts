@@ -5,6 +5,7 @@ import { apiKeyMiddleware } from '@middlewares/auth.middleware';
 import { limiterUsers } from '@/middlewares/limiting.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
 import { ApiKeyDTO } from '@/dtos/auth.dto';
+import { UserGetDTO } from '@/dtos/users.dto';
 
 class UsersRoute implements Routes {
   public path = '/users';
@@ -16,15 +17,19 @@ class UsersRoute implements Routes {
   }
 
   private initializeRoutes() {
-    this.router.get(
+    // Get the user's info
+    this.router.post(
       `${this.path}/me`,
-      [limiterUsers, validationMiddleware(ApiKeyDTO, 'query'), apiKeyMiddleware('query', 'user.self')],
+      [limiterUsers, validationMiddleware(ApiKeyDTO, 'body'), apiKeyMiddleware('body', ['users.self.get'], true)],
+      this.usersController.getSelf,
+    );
+
+    // Get any user by ID, requires permission
+    this.router.post(
+      `${this.path}/get`,
+      [limiterUsers, validationMiddleware(UserGetDTO, 'body'), apiKeyMiddleware('body', ['users.admin.get'], true)],
       this.usersController.getUser,
     );
-    // this.router.get(`${this.path}/:id`, authMiddleware, this.usersController.getUserById);
-    // this.router.post(`${this.path}`, authMiddleware, this.usersController.createUser);
-    // this.router.put(`${this.path}/:id`, authMiddleware, this.usersController.updateUser);
-    // this.router.delete(`${this.path}/:id`, authMiddleware, this.usersController.deleteUser);
   }
 }
 

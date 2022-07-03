@@ -1,7 +1,7 @@
 import { IsString, Length } from 'class-validator';
 
 export class RegisterDTO {
-  @Length(1)
   @IsString()
+  @Length(1)
   public code: string;
 }

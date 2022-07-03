@@ -42,6 +42,11 @@ class RedisService {
     else return Promise.reject('Redis not connected');
   }
 
+  public static async mget(keys: string[]) {
+    if (RedisService.connection && RedisService.connected) return RedisService.connection.mget(keys);
+    else return Promise.reject('Redis not connected');
+  }
+
   public static async set(key: string, value: string, expireType?: 'KEEPTTL' | 'PX' | 'EX' | undefined, expireTime?: number) {
     if (RedisService.connection && RedisService.connected) {
       switch (expireType) {
@@ -57,7 +62,12 @@ class RedisService {
     } else return Promise.reject('Redis not connected');
   }
 
-  public static async del(...keys: string[]) {
+  public static async del(key: string) {
+    if (RedisService.connection && RedisService.connected) return RedisService.connection.del(key);
+    else return Promise.reject('Redis not connected');
+  }
+
+  public static async mdel(keys: string[]) {
     if (RedisService.connection && RedisService.connected) return RedisService.connection.del(keys);
     else return Promise.reject('Redis not connected');
   }

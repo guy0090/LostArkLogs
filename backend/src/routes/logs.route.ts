@@ -25,15 +25,15 @@ class LogsRoute implements Routes {
     // Upload log
     this.router.post(
       `${this.path}/upload`,
-      [limiterUsers, validationMiddleware(LogUploadDTO, 'body'), apiKeyMiddleware('body', 'log.upload')],
+      [limiterUsers, validationMiddleware(LogUploadDTO, 'body'), apiKeyMiddleware('body', ['log.upload'])],
       this.logsController.uploadLog,
     );
 
     // Delete a log
-    this.router.delete(
+    this.router.post(
       `${this.path}/delete`,
-      [limiterUsers, validationMiddleware(LogDeleteDTO, 'query'), apiKeyMiddleware('query', 'log.delete')],
-      this.logsController.deleteLog,
+      [limiterUsers, validationMiddleware(LogDeleteDTO, 'body'), apiKeyMiddleware('body', ['log.delete'], true)],
+      this.logsController.deleteOwnLog,
     );
 
     // Get currently tracked bosses (bosses that exist in logs)

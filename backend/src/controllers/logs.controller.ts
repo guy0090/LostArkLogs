@@ -39,11 +39,29 @@ class LogsController {
 
   public deleteLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const logId = req.params.id;
+      const logId: string = req.body.logId;
       await this.logService.deleteLog(logId);
 
-      res.status(200).json({ deleted: true });
+      res.status(200).json({ id: logId, deleted: true });
     } catch (error) {
+      next(new Exception(500, 'Error deleting log'));
+    }
+  };
+
+  public deleteOwnLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      const logId: string = req.body.logId;
+
+      const findLog = await this.logService.getLogById(logId);
+      if (!findLog) throw new Exception(404, 'Log not found');
+      if (findLog.creator === `${user._id}`) {
+        await this.logService.deleteLog(logId);
+        res.status(200).json({ deleted: true });
+      } else {
+        throw new Exception(403, 'You do not have permission to delete this log');
+      }
+    } catch (err) {
       next(new Exception(500, 'Error deleting log'));
     }
   };

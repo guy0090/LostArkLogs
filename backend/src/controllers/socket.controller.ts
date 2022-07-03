@@ -140,7 +140,7 @@ class SocketController {
     socket.on('tokens', async (args, callback) => {
       try {
         const { access, uploadKey, returnedUser } = await this.socketService.refreshToken(args);
-        const permissions = await this.permissionService.getPermissions(args.u._id);
+        const permissions = await this.permissionService.getUserPermissions(args.u._id);
 
         callback({ at: access, u: returnedUser, ut: uploadKey, p: permissions });
       } catch (err) {

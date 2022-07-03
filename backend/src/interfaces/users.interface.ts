@@ -27,3 +27,8 @@ export interface User {
   discriminator: number;
   avatar: string;
 }
+
+export interface UserUpdate {
+  id: string;
+  username?: string;
+}

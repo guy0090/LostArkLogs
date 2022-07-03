@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { getRandomString } from '@/utils/crypto';
 import { DiscordUser } from '@/interfaces/discord.interface';
 import RedisService from '@/services/redis.service';
+import PermissionsService from '@/services/permissions.service';
 import ms from 'ms';
 
 /**
@@ -13,6 +14,7 @@ import ms from 'ms';
  */
 class UserService {
   public users = userModel;
+  public permissionsService = new PermissionsService();
 
   /**
    * Find all users in the database. Defaults to 50.
@@ -146,11 +148,51 @@ class UserService {
   public async deleteUser(userId: string): Promise<void> {
     try {
       const cached = await RedisService.get(`user:${userId}`);
-      if (cached) RedisService.del(`user:${userId}`);
+      if (cached) await RedisService.del(`user:${userId}`);
 
       await this.users.findByIdAndDelete(userId);
 
       return;
+    } catch (err) {
+      throw new HttpException(400, err.message);
+    }
+  }
+
+  public async banUser(userId: mongoose.Types.ObjectId, reason: string): Promise<User> {
+    try {
+      const cached = await RedisService.get(`user:${userId}`);
+      if (cached) await RedisService.del(`user:${userId}`);
+
+      const update = await this.updateUser(userId, { banned: true, banReason: reason });
+
+      return update;
+    } catch (err) {
+      throw new HttpException(400, err.message);
+    }
+  }
+
+  public async unbanUser(userId: mongoose.Types.ObjectId): Promise<User> {
+    try {
+      const cached = await RedisService.get(`user:${userId}`);
+      if (cached) await RedisService.del(`user:${userId}`);
+      const update = await this.updateUser(userId, { banned: false, banReason: '' });
+
+      return update;
+    } catch (err) {
+      throw new HttpException(400, err.message);
+    }
+  }
+
+  public async getBannedUsers(): Promise<{ id: string; name: string; reason: string }[]> {
+    try {
+      const users = await this.users.find({ banned: true }).lean();
+      return users.map((user: User) => {
+        return {
+          id: `${user._id}`,
+          name: user.username,
+          reason: user.banReason,
+        };
+      });
     } catch (err) {
       throw new HttpException(400, err.message);
     }

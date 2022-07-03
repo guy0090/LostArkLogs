@@ -95,14 +95,15 @@ class DiscordService {
 
   /**
    * Create the user's DiscordOAuthGrant object in MongoDB.
-   * @param {ObjectId} id The user's ID
+   *
+   * @param {ObjectId} userId The user's ID
    * @param {DiscordOAuthGrant} grant The `DiscordOAuthGrant` object received from Discord
    * @returns The user's `DiscordOAuth` object
    */
-  public async createGrant(id: mongoose.Types.ObjectId, grant: DiscordOAuthGrant): Promise<DiscordOAuth> {
+  public async createGrant(userId: mongoose.Types.ObjectId, grant: DiscordOAuthGrant): Promise<DiscordOAuth> {
     try {
       const createGrant = await this.grants.create({
-        _id: id,
+        _id: userId,
         discordAccess: grant.access_token,
         discordRefresh: grant.refresh_token,
         expires: new Date(Date.now() + grant.expires_in * 1000),
@@ -117,14 +118,29 @@ class DiscordService {
   }
 
   /**
+   * Delete the user's DiscordOAuthGrant object from MongoDB.
+   *
+   * @param {mongoose.Types.ObjectId} userId The ID of the user whos Discord auth information should be deleted
+   * @returns {void} No return value
+   */
+  public async deleteGrant(userId: mongoose.Types.ObjectId): Promise<void> {
+    try {
+      await this.grants.deleteOne({ _id: userId });
+    } catch (err) {
+      throw new HttpException(500, 'Error deleting Discord auth');
+    }
+  }
+
+  /**
    * Upade the user's DiscordOAuthGrant object in MongoDB.
-   * @param {ObjectId} id The user's ID
+   *
+   * @param {ObjectId} userId The user's ID
    * @param {any} update The update object
    * @returns {Promise<DiscordOAuth>} The user's updated `DiscordOAuth` object
    */
-  public async updateGrant(id: mongoose.Types.ObjectId, update: any): Promise<DiscordOAuth> {
+  public async updateGrant(userId: mongoose.Types.ObjectId, update: any): Promise<DiscordOAuth> {
     try {
-      const updateGrant = await this.grants.findByIdAndUpdate(id, { $set: update }, { returnDocument: 'after' });
+      const updateGrant = await this.grants.findByIdAndUpdate(userId, { $set: update }, { returnDocument: 'after' });
       return updateGrant;
     } catch (err) {
       throw new HttpException(500, 'Error updating Discord auth');
