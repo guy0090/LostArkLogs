@@ -94,6 +94,10 @@ class LogsService {
 
   public getUniqueEntities = async (type?: ENTITY_TYPE[] | undefined): Promise<any[]> => {
     if (!type) type = [ENTITY_TYPE.BOSS, ENTITY_TYPE.GUARDIAN];
+
+    const cached = await RedisService.get(`uniqueEntities:${type.join(',')}`);
+    if (cached) return JSON.parse(cached);
+
     try {
       const bosses = [];
       // TODO: Use find here instead?
@@ -125,6 +129,9 @@ class LogsService {
       for (const doc of await aggregate) {
         bosses.push(doc._id);
       }
+
+      await RedisService.set(`uniqueEntities:${type.join(',')}`, JSON.stringify(bosses), 'PX', ms('5m'));
+
       return bosses;
     } catch (err) {
       logger.error(err);
