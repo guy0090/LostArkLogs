@@ -2,7 +2,7 @@
   <v-container fluid v-if="JSON.stringify(session) !== '{}'">
     <v-row id="title">
       <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
-      <v-col cols="auto" class="align-self-center expand-sm">
+      <v-col cols="auto" class="align-self-center">
         <v-chip
           variant="contained-text"
           label
@@ -13,6 +13,15 @@
           UPLOADED {{ timeSince(session.createdAt).toUpperCase() }}
         </v-chip>
       </v-col>
+      <v-spacer v-if="!$vuetify.display.sm && !$vuetify.display.xs"></v-spacer>
+      <v-col
+        v-if="store.getters.uploadToken !== null && isUpload"
+        cols="auto"
+        class="me-2"
+      >
+        <v-btn color="success" v-on:click="saveUpload">SAVE</v-btn>
+      </v-col>
+      <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
     </v-row>
     <v-row id="summary" class="ma-1" justify="center">
       <v-col class="hide-on-sm px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
@@ -82,7 +91,17 @@ export default defineComponent({
 
   mounted() {
     this.store.commit("setPageLoading", true);
-    this.getSession();
+    if (this.$props.uSession) {
+      const session = this.$props.uSession as Session;
+      this.loadFileSession(session);
+    } else {
+      this.getSession();
+    }
+  },
+
+  props: {
+    uSession: Object || undefined,
+    isUpload: false || Boolean,
   },
 
   setup() {
@@ -94,10 +113,8 @@ export default defineComponent({
 
   data() {
     return {
-      revealToken: false,
       loadingMessage: "LOADING",
       session: {} as Session,
-      tab: null,
     };
   },
 
@@ -132,6 +149,12 @@ export default defineComponent({
           this.store.commit("setPageLoading", false);
           this.loadingMessage = `Error loading session ${id}`;
         });
+    },
+    loadFileSession(session: Session) {
+      this.session = session;
+      this.players = this.getPlayerEntities(false);
+
+      this.store.commit("setPageLoading", false);
     },
     duplicateEntities(session: Session) {
       return [
@@ -231,6 +254,19 @@ export default defineComponent({
         .map((e, idx) => {
           return { ...e, iid: idx + 1 };
         });
+    },
+    async saveUpload() {
+      const session: Session = JSON.parse(JSON.stringify(this.session));
+      const uploadKey = this.store.getters.uploadToken;
+
+      const upload = { key: uploadKey, data: session };
+
+      const response = await axios.post(
+        `${this.store.getters.apiUrl}/logs/upload`,
+        upload
+      );
+      const createdId = response.data.id;
+      this.$router.push({ path: `/logs/${createdId}` });
     },
   },
 });

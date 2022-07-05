@@ -13,6 +13,7 @@ import AdminView from "@/views/admin.view.vue";
 
 import LogsBase from "@/components/logs/base.component.vue";
 import Log from "@/components/logs/log.component.vue";
+import ULog from "@/components/logs/ulog.component.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -44,6 +45,12 @@ const routes: Array<RouteRecordRaw> = [
         component: Log,
       },
     ],
+  },
+  {
+    path: "/ulog",
+    name: "ulog",
+    component: ULog,
+    props: true,
   },
   {
     path: "/a",

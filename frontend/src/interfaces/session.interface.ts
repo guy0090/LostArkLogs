@@ -6,11 +6,39 @@ export enum ENTITY_TYPE {
   PLAYER = 3,
 }
 
+export interface USession {
+  id: string;
+  server?: string;
+  region?: string;
+  firstPacket: number;
+  lastPacket: number;
+  duration?: number;
+  createdAt: number;
+  entities: UEntity[];
+  damageStatistics: DamageStatistics;
+}
+
+export interface UEntity {
+  id: string;
+  npcId: number | undefined;
+  name?: string;
+  lastUpdate: number;
+  type: ENTITY_TYPE;
+  classId: number;
+  level: number;
+  gearLevel: string | number;
+  skills: { [key: string]: Skill } | Skill[];
+  stats: Stats;
+  iid?: number;
+}
+
 export interface Session {
   id: string;
   server?: string;
   region?: string;
   creator: string;
+  firstPacket: number;
+  lastPacket: number;
   duration: number;
   createdAt: number;
   entities: Entity[];
@@ -31,7 +59,7 @@ export interface Entity {
 
 export interface Skill {
   id: number;
-  breakdown: SkillBreakdown[];
+  breakdown?: SkillBreakdown[];
   stats: SkillStats;
 }
 
