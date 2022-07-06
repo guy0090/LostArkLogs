@@ -115,7 +115,7 @@ class RoleService {
       const uncached = [];
       cached.forEach((role, index) => {
         if (!role) uncached.push(roles[index]);
-        else result.push(role);
+        else result.push(JSON.parse(role));
       });
 
       if (result.length === roles.length) return result;
