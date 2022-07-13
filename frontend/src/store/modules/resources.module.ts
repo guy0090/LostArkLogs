@@ -1,4 +1,3 @@
-import { Entity } from "@/interfaces/session.interface";
 import { SupportedRaid } from "@/interfaces/util.interface";
 import { Module } from "vuex";
 

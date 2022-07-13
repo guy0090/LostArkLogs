@@ -180,7 +180,7 @@ export default defineComponent({
       }, 200);
     }
 
-    this.getRecentSessions(500);
+    this.getRecentSessions(100);
   },
   setup() {
     const store = useStore();

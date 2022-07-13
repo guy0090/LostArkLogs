@@ -68,7 +68,11 @@
                       <v-chip
                         :class="`ma-2 ps-1 ${
                           $vuetify.display.xs ? 'pe-0' : ''
-                        } ${filter.classes.includes(c.id) ? `c-${c.id}` : ''}`"
+                        } ${
+                          filter.classes.includes(c.id)
+                            ? 'bg-indigo-darken-3'
+                            : ''
+                        }`"
                         label
                         :id="c.id"
                         :ripple="false"
@@ -330,8 +334,6 @@ import {
 import { defineComponent, reactive, ref } from "vue";
 import { useStore } from "vuex";
 import axios from "axios";
-import ms from "ms";
-
 import EncounterCard from "@/components/home/encounter.component.vue";
 
 export default defineComponent({
@@ -357,7 +359,8 @@ export default defineComponent({
       classes: [] as number[],
       bosses: [] as number[],
       gearLevel: [302, 1625],
-      range: [+new Date() - ms("23h"), +new Date()],
+      // range: [+new Date() - ms("23h"), +new Date()],
+      range: [],
       level: [50, 60],
       partyDps: 0,
       server: "any",
@@ -385,7 +388,8 @@ export default defineComponent({
   mounted() {
     this.store.commit("setPageLoading", true);
 
-    this.loadFilters();
+    const lastFilter = localStorage.getItem("lastFilter");
+    if (lastFilter) this.loadFilter(JSON.parse(lastFilter));
 
     this.getSupportedBosses(this.onlyTracked).then((s) => {
       this.store.commit("setPageLoading", false);
@@ -401,6 +405,16 @@ export default defineComponent({
       if (!filters) return [];
       return JSON.parse(filters);
     },
+    loadFilter(filter: LogFilter) {
+      this.filter.bosses = filter.bosses || [];
+      this.filter.classes = filter.classes || [];
+      this.filter.gearLevel = filter.gearLevel || [302, 1625];
+      this.filter.range = filter.range || [];
+      this.filter.level = filter.level || [50, 60];
+      this.filter.partyDps = filter.partyDps || 0;
+      this.filter.server = filter.server || "any";
+      this.filter.region = filter.region || "any";
+    },
     saveFilter() {
       const newFilter = JSON.parse(JSON.stringify(this.filter));
       return newFilter;
@@ -409,7 +423,8 @@ export default defineComponent({
       this.filter.bosses = [];
       this.filter.classes = [];
       this.filter.gearLevel = [302, 1625];
-      this.filter.range = [+new Date() - ms("1d"), +new Date()];
+      // this.filter.range = [+new Date() - ms("1d"), +new Date()];
+      this.filter.range = [];
       this.filter.level = [50, 60];
       this.filter.partyDps = 0;
       this.filter.region = "any";
@@ -417,6 +432,8 @@ export default defineComponent({
 
       this.filtered = [];
       this.lastFilter = {} as LogFilter;
+
+      localStorage.removeItem("lastFilter");
     },
     getClasses() {
       const classes: any[] = [];
@@ -589,6 +606,9 @@ export default defineComponent({
               break;
           }
         }
+        supported.sort(
+          (a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name)
+        );
         return supported;
       } catch (err) {
         this.store.dispatch("error", err);
@@ -616,7 +636,9 @@ export default defineComponent({
         this.loading = false;
         return;
       } else {
+        this.filtered = [];
         this.lastFilter = filter;
+        localStorage.setItem("lastFilter", JSON.stringify(filter));
         this.loading = true;
       }
 
@@ -630,10 +652,11 @@ export default defineComponent({
 
         setTimeout(() => {
           this.filtered = logs.data.sort(
-            (a: Session, b: Session) => b.createdAt - a.createdAt
+            (a: Session, b: Session) =>
+              b.damageStatistics.dps - a.damageStatistics.dps
           );
           this.loading = false;
-        }, 250);
+        }, 50);
       } catch (err) {
         this.store.dispatch("error", err);
         this.filtered = [];

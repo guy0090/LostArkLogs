@@ -1,6 +1,7 @@
 import { Session } from "@/interfaces/session.interface";
 import axios from "axios";
 import { Module } from "vuex";
+import ms from "ms";
 
 /**
  * Module containing log related functions and variables.
@@ -47,7 +48,7 @@ export const logs: Module<any, any> = {
             bosses: [],
             gearLevel: [0, 1625],
             level: [0, 60],
-            range: [],
+            range: [+new Date() - ms("23h"), +new Date()],
             partyDps: 0,
             key: key,
           },
@@ -77,7 +78,7 @@ export const logs: Module<any, any> = {
             bosses: [],
             gearLevel: [0, 1625],
             level: [0, 60],
-            range: [],
+            range: [+new Date() - ms("23h"), +new Date()],
             partyDps: 0,
           },
           headers: {

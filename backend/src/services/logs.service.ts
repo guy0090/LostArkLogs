@@ -144,67 +144,90 @@ class LogsService {
       let user: User | undefined = undefined;
       if (filter.key) user = await this.users.findByApiKey(filter.key);
 
-      const aggrQuery = [
+      const aggrPipeline = [
         {
+          // Match for filtered bosses, creator and creation date first
+          $match: {},
+        },
+        {
+          // Unwind entities to allow specific filters
           $unwind: {
             path: '$entities',
             preserveNullAndEmptyArrays: false,
           },
         },
         {
+          // Add specific entity filters
           $match: {},
         },
         {
+          // Group by ID and DPS
           $group: {
-            _id: '$_id',
+            _id: {
+              id: '$_id',
+              created: '$createdAt',
+              dps: '$entities.stats.dps',
+            },
           },
+        },
+        {
+          // Sort by either DPS or creation date (TODO: or both? more? only dps? allow option?)
+          $sort: {
+            // '_id.created': -1,
+            '_id.dps': -1,
+          },
+        },
+        {
+          // Limit the number of results
+          $limit: 20,
         },
       ];
 
-      const $match = {
-        'entities.level': {
-          $gte: filter.level[0],
-          $lte: filter.level[1],
-        },
-        'entities.gearLevel': {
-          $gte: filter.gearLevel[0],
-          $lte: filter.gearLevel[1],
-        },
-        'damageStatistics.dps': {
-          $gte: filter.partyDps,
-        },
-      };
-
+      const firstMatch = {};
       if (user) {
-        $match['creator'] = user._id;
+        firstMatch['creator'] = user._id;
+      }
+
+      if (filter.bosses.length > 0) {
+        firstMatch['entities.npcId'] = {
+          $in: filter.bosses,
+        };
       }
 
       if (filter.range.length > 0) {
-        $match['createdAt'] = {
+        firstMatch['createdAt'] = {
           $gte: filter.range[0],
           $lte: filter.range[1],
         };
-      } else {
-        $match['createdAt'] = {
-          $gte: +new Date() - ms('24h'),
-          $lte: +new Date(),
-        };
       }
+
+      const secondMatch = {
+        'entities.level': {
+          $gte: filter.level[0], // default 0
+          $lte: filter.level[1], // default 60
+        },
+        'entities.gearLevel': {
+          $gte: filter.gearLevel[0], // default 302
+          $lte: filter.gearLevel[1], // default 1625
+        },
+        'damageStatistics.dps': {
+          $gte: filter.partyDps, // default 0
+        },
+      };
 
       if (filter.classes.length > 0) {
-        $match['entities.classId'] = { $in: filter.classes };
+        secondMatch['entities.classId'] = { $in: filter.classes };
       }
 
-      aggrQuery[1] = { $match };
+      aggrPipeline[0] = { $match: firstMatch };
+      aggrPipeline[2] = { $match: secondMatch };
 
-      const foundIds = await this.logs.aggregate(aggrQuery);
+      const foundIds = await this.logs.aggregate(aggrPipeline);
       if (foundIds.length > 0) {
-        const findQuery = { _id: { $in: foundIds.map(doc => doc._id) } };
-        if (filter.bosses.length > 0) {
-          findQuery['entities.npcId'] = { $in: filter.bosses };
-        }
+        const logIds = foundIds.map(grp => grp._id.id);
+        const findQuery = { _id: { $in: logIds } };
 
-        const foundLogs = await this.logs.find(findQuery).lean().limit(20);
+        const foundLogs = await this.logs.find(findQuery).lean();
         return foundLogs.map(log => new LogObject(log));
       }
 
