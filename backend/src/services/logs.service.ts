@@ -166,7 +166,7 @@ class LogsService {
             _id: {
               id: '$_id',
               created: '$createdAt',
-              dps: '$entities.stats.dps',
+              dps: '$damageStatistics.dps',
             },
           },
         },
