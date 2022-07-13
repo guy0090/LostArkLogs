@@ -83,6 +83,7 @@
                           class="me-1"
                           :image="`/img/sprites/${c.id}.webp`"
                           style="user-select: none"
+                          rounded="0"
                         ></v-avatar>
                         <span class="hide-on-sm" style="user-select: none">{{
                           c.name
@@ -141,6 +142,7 @@
                           class="me-1"
                           :image="`/img/sprites/${boss.type}.webp`"
                           style="user-select: none"
+                          rounded="0"
                         ></v-avatar>
                         <span style="user-select: none">{{
                           $t(`monsters.${boss.id}`)

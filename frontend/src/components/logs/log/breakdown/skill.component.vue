@@ -1,7 +1,7 @@
 <template>
   <v-row class="mb-0 mt-1">
     <v-col cols="auto" class="pt-2 pb-0 ps-1 pe-0"
-      ><v-avatar class="skill-icon"
+      ><v-avatar class="skill-icon" rounded="0"
         ><v-img :src="skillIcon" v-on:error="onImgMissing" /></v-avatar
     ></v-col>
     <v-col cols="6" class="align-self-center ms-2">
@@ -105,7 +105,7 @@ export default defineComponent({
   computed: {
     skillIcon: function () {
       return this.missingImage
-        ? "/img/sprites/unknown.webp"
+        ? "/img/sprites/e400.webp"
         : `/img/sprites/${this.skill?.id}.webp`;
     },
   },
@@ -166,6 +166,7 @@ export default defineComponent({
         return "0";
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onImgMissing(_event: Event) {
       this.missingImage = true;
     },

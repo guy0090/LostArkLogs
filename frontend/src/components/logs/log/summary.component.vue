@@ -7,6 +7,7 @@
         <v-row>
           <v-col cols="auto">
             <v-avatar
+              rounded="0"
               :image="
                 encounterShort === 'ue'
                   ? '/img/sprites/e400.webp'

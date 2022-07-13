@@ -3,7 +3,7 @@
     <v-card :class="`c-${entity?.classId}`">
       <v-row dense>
         <v-col cols="auto" class="ms-1 me-0">
-          <v-avatar size="26">
+          <v-avatar size="26" rounded="0">
             <img
               width="28"
               height="28"

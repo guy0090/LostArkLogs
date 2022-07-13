@@ -12,7 +12,10 @@
       <v-card-content class="pa-3">
         <v-row :class="$vuetify.display.xs ? 'pb-2' : 'py-1'">
           <v-col cols="auto" class="align-self-center">
-            <v-avatar :image="`/img/sprites/${encounterName}.webp`" />
+            <v-avatar
+              rounded="0"
+              :image="`/img/sprites/${encounterName}.webp`"
+            />
           </v-col>
           <v-col cols="auto" class="align-self-center">
             <v-row
@@ -45,7 +48,10 @@
               }`"
               :style="i >= 4 ? 'display: none' : ''"
             >
-              <v-avatar :image="`/img/sprites/${entity.classId}.webp`" />
+              <v-avatar
+                rounded="0"
+                :image="`/img/sprites/${entity.classId}.webp`"
+              />
               <span v-if="!$vuetify.display.xs"
                 >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
               >

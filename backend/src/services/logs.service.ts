@@ -144,7 +144,7 @@ class LogsService {
       let user: User | undefined = undefined;
       if (filter.key) user = await this.users.findByApiKey(filter.key);
 
-      const aggrPipeline = [
+      const aggrPipeline: any[] = [
         {
           // Match for filtered bosses, creator and creation date first
           $match: {},
@@ -165,21 +165,10 @@ class LogsService {
           $group: {
             _id: {
               id: '$_id',
-              created: '$createdAt',
+              createdAt: '$createdAt',
               dps: '$damageStatistics.dps',
             },
           },
-        },
-        {
-          // Sort by either DPS or creation date (TODO: or both? more? only dps? allow option?)
-          $sort: {
-            // '_id.created': -1,
-            '_id.dps': -1,
-          },
-        },
-        {
-          // Limit the number of results
-          $limit: 20,
         },
       ];
 
@@ -194,11 +183,17 @@ class LogsService {
         };
       }
 
+      // If the filter contains a time range, sort by creation date (by most recent)
+      // If it doesn't contain a time range, sort by DPS (by highest)
+      // TODO: Add an option to sort by either
       if (filter.range.length > 0) {
         firstMatch['createdAt'] = {
           $gte: filter.range[0],
           $lte: filter.range[1],
         };
+        aggrPipeline.push({ $sort: { '_id.createdAt': -1 } });
+      } else {
+        aggrPipeline.push({ $sort: { '_id.dps': -1 } });
       }
 
       const secondMatch = {
@@ -221,6 +216,7 @@ class LogsService {
 
       aggrPipeline[0] = { $match: firstMatch };
       aggrPipeline[2] = { $match: secondMatch };
+      aggrPipeline.push({ $limit: 20 });
 
       const foundIds = await this.logs.aggregate(aggrPipeline);
       if (foundIds.length > 0) {
