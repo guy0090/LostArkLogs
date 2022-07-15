@@ -20,13 +20,13 @@ const perms = new PermissionsService();
 /**
  * Express middleware to handle authentication on HTTP requests.
  *
- * @param {string[] | undefined} permissions Optional: The permissions required to access the route.
+ * @param permissions Optional: The permissions required to access the route.
  */
 export const httpAuthMiddleware = (permissions?: string[], byPassCache = false) => {
   return async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const refresh = req.cookies['Authorization'] || (req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null);
-      const access = req.cookies['at'] || (req.header('at').split('Bearer ')[1] ? req.header('at') : null);
+      const refresh = req.cookies['Authorization'] || req.header('Authorization');
+      const access = req.cookies['at'] || req.header('at');
 
       if (refresh) {
         const secretKey: string = SECRET_KEY;
@@ -91,8 +91,8 @@ export const apiKeyMiddleware = (
 
       if (!access && cookieFallback) {
         logger.debug('No API key found in request, falling back to cookie');
-        const refreshToken = req.cookies['Authorization'] || (req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null);
-        const accessToken = req.cookies['at'] || (req.header('at').split('Bearer ')[1] ? req.header('at') : null);
+        const refreshToken = req.cookies['Authorization'] || req.header('Authorization');
+        const accessToken = req.cookies['at'] || req.header('at');
 
         if (refreshToken) {
           const secretKey: string = SECRET_KEY;
