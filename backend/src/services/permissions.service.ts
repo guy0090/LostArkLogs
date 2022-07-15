@@ -41,6 +41,27 @@ class PermissionsService {
   }
 
   /**
+   * Set permissions for a user.
+   *
+   * @param userId The user's database ID
+   * @param setPermissions The new permissions to set
+   * @returns The new `Permissions` object with set permissions
+   */
+  public async setPermissions(userId: mongoose.Types.ObjectId, setPermissions: string[]): Promise<Permissions> {
+    try {
+      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { permissions: setPermissions }, { returnDocument: 'after' });
+      if (!updatePermissions) throw new Error('Error setting permissions: update failed');
+
+      const cached = await RedisService.get(`permissions:${userId}`);
+      if (cached) await RedisService.del(`permissions:${userId}`);
+
+      return updatePermissions;
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  /**
    * Add permissions to the user.
    *
    * @param userId The user's database ID
@@ -49,10 +70,11 @@ class PermissionsService {
    */
   public async addPermissions(userId: mongoose.Types.ObjectId, newPermissions: string[]): Promise<Permissions> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error(`Permissions document not found for user: ${userId}`);
-
-      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $addToSet: { permissions: { $each: newPermissions } } });
+      const updatePermissions = await this.permissions.findByIdAndUpdate(
+        userId,
+        { $addToSet: { permissions: { $each: newPermissions } } },
+        { returnDocument: 'after' },
+      );
       if (!updatePermissions) throw new Error('Error adding permissions: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
@@ -73,10 +95,11 @@ class PermissionsService {
    */
   public async removePermissions(userId: mongoose.Types.ObjectId, removePermissions: string[]): Promise<Permissions> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error(`Permissions document not found for user: ${userId}`);
-
-      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { $pull: { permissions: { $in: removePermissions } } });
+      const updatePermissions = await this.permissions.findByIdAndUpdate(
+        userId,
+        { $pull: { permissions: { $in: removePermissions } } },
+        { returnDocument: 'after' },
+      );
       if (!updatePermissions) throw new Error('Error removing permissions: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
@@ -116,6 +139,7 @@ class PermissionsService {
 
   /**
    * Get the user's permissions.
+   *
    * @param userId The user's database ID
    * @returns The user's permissions
    */
@@ -153,15 +177,22 @@ class PermissionsService {
    * @param checkPermissions The permissions to check for
    * @returns {boolean} If the user has the permission or not
    */
-  public async userHasPermissions(userId: mongoose.Types.ObjectId, checkPermissions: string[]): Promise<boolean> {
+  public async userHasPermissions(userId: mongoose.Types.ObjectId, checkPermissions: string[], byPassCache = false): Promise<boolean> {
     try {
-      const userPermissions = new Set(await this.getUserPermissions(userId));
-      return checkPermissions.every(permission => userPermissions.has(permission));
+      const userPermissions = new Set(await this.getUserPermissions(userId, byPassCache));
+      if (userPermissions.has('*')) return true;
+      else return checkPermissions.every(permission => userPermissions.has(permission));
     } catch (err) {
       throw new Exception(500, err.message);
     }
   }
 
+  /**
+   * Get a list of all roles a user has.
+   *
+   * @param userId The ID of the user to get roles for
+   * @returns The user's roles
+   */
   public async getUserRoles(userId: mongoose.Types.ObjectId): Promise<Role[]> {
     try {
       const findPermissions = await this.permissions.findOne({ _id: userId });
@@ -174,12 +205,16 @@ class PermissionsService {
     }
   }
 
+  /**
+   * Set a users roles, overwriting any currently set roles.
+   *
+   * @param userId The ID of the user to set roles for
+   * @param roles The roles to set
+   * @returns The user's roles
+   */
   public async setUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error(`Failed setting user roles: permissions document not found for user: ${userId}`);
-
-      const update = await this.permissions.findByIdAndUpdate(userId, { $set: { roles } });
+      const update = await this.permissions.findByIdAndUpdate(userId, { $set: { roles } }, { returnDocument: 'after' });
       if (!update) throw new Error('Error setting roles: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
@@ -191,11 +226,15 @@ class PermissionsService {
     }
   }
 
+  /**
+   * Add a role to a user. If the user already has the role, it will not be added again.
+   *
+   * @param userId The ID of the user to add the role to
+   * @param roles The IDs of the roles to add
+   * @returns The user's roles
+   */
   public async addUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error(`Failed adding user roles: permissions document not found for user: ${userId}`);
-
       const update = await this.permissions.findByIdAndUpdate(userId, { $addToSet: { roles: { $each: roles } } }, { returnDocument: 'after' });
       if (!update) throw new Error('Error adding roles: update failed');
 
@@ -208,11 +247,15 @@ class PermissionsService {
     }
   }
 
+  /**
+   * Remove roles from a user. If the user does not have the role, it will not be removed.
+   *
+   * @param userId The ID of the user to remove the role from
+   * @param roles The IDs of the roles to remove
+   * @returns The user's roles
+   */
   public async removeUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
     try {
-      const findPermissions = await this.permissions.findOne({ _id: userId });
-      if (!findPermissions) throw new Error(`Failed removing user roles: permissions document not found for user: ${userId}`);
-
       const update = await this.permissions.findByIdAndUpdate(userId, { $pull: { roles: { $in: roles } } }, { returnDocument: 'after' });
       if (!update) throw new Error('Error removing roles: update failed');
 
@@ -220,6 +263,44 @@ class PermissionsService {
       if (cached) await RedisService.del(`permissions:${userId}`);
 
       return update.roles;
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  public async userHasRole(userId: mongoose.Types.ObjectId, roleId: number): Promise<boolean> {
+    try {
+      const userRoles = await this.getUserRoles(userId);
+      return userRoles.some(role => role._id === roleId);
+    } catch (err) {
+      throw new Exception(500, err.message);
+    }
+  }
+
+  /**
+   * Get a list of all unverified users.
+   * TODO: Currently done under the assumption that role `id:0` will always be the unverified role
+   * and that role `id:1` will always be the verified role and that all other roles inherit from it.
+   *
+   * @returns A list of objects with a single key `_id` that are unverified users
+   */
+  public async getUnverifiedUserIds(): Promise<{ _id: mongoose.Types.ObjectId }[]> {
+    try {
+      const unverified = await this.permissions.aggregate([
+        {
+          $match: {
+            roles: {
+              $in: [0],
+            },
+          },
+        },
+        {
+          $project: {
+            _id: '$_id',
+          },
+        },
+      ]);
+      return unverified.map(res => res._id);
     } catch (err) {
       throw new Exception(500, err.message);
     }

@@ -37,7 +37,7 @@ class SocketService {
    * @param socket The connected socket
    * @returns The user's ID
    */
-  public async getUser(socket: Socket): Promise<string> {
+  public async getUserId(socket: Socket): Promise<string> {
     try {
       const socketHeaders = socket.request.headers;
       const refreshToken = socketHeaders['cookie'] ? cookie.parse(socketHeaders['cookie']).Authorization : null;

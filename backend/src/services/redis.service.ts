@@ -71,6 +71,26 @@ class RedisService {
     if (RedisService.connection && RedisService.connected) return RedisService.connection.del(keys);
     else return Promise.reject('Redis not connected');
   }
+
+  public static async flush() {
+    if (RedisService.connection && RedisService.connected) return RedisService.connection.flushdb();
+    else return Promise.reject('Redis not connected');
+  }
+
+  public static async keys(match = '*') {
+    if (RedisService.connection && RedisService.connected) return RedisService.connection.keys(match);
+    else return Promise.reject('Redis not connected');
+  }
+
+  public static async pexpiretime(key: string) {
+    if (RedisService.connection && RedisService.connected) return RedisService.connection.pexpiretime(key);
+    else return Promise.reject('Redis not connected');
+  }
+
+  public static async info() {
+    if (RedisService.connection && RedisService.connected) return RedisService.connection.info();
+    else return Promise.reject('Redis not connected');
+  }
 }
 
 export default RedisService;

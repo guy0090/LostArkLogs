@@ -10,6 +10,7 @@ class RoleService {
 
   /**
    * Create the default roles provided in `config/roles.ts` if they don't exist.
+   *
    * @returns The created roles if any
    */
   public static async initializeRoles(): Promise<Role[]> {
@@ -30,7 +31,8 @@ class RoleService {
   }
 
   /**
-   * Create a new role
+   * Create a new role.
+   *
    * @param role The role to add
    * @returns The created `Role`
    */
@@ -46,7 +48,8 @@ class RoleService {
   }
 
   /**
-   * Update an existing role
+   * Update an existing role.
+   *
    * @param id The id of the role to update
    * @param update The update to apply
    * @returns The updated `Role`
@@ -66,7 +69,8 @@ class RoleService {
   }
 
   /**
-   * Delete an existing role
+   * Delete an existing role.
+   *
    * @param id The id of the role to delete
    * @returns Nothing
    */
@@ -83,6 +87,13 @@ class RoleService {
     }
   }
 
+  /**
+   * Get a role by its ID.
+   *
+   * @param id The ID of the role to get
+   * @param byPassCache Whether to bypass the cache
+   * @returns The role with the given ID
+   */
   public async getRole(id: number, byPassCache = false): Promise<Role> {
     try {
       const cached = await RedisService.get(`role:${id}`);
@@ -100,6 +111,13 @@ class RoleService {
     }
   }
 
+  /**
+   * Get a list of roles.
+   *
+   * @param roles The IDs of the roles to get
+   * @param byPassCache Whether to bypass the cache for each role
+   * @returns The roles within the given IDs
+   */
   public async getRoles(roles: number[], byPassCache = false): Promise<Role[]> {
     try {
       if (byPassCache) {

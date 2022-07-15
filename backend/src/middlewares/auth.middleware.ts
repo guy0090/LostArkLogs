@@ -22,7 +22,7 @@ const perms = new PermissionsService();
  *
  * @param {string[] | undefined} permissions Optional: The permissions required to access the route.
  */
-export const httpAuthMiddleware = (permissions?: string[]) => {
+export const httpAuthMiddleware = (permissions?: string[], byPassCache = false) => {
   return async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const refresh = req.cookies['Authorization'] || (req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null);
@@ -36,7 +36,7 @@ export const httpAuthMiddleware = (permissions?: string[]) => {
           next(new HttpException(403, 'Invalid Authorization'));
         } else {
           const userId = refreshVerificationResponse.i;
-          let findUser: User = await users.findUserById(userId);
+          let findUser: User = await users.findUserById(userId, byPassCache);
 
           let accessVerificationResponse: DataStoredInToken;
           if (access) {
@@ -48,7 +48,7 @@ export const httpAuthMiddleware = (permissions?: string[]) => {
           }
 
           if (findUser) {
-            const hasPermission = permissions ? await perms.userHasPermissions(findUser._id, permissions) : true;
+            const hasPermission = permissions ? await perms.userHasPermissions(findUser._id, permissions, byPassCache) : true;
             if (hasPermission) {
               req.user = findUser;
               req.rt = refreshVerificationResponse;
@@ -161,7 +161,7 @@ export const socketAuthMiddleware = async (socket: Socket, event: Event, next: {
     if (!event) {
       next(new WsException(409, 'Event Missing'));
     } else if (SocketService.requiresAuthorization(event[0])) {
-      // If authorization is required, request body not be missing
+      // If authorization is required, request body must not be missing
       if (!event[1]) {
         next(new WsException(409, 'Event Body Missing'));
       } else if (refresh) {

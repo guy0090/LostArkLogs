@@ -10,6 +10,13 @@ import { NextFunction, Request, Response } from 'express';
 class LogsController {
   public logService = new LogsService();
 
+  /**
+   * Get a DPS log.
+   *
+   * @param req The passed request from express middleware with log ID
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public getLog = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const logId = req.body.id as string;
@@ -22,6 +29,14 @@ class LogsController {
     }
   };
 
+  /**
+   * Attempt to create a new DPS log.
+   * The log will be validated and created if valid, an error is thrown otherwise.
+   *
+   * @param req The passed request from express middleware with the new log and the uploader's information
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public uploadLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const log: Log = { ...req.body.data, creator: req.user._id, createdAt: +new Date() };
@@ -37,6 +52,13 @@ class LogsController {
     }
   };
 
+  /**
+   * Delete a DPS log.
+   *
+   * @param req The passed request from express middleware with log ID
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public deleteLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const logId: string = req.body.logId;
@@ -48,6 +70,14 @@ class LogsController {
     }
   };
 
+  /**
+   * Helper function to delete a user's own DPS log.
+   * If the user attempting to delete the log is not the owner, an error is thrown.
+   *
+   * @param req The passed request from express middleware with the ID of the log to delete and the user's information
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public deleteOwnLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const user = req.user;
@@ -66,6 +96,13 @@ class LogsController {
     }
   };
 
+  /**
+   * Get a list of all currently tracked bosses.
+   *
+   * @param req The passed request from express middleware
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public getUniqueBosses = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const bosses = await this.logService.getUniqueEntities();
@@ -75,6 +112,13 @@ class LogsController {
     }
   };
 
+  /**
+   * Get a list of all logs that match a provided filter.
+   *
+   * @param req The passed request from express middleware with the log filter
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public getFilteredLogs = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filter: LogFilter = req.body;

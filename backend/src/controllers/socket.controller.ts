@@ -6,12 +6,15 @@ import { User } from '@/interfaces/users.interface';
 import PageService from '@/services/pages.service';
 import PermissionsService from '@/services/permissions.service';
 import { WsException } from '@/exceptions/WsException';
+import { LogObject } from '@/objects/log.object';
+import LogsService from '@/services/logs.service';
 
 class SocketController {
   public static io: Server;
   public static socketService = new SocketService();
   public static pageService = new PageService();
   public static permissionService = new PermissionsService();
+  public static logService = new LogsService();
 
   /**
    * Event definitions.
@@ -37,9 +40,16 @@ class SocketController {
       auth: true,
       permissions: [],
     },
-    permissions: {
+    has_permissions: {
       auth: true,
       permissions: [],
+    },
+    upload_log: {
+      auth: true,
+      permissions: ['log.upload'],
+    },
+    unique_bosses: {
+      auth: false,
     },
   };
 
@@ -92,12 +102,12 @@ class SocketController {
     if (!socket) throw new WsException(500, 'Socket is not defined');
 
     try {
-      const socketUser = await this.socketService.getUser(socket);
+      const socketUser = await this.socketService.getUserId(socket);
       this.sockets[`${socketUser}`] = socket;
-      // logger.info(`Associated socket ${socket.id} with user ${socketUser}`);
+      logger.info(`Associated socket ${socket.id} with user ${socketUser}`);
     } catch (socketGetErr) {
-      if (socketGetErr.status === 404) logger.info(`Connecting socket ${socket.id} is not a verified user`);
-      else logger.error(`Unexpected error registered socket ${socket.id}: ${socketGetErr.message}`);
+      if (socketGetErr.status === 404) logger.info(`Connecting socket ${socket.id} is not a verified user, skipping registration`);
+      else logger.error(`Unexpected error registering socket ${socket.id}: ${socketGetErr.message}`);
     }
   }
 
@@ -106,24 +116,17 @@ class SocketController {
    * @param socket The socket to unregister
    * @returns Nothing
    */
-  private static async unregisterUserSocket(socket: Socket): Promise<void> {
+  private static async unregisterUserSocket(socket: Socket) {
     if (!socket) throw new WsException(500, 'Socket is not defined');
 
-    return new Promise((resolve, reject) => {
-      this.socketService
-        .getUser(socket)
-        .then(socketUser => {
-          if (this.sockets[`${socketUser}`].id === socket.id) delete this.sockets[`${socketUser}`];
-          logger.info(`Disassociated socket ${socket.id} with user ${socketUser}`);
-          resolve();
-        })
-        .catch(socketGetErr => {
-          if (socketGetErr.status === 404) {
-            logger.info(`Disconnecting socket ${socket.id} is not a verified user`);
-            resolve();
-          } else reject(socketGetErr);
-        });
-    });
+    try {
+      const socketUser = await this.socketService.getUserId(socket);
+      if (this.sockets[`${socketUser}`].id === socket.id) delete this.sockets[`${socketUser}`];
+      logger.info(`Disassociated socket ${socket.id} with user ${socketUser}`);
+    } catch (err) {
+      if (err.status === 404) logger.info(`Disconnecting socket ${socket.id} is not a verified user, skipping unregister`);
+      else logger.error(`Unexpected error unregistering socket ${socket.id}: ${err.message}`);
+    }
   }
 
   /**
@@ -155,6 +158,7 @@ class SocketController {
     socket.on('page_access', async (args, callback) => {
       try {
         const page: string = args.page;
+        const user: User = args.u;
 
         const { permissions } = await this.pageService.getPageByName(page);
         let access = false;
@@ -162,12 +166,11 @@ class SocketController {
         if (permissions.length === 0) {
           access = true;
         } else {
-          access = await this.permissionService.userHasPermissions(args.u._id, permissions);
+          access = await this.permissionService.userHasPermissions(user._id, permissions);
         }
 
-        logger.info(`Authorized ${socket.id} to access page ${page}: ${access}`);
-
-        callback({ access: access });
+        logger.info(`[WS] Authorized ${socket.id} to access page ${page}: ${access}`);
+        callback({ access });
       } catch (err) {
         logger.error(`Error authorizing page access for ${socket.id}`);
         callback({ access: false });
@@ -177,19 +180,52 @@ class SocketController {
     /**
      * Event for getting a user's permissions.
      */
-    socket.on('permissions', async (args, callback) => {
+    socket.on('has_permissions', async (args, callback) => {
       try {
         if (!args.p) {
           callback({ p: false });
         } else {
-          const permission = args.p as string;
-          const user: User = args.u as User;
-          const hasPermission = await this.permissionService.userHasPermissions(user._id, [permission]);
+          const permissions: string[] = args.p;
+          const user: User = args.u;
+          const hasPermission = await this.permissionService.userHasPermissions(user._id, permissions);
           callback({ p: hasPermission });
         }
       } catch (err) {
         logger.error(`Error getting permission ${args.p} for ${socket.id}: ${err.message}`);
         callback({ p: false });
+      }
+    });
+
+    /**
+     * Event for uploading a DPS log.
+     */
+    socket.on('upload_log', async (args, callback) => {
+      try {
+        const user: User = args.u;
+        const log = { ...args.data, creator: user._id, createdAt: +new Date() };
+        const toValidate = new LogObject(log);
+        await this.logService.validateLog(toValidate);
+
+        const createdLog: LogObject = await this.logService.createLog(toValidate);
+        if (!createdLog) throw new WsException(500, 'Log could not be created');
+
+        callback({ created: true, id: createdLog.id });
+      } catch (err) {
+        logger.error(`Error uploading log for ${socket.id}: ${err.message}`);
+        callback({ created: false });
+      }
+    });
+
+    /**
+     * Event for getting a list of unique bosses.
+     */
+    socket.on('unique_bosses', async (_args, callback) => {
+      try {
+        const bosses = await this.logService.getUniqueEntities();
+        callback({ bosses });
+      } catch (err) {
+        logger.error(`Error getting unique bosses for ${socket.id}: ${err.message}`);
+        callback({ bosses: [] });
       }
     });
 

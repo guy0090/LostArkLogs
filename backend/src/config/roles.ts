@@ -21,7 +21,15 @@ export const roles = [
     default: false,
     builtIn: true,
     inherits: [1],
-    permissions: ['admin'],
+    permissions: [
+      'admin',
+      'users.manage',
+      'users.manage.moderate',
+      'users.manage.permissions',
+      'users.manage.roles',
+      'logs.manage',
+      'service.manage.cache',
+    ],
   },
   {
     _id: 3,
@@ -29,6 +37,6 @@ export const roles = [
     default: false,
     builtIn: true,
     inherits: [2],
-    permissions: ['superadmin'],
+    permissions: ['*'],
   },
 ];

@@ -30,6 +30,8 @@ class App {
 
   constructor(routes: Routes[]) {
     this.app = express();
+    this.app.set('trust proxy', true);
+
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
 

@@ -1,4 +1,4 @@
-import { HttpException } from '@exceptions/HttpException';
+import { Exception } from '@exceptions/Exception';
 import { User } from '@interfaces/users.interface';
 import userModel from '@/models/user.model';
 import mongoose from 'mongoose';
@@ -17,13 +17,37 @@ class UserService {
   public permissionsService = new PermissionsService();
 
   /**
-   * Find all users in the database. Defaults to 50.
-   * @param limit The limit of users to return
-   * @returns All users found in database
+   * Find all users in the database. Defaults to 50 results per request.
+   *
+   * @param skip The number of users to skip
+   * @param limit The number of users to return
+   * @returns Users found in database
    */
-  public async findAllUser(limit = 50): Promise<User[]> {
-    const users: User[] = await this.users.find().limit(limit);
-    return users;
+  public async findAllUsers(skip = 0, limit = 50): Promise<User[]> {
+    const aggregate = await this.users.aggregate([
+      {
+        $project: {
+          username: '$username',
+          discrim: '$discriminator',
+          discordId: '$discordId',
+          banned: '$banned',
+          banReason: '$banReason',
+          registered: '$registered',
+        },
+      },
+      {
+        $sort: {
+          registered: -1,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ]);
+    return aggregate;
   }
 
   /**
@@ -40,18 +64,24 @@ class UserService {
         user = JSON.parse(cached);
       } else {
         user = await this.users.findById(userId);
-        if (!user) throw new HttpException(404, 'Error finding user');
+        if (!user) throw new Exception(404, 'Error finding user');
 
         await RedisService.set(`user:${userId}`, JSON.stringify(user), 'PX', ms('10m'));
       }
 
       return user;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
     }
   }
 
-  // TODO: Caching by discord ID AND user ID will lead to duplicates
+  /**
+   * Find a user by their Discord ID.
+   *
+   * @param discordId The Discord ID of the user to find
+   * @param byPassCache Whether to bypass the cache
+   * @returns The found user
+   */
   public async findUserByDiscordId(discordId: string, byPassCache = false): Promise<User> {
     try {
       let user: User = undefined;
@@ -60,36 +90,61 @@ class UserService {
         user = JSON.parse(cached);
       } else {
         user = await this.users.findOne({ discordId });
-        if (!user) throw new HttpException(404, 'Error finding user');
+        if (!user) throw new Exception(404, 'Error finding user');
 
         await RedisService.set(`user:${discordId}`, JSON.stringify(user), 'PX', ms('10m'));
       }
       return user;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
     }
   }
 
-  public async findByApiKey(uploadKey: string, byPassCache = false): Promise<User> {
+  /**
+   * Find a user by their API key.
+   *
+   * @param apiKey The API key of the user to find
+   * @param byPassCache Whether to bypass the cache
+   * @returns The found user
+   */
+  public async findByApiKey(apiKey: string, byPassCache = false): Promise<User> {
     try {
       let user: User = undefined;
-      const cached = await RedisService.get(uploadKey);
+      const cached = await RedisService.get(apiKey);
       if (cached && !byPassCache) {
         user = JSON.parse(cached);
       } else {
-        user = await this.users.findOne({ uploadKey });
-        if (!user) throw new HttpException(404, 'Error finding user');
+        user = await this.users.findOne({ uploadKey: apiKey });
+        if (!user) throw new Exception(404, 'Error finding user');
 
-        await RedisService.set(`user:${uploadKey}`, JSON.stringify(user), 'PX', ms('10m'));
+        await RedisService.set(`user:${apiKey}`, JSON.stringify(user), 'PX', ms('10m'));
       }
       return user;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
+    }
+  }
+
+  /**
+   * Search for users that match a username. Optionally case sensitive.
+   *
+   * @param {string} username The username to match for
+   * @returns The found users
+   */
+  public async searchUsernames(username: string, caseSensitive = false): Promise<User[]> {
+    try {
+      const regex = new RegExp(username, caseSensitive ? '' : 'i');
+      const users = await this.users.find({ username: { $regex: regex } });
+
+      return users;
+    } catch (err) {
+      throw new Exception(400, 'Error searching usernames');
     }
   }
 
   /**
    * Create a new user in MongoDB from their received Discord information.
+   *
    * @param {DiscordUser} user The `DiscordUser` object
    * @returns {Promise<User>} The new `User` object
    */
@@ -112,7 +167,7 @@ class UserService {
       RedisService.set(`user:${newUser._id}`, JSON.stringify(newUser), 'PX', ms('10m'));
       return newUser;
     } catch (err) {
-      throw new HttpException(500, 'Error creating user');
+      throw new Exception(500, 'Error creating user');
     }
   }
 
@@ -128,14 +183,14 @@ class UserService {
       if (update._id) delete update._id;
 
       const updateUserById: User = await this.users.findByIdAndUpdate(userId, { $set: update }, { returnDocument: 'after' });
-      if (!updateUserById) throw new HttpException(400, 'Error updating user');
+      if (!updateUserById) throw new Exception(400, 'Error updating user');
 
       const cached = await RedisService.get(`user:${userId}`);
       if (cached) await RedisService.set(`user:${userId}`, JSON.stringify(updateUserById), 'PX', ms('10m'));
 
       return updateUserById;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
     }
   }
 
@@ -147,54 +202,126 @@ class UserService {
    */
   public async deleteUser(userId: string): Promise<void> {
     try {
+      await this.users.findByIdAndDelete(userId);
+
       const cached = await RedisService.get(`user:${userId}`);
       if (cached) await RedisService.del(`user:${userId}`);
-
-      await this.users.findByIdAndDelete(userId);
 
       return;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
     }
   }
 
-  public async banUser(userId: mongoose.Types.ObjectId, reason: string): Promise<User> {
+  /**
+   * Ban a user. Removes all permissions and roles the user has.
+   *
+   * @param userId The ID of the user to ban
+   * @param reason The reason for the ban
+   * @returns Nothing
+   */
+  public async banUser(userId: mongoose.Types.ObjectId, reason = 'No Reason Specified'): Promise<User> {
     try {
-      const cached = await RedisService.get(`user:${userId}`);
-      if (cached) await RedisService.del(`user:${userId}`);
-
+      if (reason === '') reason = 'No Reason Specified';
+      // Remove permissions
+      await this.permissionsService.setPermissions(userId, []);
+      // Reset roles to default
+      await this.permissionsService.setUserRoles(userId, [0]);
+      // Ban user
       const update = await this.updateUser(userId, { banned: true, banReason: reason });
 
       return update;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
     }
   }
 
+  /**
+   * Unban a user.
+   *
+   * @param userId The id of the user to unban
+   * @returns The unbanned user
+   */
   public async unbanUser(userId: mongoose.Types.ObjectId): Promise<User> {
     try {
-      const cached = await RedisService.get(`user:${userId}`);
-      if (cached) await RedisService.del(`user:${userId}`);
+      // Remove permissions
+      await this.permissionsService.setPermissions(userId, []);
+      // Reset roles to default
+      await this.permissionsService.setUserRoles(userId, [0]);
+      // Remove ban
       const update = await this.updateUser(userId, { banned: false, banReason: '' });
 
       return update;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
     }
   }
 
-  public async getBannedUsers(): Promise<{ id: string; name: string; reason: string }[]> {
+  /**
+   * Get a list of all users in the database who are banned.
+   *
+   * @returns A list of banned users
+   */
+  public async getBannedUsers() {
     try {
-      const users = await this.users.find({ banned: true }).lean();
-      return users.map((user: User) => {
-        return {
-          id: `${user._id}`,
-          name: user.username,
-          reason: user.banReason,
-        };
-      });
+      const aggregate = await this.users.aggregate([
+        {
+          $match: {
+            banned: true,
+          },
+        },
+        {
+          $project: {
+            _id: false,
+            id: '$_id',
+            username: '$username',
+            discordId: '$discordId',
+            discriminator: '$discriminator',
+            avatar: '$avatar',
+            registered: '$registered',
+            banReason: '$banReason',
+          },
+        },
+      ]);
+      return aggregate;
     } catch (err) {
-      throw new HttpException(400, err.message);
+      throw new Exception(400, err.message);
+    }
+  }
+
+  /**
+   * Get a list of all users in the database who are not verified.
+   *
+   * @returns `UserObject[]` of all users that are not verified.
+   */
+  public async getUnverifiedUsers() {
+    try {
+      const unverifiedIds = await this.permissionsService.getUnverifiedUserIds();
+      const unverifiedUsers = await this.users.aggregate([
+        {
+          $match: {
+            _id: { $in: unverifiedIds },
+            banned: false,
+          },
+        },
+        {
+          $project: {
+            _id: false,
+            id: '$_id',
+            discordId: '$discordId',
+            username: '$username',
+            discriminator: '$discriminator',
+            avatar: '$avatar',
+            registered: '$registered',
+            banned: '$banned',
+            banReason: '$banReason',
+          },
+        },
+      ]);
+
+      return unverifiedUsers;
+    } catch (err) {
+      throw new Exception(400, err.message);
     }
   }
 }

@@ -67,10 +67,11 @@ class LogsService {
    */
   public deleteLog = async (id: mongoose.Types.ObjectId | string): Promise<void> => {
     try {
+      await this.logs.findByIdAndDelete(id);
+
       const logged = await RedisService.get(`log:${id}`);
       if (logged) await RedisService.del(`log:${id}`);
 
-      await this.logs.findByIdAndDelete(id);
       return;
     } catch (err) {
       throw new Exception(400, err.message);
@@ -92,6 +93,12 @@ class LogsService {
     }
   };
 
+  /**
+   * Gets a unique list of all currently tracked bosses in logs.
+   *
+   * @param type The type of entities to get
+   * @returns The list of entities
+   */
   public getUniqueEntities = async (type?: ENTITY_TYPE[] | undefined): Promise<any[]> => {
     if (!type) type = [ENTITY_TYPE.BOSS, ENTITY_TYPE.GUARDIAN];
 
@@ -101,7 +108,7 @@ class LogsService {
     try {
       const bosses = [];
       // TODO: Use find here instead?
-      const aggregate = this.logs.aggregate([
+      const aggregate = await this.logs.aggregate([
         {
           $unwind: {
             path: '$entities',
@@ -126,7 +133,7 @@ class LogsService {
         },
       ]);
 
-      for (const doc of await aggregate) {
+      for (const doc of aggregate) {
         bosses.push(doc._id);
       }
 
@@ -139,6 +146,13 @@ class LogsService {
     }
   };
 
+  /**
+   * Get a list of logs based on a specified filter.
+   * TODO: Describe this in more detail
+   *
+   * @param filter The filter to use
+   * @returns The list of logs
+   */
   public getFilteredLogs = async (filter: LogFilter): Promise<LogObject[]> => {
     try {
       let user: User | undefined = undefined;
@@ -234,6 +248,13 @@ class LogsService {
     }
   };
 
+  /**
+   * Validate a log object.
+   *
+   * @param log The log object to validate
+   * @returns nothing
+   * @throws Exception if the log is invalid
+   */
   public async validateLog(log: LogObject) {
     try {
       const errors: ValidationError[] = await validate(log, { validationError: { target: false, value: false } });
@@ -263,6 +284,12 @@ class LogsService {
     }
   }
 
+  /**
+   * Fetch nested validation errors and return them
+   *
+   * @param error The error to transform
+   * @returns The transformed errors
+   */
   private transformError(error: ValidationError) {
     const errors = [];
     if (error.constraints) {

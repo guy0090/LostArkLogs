@@ -816,14 +816,9 @@
     "slash" "3.0.0"
     "source-map" "^0.7.3"
 
-"@swc/core-linux-x64-gnu@1.2.177":
-  "integrity" "sha512-kBj91kNio+7jTC2C9T71O7oYuZyllOTc/Bk6kbwIR5g5cmhi3uRCkdatQlyAcxoY1NGClocW6v49Fmm7EB7sQg=="
-  "resolved" "https://registry.npmjs.org/@swc/core-linux-x64-gnu/-/core-linux-x64-gnu-1.2.177.tgz"
-  "version" "1.2.177"
-
-"@swc/core-linux-x64-musl@1.2.177":
-  "integrity" "sha512-yO3PqvctMqypIz9GrxHUlbPegrRKOyaVaPQZ/L/u9b1Bo7lUzE83covV7xfGgIy6KGCescVKmv39eO1G5AaLjA=="
-  "resolved" "https://registry.npmjs.org/@swc/core-linux-x64-musl/-/core-linux-x64-musl-1.2.177.tgz"
+"@swc/core-win32-x64-msvc@1.2.177":
+  "integrity" "sha512-88RpWLPSJmqUZCmIfyiybfJa+GpVp5CyBd/InK+wiYw7IpcUndSX21KeU7IeGSZvPp0T4GKvRdwK5O+Xd6fFsg=="
+  "resolved" "https://registry.npmjs.org/@swc/core-win32-x64-msvc/-/core-win32-x64-msvc-1.2.177.tgz"
   "version" "1.2.177"
 
 "@swc/core@^1.2.108", "@swc/core@^1.2.66", "@swc/core@>=1.2.50":

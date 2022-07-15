@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsDefined, IsString, Length } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsDefined, IsOptional, IsString, Length, MaxLength, Validate, ValidateIf } from 'class-validator';
 
 export class UserIdDTO {
   @IsDefined()
@@ -15,7 +15,7 @@ export class BanUserDTO {
 
   @IsDefined()
   @IsString()
-  @Length(1, 255)
+  @MaxLength(255)
   public banReason!: string;
 }
 
@@ -48,4 +48,22 @@ export class UserRolesDTO {
   @IsArray()
   @ArrayMinSize(1)
   public roles!: string[];
+}
+
+export class SearchUsersDTO {
+  @ValidateIf(o => !o.username)
+  @IsDefined()
+  @IsString()
+  @Length(24, 24)
+  public id?: string;
+
+  @ValidateIf(o => !o.id)
+  @IsDefined()
+  @IsString()
+  @Length(2, 32)
+  public username?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  public caseSensitive?: boolean;
 }

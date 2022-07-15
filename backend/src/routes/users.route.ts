@@ -5,7 +5,6 @@ import { apiKeyMiddleware } from '@middlewares/auth.middleware';
 import { limiterUsers } from '@/middlewares/limiting.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
 import { ApiKeyDTO } from '@/dtos/auth.dto';
-import { UserGetDTO } from '@/dtos/users.dto';
 
 class UsersRoute implements Routes {
   public path = '/users';
@@ -24,12 +23,8 @@ class UsersRoute implements Routes {
       this.usersController.getSelf,
     );
 
-    // Get any user by ID, requires permission
-    this.router.post(
-      `${this.path}/get`,
-      [limiterUsers, validationMiddleware(UserGetDTO, 'body'), apiKeyMiddleware('body', ['users.admin.get'], true)],
-      this.usersController.getUser,
-    );
+    // Get any user by ID
+    // this.router.post(`${this.path}/get`, [limiterUsers, validationMiddleware(UserIdDTO, 'body')], this.usersController.getUser);
   }
 }
 
