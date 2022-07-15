@@ -2,6 +2,7 @@ import { Session } from "@/interfaces/session.interface";
 import axios from "axios";
 import { Module } from "vuex";
 import ms from "ms";
+import { TrackedBosses } from "@/interfaces/util.interface";
 
 /**
  * Module containing log related functions and variables.
@@ -15,7 +16,7 @@ export const logs: Module<any, any> = {
     setTab(state, value: any) {
       state.tab = value;
     },
-    addCached(state, value: any) {
+    addCachedLog(state, value: any) {
       const find = state.cached.findIndex(
         (cached: Session) => cached.id === value.id
       );
@@ -27,7 +28,7 @@ export const logs: Module<any, any> = {
     tab(state) {
       return state.tab;
     },
-    getCached: (state) => (id: string) => {
+    getCachedLog: (state) => (id: string) => {
       return state.cached.find((cached: Session) => cached.id === id);
     },
   },
@@ -95,6 +96,78 @@ export const logs: Module<any, any> = {
             reject(new Error(`Failed getting sessions`));
           });
       });
+    },
+    getUniqueBosses(context) {
+      const { dispatch, rootGetters } = context;
+      const app = rootGetters.app;
+
+      dispatch("info", "[WS] Getting tracked bosses");
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+        io.timeout(5000).emit(
+          "unique_bosses",
+          {},
+          (
+            err: Error,
+            res: {
+              bosses: TrackedBosses[];
+            }
+          ) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              resolve(res.bosses);
+            }
+          }
+        );
+      });
+    },
+    uploadLog(context, log: Session) {
+      const { getters, dispatch, rootGetters } = context;
+      const app = rootGetters.app;
+
+      dispatch("info", "[WS] Uploading log");
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+        const atCookie = getters.accessToken;
+
+        io.timeout(5000).emit(
+          "upload_log",
+          { at: atCookie, data: log },
+          (
+            err: Error,
+            res: {
+              created: boolean;
+              id: string;
+            }
+          ) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              if (res.created) resolve(res.id);
+              else reject(new Error(`Failed to upload log`));
+            }
+          }
+        );
+      });
+    },
+    async deleteOwnLog({ dispatch, getters }, id: string) {
+      try {
+        const key = getters.uploadToken;
+        if (!key) return false;
+
+        const res = await dispatch("request", {
+          endpoint: "logs/delete",
+          body: { key, logId: id },
+        });
+        dispatch("info", res);
+        return true;
+      } catch (err) {
+        dispatch("error", err);
+        return false;
+      }
     },
   },
 };

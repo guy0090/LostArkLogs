@@ -164,7 +164,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useStore } from "vuex";
+import { mapGetters } from "vuex";
 
 import EntitySkill from "@/components/logs/log/breakdown/skill.component.vue";
 import { Skill } from "@/interfaces/session.interface";
@@ -174,13 +174,6 @@ export default defineComponent({
 
   components: {
     EntitySkill,
-  },
-
-  setup() {
-    const store = useStore();
-    return {
-      store,
-    };
   },
 
   props: {
@@ -202,12 +195,12 @@ export default defineComponent({
     getDamageDealt(abbreviate = true) {
       const damageDealt = this.entity?.stats.damageDealt;
       if (!abbreviate) return new Intl.NumberFormat().format(damageDealt);
-      return this.abbrNum(damageDealt);
+      return this.abbrevNum(damageDealt);
     },
     getDamageDealtPerSecond(abbreviate = true) {
       const damageDealt = this.entity?.stats.damageDealt / (this.duration || 0);
       if (!abbreviate) return new Intl.NumberFormat().format(damageDealt);
-      return this.abbrNum(damageDealt);
+      return this.abbrevNum(damageDealt);
     },
     clickTab(target: string) {
       const tab: any = document.querySelector(`#${target}`);
@@ -255,7 +248,7 @@ export default defineComponent({
 
       if (healing) {
         if (!abbreviate) return Intl.NumberFormat().format(healing);
-        return this.abbrNum(healing);
+        return this.abbrevNum(healing);
       } else {
         return 0;
       }
@@ -265,7 +258,7 @@ export default defineComponent({
 
       if (damageTaken) {
         if (!abbreviate) return Intl.NumberFormat().format(damageTaken);
-        return this.abbrNum(damageTaken);
+        return this.abbrevNum(damageTaken);
       } else {
         return 0;
       }
@@ -274,13 +267,16 @@ export default defineComponent({
       const clone = [...this.entity?.skills] as Skill[];
       return clone.sort((a, b) => b.stats.damageDealt - a.stats.damageDealt);
     },
-    abbrNum(number: number, decPlaces = 2) {
+    abbrevNum(number: number, decPlaces = 2) {
       if (this.isXS()) decPlaces = 1;
-      return this.store.getters.abbrNum(number, decPlaces);
+      return this.abbrNum(number, decPlaces);
     },
     isXS() {
       return this.$vuetify.display.xs;
     },
+  },
+  computed: {
+    ...mapGetters(["abbrNum"]),
   },
 });
 </script>

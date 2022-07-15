@@ -57,7 +57,6 @@ export const user: Module<any, any> = {
         registered: string;
       }
     ): string {
-      dispatch("info", "Parsing Discord avatar hash");
       const baseURL = "https://cdn.discordapp.com/";
 
       let avatar = "";

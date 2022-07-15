@@ -24,20 +24,13 @@
       <v-btn
         v-if="mode !== null"
         variant="contained-text"
-        :color="
-          store.getters.logLevel === 'debug' ? 'secondary' : 'red-lighten-1'
-        "
-        v-on:click="
-          store.commit(
-            'setLogLevel',
-            store.getters.logLevel === 'debug' ? 'none' : 'debug'
-          )
-        "
+        :color="logLevel === 'debug' ? 'secondary' : 'red-lighten-1'"
+        v-on:click="setLogLevel(logLevel === 'debug' ? 'none' : 'debug')"
       >
-        LOGGING: {{ store.getters.logLevel }} </v-btn
+        LOGGING: {{ logLevel }} </v-btn
       >&nbsp;
       <v-btn
-        v-if="currentRouteName !== 'login' && !store.getters.user"
+        v-if="currentRouteName !== 'login' && !user"
         v-on:click="login"
         class="bg-indigo-accent-3"
         variant="contained-text"
@@ -48,21 +41,21 @@
       </v-btn>
       <div v-else>
         <v-btn
-          v-if="store.getters.permissions.includes('admin')"
+          v-if="permissions.includes('admin') && user"
           class="bg-red-darken-3 me-3"
           variant="contained-text"
-          v-on:click="$router.push({ name: 'admin' })"
+          v-on:click="gotoAdmin"
           >ADMIN
         </v-btn>
         <v-btn
-          v-else-if="store.getters.permissions.includes('verified')"
+          v-else-if="permissions.includes('verified')"
           prepend-icon="mdi-check"
           class="bg-indigo-darken-1 me-3"
           variant="contained-text"
           :disabled="true"
           >VERIFIED
         </v-btn>
-        <v-avatar :image="store.getters.avatar"></v-avatar>
+        <v-avatar :image="avatar"></v-avatar>
         &nbsp;
       </div>
     </v-app-bar>
@@ -109,7 +102,7 @@
       <v-list
         density="compact"
         nav
-        :selected="[store.getters.currentRoute]"
+        :selected="[currentRoute]"
         v-on:click:select="navSelect"
       >
         <v-list-item value="home" v-on:click="$router.push({ name: 'home' })">
@@ -118,11 +111,15 @@
           </v-list-item-avatar>
           <v-list-item-title>Home</v-list-item-title>
         </v-list-item>
-        <v-list-item disabled value="settings">
+        <v-list-item
+          v-if="permissions.includes('admin') && user"
+          value="admin"
+          v-on:click="gotoAdmin"
+        >
           <v-list-item-avatar>
             <v-icon color="white"> mdi-cog </v-icon>
           </v-list-item-avatar>
-          <v-list-item-title>Settings</v-list-item-title>
+          <v-list-item-title>Admin</v-list-item-title>
         </v-list-item>
         <v-list-item
           value="logs"
@@ -156,7 +153,7 @@
             >
           </v-btn>
         </div>
-        <div v-if="store.getters.user">
+        <div v-if="user">
           <v-divider></v-divider>
           <div class="pa-2">
             <v-btn block rounded="sm" color="red-darken-3" v-on:click="logout">
@@ -172,17 +169,17 @@
 
     <v-main>
       <v-progress-linear
-        :active="store.getters.pageLoading"
-        :indeterminate="store.getters.pageLoading"
+        :active="pageLoading"
+        :indeterminate="pageLoading"
         absolute
         bottom
         color="indigo-accent-4"
       ></v-progress-linear>
       <v-row
         v-if="
-          store.getters.user &&
-          store.getters.permissions.includes('verified') &&
-          store.getters.verifiedAlertAccepted === '0'
+          user &&
+          permissions.includes('verified') &&
+          verifiedAlertAccepted === '0'
         "
         justify="center"
       >
@@ -207,7 +204,7 @@
                 icon="mdi-close"
                 variant="plain"
                 @click="toggle"
-                v-on:click="store.commit('setVerifiedAlertAccepted', '1')"
+                v-on:click="setVerifiedAlertAccepted(1)"
               >
               </v-icon>
             </template>
@@ -223,7 +220,7 @@
 import { defineComponent, reactive } from "vue";
 import { ref } from "vue";
 import { useCookies } from "vue3-cookies";
-import { useStore } from "vuex";
+import { mapActions, mapGetters, mapMutations, useStore } from "vuex";
 import { NODE_ENV } from "./config/index";
 
 export default defineComponent({
@@ -266,6 +263,13 @@ export default defineComponent({
     };
   },
   methods: {
+    ...mapActions(["error", "info"]),
+    ...mapMutations([
+      "setLogLevel",
+      "setCurrentRoute",
+      "setVerifiedAlertAccepted",
+      "setAdminTab",
+    ]),
     navEnter: function () {
       if (this.navSettings.expand) this.navSettings.hovering = true;
     },
@@ -273,10 +277,10 @@ export default defineComponent({
       if (this.navSettings.expand) this.navSettings.hovering = false;
     },
     navSelect: function (e: any) {
-      this.store.commit("setCurrentRoute", e.id);
+      this.setCurrentRoute(e.id);
     },
     login: function () {
-      const oAuthURL = this.store.getters.authUrl;
+      const oAuthURL = this.authUrl;
       window.location.href = oAuthURL;
     },
     logout: function () {
@@ -287,7 +291,7 @@ export default defineComponent({
         })
         .catch((err) => {
           this.$router.push({ name: "home" });
-          this.store.dispatch("error", err);
+          this.error(err);
         });
     },
     revoke: function () {
@@ -297,26 +301,40 @@ export default defineComponent({
           this.$router.push({ name: "home" });
         })
         .catch((err) => {
-          this.store.dispatch("error", err);
+          this.error(err);
         });
     },
     getUser: function () {
-      return this.store.getters.user;
+      return this.user;
     },
     getAvatar: function () {
-      return this.store.getters.avatar;
+      return this.avatar;
     },
     setVerifiedClicked: function () {
-      this.store.commit("setVerifiedAlertAccepted", 1);
+      this.setVerifiedAlertAccepted(1);
     },
     openGh() {
       window.open(process.env.VUE_APP_GITHUB);
+    },
+    gotoAdmin() {
+      this.setAdminTab("users");
+      this.$router.push({ name: "usersAdmin" });
     },
   },
   computed: {
     currentRouteName() {
       return this.$route.name;
     },
+    ...mapGetters([
+      "user",
+      "avatar",
+      "authUrl",
+      "logLevel",
+      "permissions",
+      "currentRoute",
+      "pageLoading",
+      "verifiedAlertAccepted",
+    ]),
   },
 });
 </script>

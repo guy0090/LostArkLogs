@@ -50,7 +50,7 @@
       </v-row>
       <v-row class="pt-1 text-right">
         <span class="flex-grow-1">
-          {{ abbrNum(skill?.stats.damageDealt, 2) }}
+          {{ abbrevNum(skill?.stats.damageDealt, 2) }}
           <span class="hide-on-sm detail-percent"
             >{{
               new Intl.NumberFormat().format(getSkillPercentDamage())
@@ -62,7 +62,7 @@
         <span class="flex-grow-1 detail">
           <span v-if="!isXS()">Max:</span>
           <span v-else>M:</span>
-          {{ abbrNum(skill?.stats.topDamage, 2) }}
+          {{ abbrevNum(skill?.stats.topDamage, 2) }}
         </span>
       </v-row>
     </v-col>
@@ -79,7 +79,7 @@
 <script lang="ts">
 import { Skill } from "@/interfaces/session.interface";
 import { defineComponent } from "vue";
-import { useStore } from "vuex";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "BreakdownSkills",
@@ -88,26 +88,11 @@ export default defineComponent({
     return { missingImage: false };
   },
 
-  setup() {
-    const store = useStore();
-    return {
-      store,
-    };
-  },
-
   props: {
     entity: Object,
     skill: Object,
     classId: Number,
     duration: Number,
-  },
-
-  computed: {
-    skillIcon: function () {
-      return this.missingImage
-        ? "/img/sprites/e400.webp"
-        : `/img/sprites/${this.skill?.id}.webp`;
-    },
   },
 
   methods: {
@@ -119,7 +104,7 @@ export default defineComponent({
 
       if (damageDealt && duration) {
         const dps = damageDealt / duration;
-        return this.abbrNum(dps, 2);
+        return this.abbrevNum(dps, 2);
       } else {
         return "0";
       }
@@ -178,12 +163,20 @@ export default defineComponent({
       if (skillName.includes("skills.")) skillName = "???";
       return skillName;
     },
-    abbrNum(number: number, decPlaces = 2) {
+    abbrevNum(number: number, decPlaces = 2) {
       if (this.isXS()) decPlaces = 1;
-      return this.store.getters.abbrNum(number, decPlaces);
+      return this.abbrNum(number, decPlaces);
     },
     isXS() {
       return this.$vuetify.display.xs;
+    },
+  },
+  computed: {
+    ...mapGetters(["abbrNum"]),
+    skillIcon: function () {
+      return this.missingImage
+        ? "/img/sprites/e400.webp"
+        : `/img/sprites/${this.skill?.id}.webp`;
     },
   },
 });

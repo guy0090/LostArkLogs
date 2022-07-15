@@ -1224,6 +1224,13 @@
   "resolved" "https://registry.npmmirror.com/@trysound/sax/-/sax-0.2.0.tgz"
   "version" "0.2.0"
 
+"@types/axios@^0.14.0":
+  "integrity" "sha512-KqQnQbdYE54D7oa/UmYVMZKq7CO4l8DEENzOKc4aBRwxCXSlJXGz83flFx5L7AWrOQnmuN3kVsRdt+GZPPjiVQ=="
+  "resolved" "https://registry.npmjs.org/@types/axios/-/axios-0.14.0.tgz"
+  "version" "0.14.0"
+  dependencies:
+    "axios" "*"
+
 "@types/body-parser@*":
   "integrity" "sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g=="
   "resolved" "https://registry.npmmirror.com/@types/body-parser/-/body-parser-1.19.2.tgz"
@@ -2359,7 +2366,7 @@
     "picocolors" "^1.0.0"
     "postcss-value-parser" "^4.2.0"
 
-"axios@^0.27.2":
+"axios@*", "axios@^0.27.2":
   "integrity" "sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ=="
   "resolved" "https://registry.npmjs.org/axios/-/axios-0.27.2.tgz"
   "version" "0.27.2"
@@ -7646,9 +7653,9 @@
     "querystring" "^0.2.1"
     "upath" "^2.0.1"
 
-"vuetify@^3.0.0-alpha.11", "vuetify@^3.0.0-beta.0":
+"vuetify@^3.0.0-alpha.11", "vuetify@3.0.0-beta.1":
   "integrity" "sha512-698CB/Xlvxku2Tm4AsFrmQ7LzMXOjleX7A5tbyQTnhPyt0NI1OTkf5zJUoXL3TNi2TN7DglN+adI6AE69e6CeQ=="
-  "resolved" "https://registry.npmmirror.com/vuetify/-/vuetify-3.0.0-beta.1.tgz"
+  "resolved" "https://registry.npmjs.org/vuetify/-/vuetify-3.0.0-beta.1.tgz"
   "version" "3.0.0-beta.1"
 
 "vuex@^4.0.0":

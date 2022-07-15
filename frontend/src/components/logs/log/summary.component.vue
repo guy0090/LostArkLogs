@@ -264,7 +264,7 @@
 import { Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
-import { useStore } from "vuex";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "LogSummary",
@@ -283,11 +283,6 @@ export default defineComponent({
       encounterName,
       encounterShort,
     };
-  },
-
-  setup() {
-    const store = useStore();
-    return { store };
   },
 
   mounted() {
@@ -405,17 +400,13 @@ export default defineComponent({
       const bossName = this.$t(`monsters.${boss.npcId}`);
 
       let encounter = "UNKNOWN ENCOUNTER";
-      if (this.store.getters.isSupportedBoss(boss.npcId, "abyssRaids")) {
+      if (this.isSupportedBoss(boss.npcId, "abyssRaids")) {
         encounter = "ABYSS RAID";
-      } else if (
-        this.store.getters.isSupportedBoss(boss.npcId, "abyssalDungeons")
-      ) {
+      } else if (this.isSupportedBoss(boss.npcId, "abyssalDungeons")) {
         encounter = "ABYSSAL DUNGEON";
-      } else if (
-        this.store.getters.isSupportedBoss(boss.npcId, "legionRaids")
-      ) {
+      } else if (this.isSupportedBoss(boss.npcId, "legionRaids")) {
         encounter = "LEGION RAID";
-      } else if (this.store.getters.isSupportedBoss(boss.npcId, "guardians")) {
+      } else if (this.isSupportedBoss(boss.npcId, "guardians")) {
         encounter = "GUARDIAN RAID";
       }
 
@@ -426,6 +417,9 @@ export default defineComponent({
         .map((w) => w[0].toLowerCase())
         .join("");
     },
+  },
+  computed: {
+    ...mapGetters(["isSupportedBoss"]),
   },
 });
 </script>

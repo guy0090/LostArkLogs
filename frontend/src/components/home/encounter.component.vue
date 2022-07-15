@@ -9,7 +9,7 @@
     >
       <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
-      <v-card-content class="pa-3">
+      <v-card-content class="pa-3" v-if="!$vuetify.display.xs">
         <v-row :class="$vuetify.display.xs ? 'pb-2' : 'py-1'">
           <v-col cols="auto" class="align-self-center">
             <v-avatar
@@ -33,8 +33,9 @@
               </v-chip>
               &nbsp;
               <v-chip label density="comfortable" color="info">
-                <v-icon start icon="mdi-cloud-upload-outline"></v-icon
-                >{{ timeSince(session?.createdAt) }}
+                <v-icon icon="mdi-cloud-upload-outline" class="pe-1" />{{
+                  timeSince(session?.createdAt)
+                }}
               </v-chip>
             </v-row>
           </v-col>
@@ -52,10 +53,73 @@
                 rounded="0"
                 :image="`/img/sprites/${entity.classId}.webp`"
               />
-              <span v-if="!$vuetify.display.xs"
+              <span v-if="!$vuetify.display.sm"
                 >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
               >
             </v-chip>
+            <v-chip v-if="getPlayerEntities().length > 4" label class="mx-1"
+              >+{{ getPlayerEntities().length - 4 }} more</v-chip
+            >
+          </v-col>
+        </v-row>
+      </v-card-content>
+      <v-card-content class="mb-3" v-else>
+        <v-row justify="center" class="mb-1">
+          <v-col cols="auto" class="align-self-center py-0 px-0">
+            <v-avatar
+              rounded="0"
+              size="small"
+              :image="`/img/sprites/${encounterName}.webp`"
+            />
+          </v-col>
+          <v-col cols="auto" class="align-self-center py-0 px-1">
+            <h3 class="d-inline-block text-truncate pt-2">
+              {{ bossName.toUpperCase() }}
+            </h3>
+          </v-col>
+        </v-row>
+        <v-row justify="center" class="mb-4">
+          <v-col cols="auto" class="pa-1"
+            ><v-chip label density="comfortable" color="error px-2">
+              <v-icon icon="mdi-sword" class="pe-1" />
+              {{ getTotalDPS(getPlayerEntities()) }}/s
+            </v-chip></v-col
+          >
+          <v-col cols="auto" class="pa-1"
+            ><v-chip label density="comfortable" color="success px-2">
+              <v-icon icon="mdi-timer-outline" class="pe-1" />
+              {{ getDuration(session?.duration) }}
+            </v-chip></v-col
+          >
+          <v-col cols="auto" class="pa-1"
+            ><v-chip label density="comfortable" color="info">
+              <v-icon icon="mdi-cloud-upload-outline" class="pe-1" />{{
+                timeSince(session?.createdAt)
+              }}
+            </v-chip></v-col
+          >
+        </v-row>
+        <v-row justify="center">
+          <v-col
+            cols="auto"
+            v-for="(entity, i) in getPlayerEntities()"
+            :key="i"
+            class="align-self-center py-1 px-0"
+          >
+            <v-chip
+              label
+              :class="`mx-1 ${
+                colors ? `c-${entity.classId}` : 'bg-blue-grey-darken-2'
+              }`"
+              :style="i >= 4 ? 'display: none' : ''"
+            >
+              <v-avatar
+                rounded="0"
+                :image="`/img/sprites/${entity.classId}.webp`"
+              />
+            </v-chip>
+          </v-col>
+          <v-col cols="auto" class="py-1 px-0">
             <v-chip v-if="getPlayerEntities().length > 4" label class="mx-1"
               >+{{ getPlayerEntities().length - 4 }} more</v-chip
             >
@@ -70,7 +134,7 @@
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
 import { Session, Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
-import { useStore } from "vuex";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "EncounterCard",
@@ -92,11 +156,6 @@ export default defineComponent({
 
   mounted() {
     this.getEncounter();
-  },
-
-  setup() {
-    const store = useStore();
-    return { store };
   },
 
   methods: {
@@ -162,17 +221,13 @@ export default defineComponent({
       const bossName = this.$t(`monsters.${boss.npcId}`);
 
       let encounter = "ue";
-      if (this.store.getters.isSupportedBoss(boss.npcId, "abyssRaids")) {
+      if (this.isSupportedBoss(boss.npcId, "abyssRaids")) {
         encounter = "ar";
-      } else if (
-        this.store.getters.isSupportedBoss(boss.npcId, "abyssalDungeons")
-      ) {
+      } else if (this.isSupportedBoss(boss.npcId, "abyssalDungeons")) {
         encounter = "ad";
-      } else if (
-        this.store.getters.isSupportedBoss(boss.npcId, "legionRaids")
-      ) {
+      } else if (this.isSupportedBoss(boss.npcId, "legionRaids")) {
         encounter = "lr";
-      } else if (this.store.getters.isSupportedBoss(boss.npcId, "guardians")) {
+      } else if (this.isSupportedBoss(boss.npcId, "guardians")) {
         encounter = "gr";
       }
 
@@ -188,8 +243,11 @@ export default defineComponent({
 
       for (let entity of entities)
         total += this.getDamageDealtPerSecond(entity);
-      return this.store.getters.abbrNum(Math.round(total), 2);
+      return this.abbrNum(Math.round(total), 2);
     },
+  },
+  computed: {
+    ...mapGetters(["isSupportedBoss", "abbrNum"]),
   },
 });
 </script>

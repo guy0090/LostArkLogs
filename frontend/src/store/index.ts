@@ -6,6 +6,7 @@ import { user } from "./modules/user.module";
 import { socket } from "./modules/socket.module";
 import { logs } from "./modules/logs.module";
 import { resources } from "./modules/resources.module";
+import { admin } from "./modules/admin.module";
 
 export const createVuexStore = (app: App<Element>) => {
   return createStore({
@@ -16,6 +17,7 @@ export const createVuexStore = (app: App<Element>) => {
       socket: socket,
       logs: logs,
       resources: resources,
+      admin: admin,
     },
     state: {
       app: app,

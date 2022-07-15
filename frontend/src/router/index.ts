@@ -15,6 +15,9 @@ import LogsBase from "@/components/logs/base.component.vue";
 import Log from "@/components/logs/log.component.vue";
 import ULog from "@/components/logs/ulog.component.vue";
 
+import UserAdmin from "@/components/admin/users.component.vue";
+import ServiceAdmin from "@/components/admin/service.component.vue";
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -60,6 +63,18 @@ const routes: Array<RouteRecordRaw> = [
     meta: {
       authorization: true,
     },
+    children: [
+      {
+        path: "users",
+        name: "usersAdmin",
+        component: UserAdmin,
+      },
+      {
+        path: "service",
+        name: "serviceAdmin",
+        component: ServiceAdmin,
+      },
+    ],
   },
 ];
 
@@ -77,12 +92,22 @@ const handleAuthorizedRoute = async (
   const atCookie = store.getters.accessToken;
 
   const comingFrom = from.name as string;
-  const goingTo = to.name as string;
+  let goingTo = to.name as string;
 
   store.dispatch(
     "info",
-    `[RG] Authorized route accessed: ${goingTo} <- ${comingFrom}`
+    `[RG] Authorized route accessed: ${comingFrom} -> ${goingTo}`
   );
+
+  // Default to first authed route to check perms
+  // TODO: Change this to allow permissions per child route
+  if (to.matched.length > 1) {
+    store.dispatch(
+      "info",
+      `[RG] Setting access to first match ${goingTo} -> ${to.matched[0].name?.toString()}`
+    );
+    goingTo = to.matched[0].name as string;
+  }
 
   return new Promise((resolve, reject) => {
     if (!atCookie) {

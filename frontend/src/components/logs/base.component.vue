@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="!store.getters.pageLoading">
+  <v-container v-if="!pageLoading">
     <v-row justify="center">
       <v-col
         class="mx-0 px-0 hide-on-sm"
@@ -334,7 +334,7 @@ import {
   TrackedBosses,
 } from "@/interfaces/util.interface";
 import { defineComponent, reactive, ref } from "vue";
-import { useStore } from "vuex";
+import { mapActions, mapGetters, mapMutations } from "vuex";
 import axios from "axios";
 import EncounterCard from "@/components/home/encounter.component.vue";
 
@@ -353,10 +353,8 @@ export default defineComponent({
 
   setup() {
     const open = ref([] as string[]);
-    const store = useStore();
     const supported = ref([] as any[]);
     const tracked = ref([] as TrackedBosses[]);
-    const classes = store.getters.classes;
     const filter = reactive({
       classes: [] as number[],
       bosses: [] as number[],
@@ -375,10 +373,8 @@ export default defineComponent({
 
     return {
       open,
-      store,
       supported,
       tracked,
-      classes,
       filter,
       lastFilter,
       savedFilters,
@@ -388,13 +384,13 @@ export default defineComponent({
   },
 
   mounted() {
-    this.store.commit("setPageLoading", true);
+    this.setPageLoading(true);
 
     const lastFilter = localStorage.getItem("lastFilter");
     if (lastFilter) this.loadFilter(JSON.parse(lastFilter));
 
     this.getSupportedBosses(this.onlyTracked).then((s) => {
-      this.store.commit("setPageLoading", false);
+      this.setPageLoading(false);
       this.supported = s;
 
       this.open = ["filters"];
@@ -402,6 +398,8 @@ export default defineComponent({
   },
 
   methods: {
+    ...mapActions(["error", "info", "getUniqueBosses"]),
+    ...mapMutations(["setPageLoading"]),
     loadFilters() {
       const filters = localStorage.getItem("filters");
       if (!filters) return [];
@@ -481,7 +479,7 @@ export default defineComponent({
           this.filter[key][1] = newVal;
         }
       } catch (err) {
-        this.store.dispatch("error", err);
+        this.error(err);
 
         if (type === "min") this.filter[key][0] = defaults.min;
         else this.filter[key][1] = defaults.max;
@@ -493,23 +491,22 @@ export default defineComponent({
         if (isNaN(newVal) || newVal < 0) newVal = 0;
         this.filter.partyDps = newVal;
       } catch (err) {
-        this.store.dispatch("error", err);
+        this.error(err);
         this.filter.partyDps = 0;
       }
     },
     async getTrackedBosses() {
       try {
-        const res = await axios.get(`${this.store.getters.apiUrl}/logs/bosses`);
-        return res.data as TrackedBosses[];
+        const bosses = await this.getUniqueBosses();
+        return bosses as TrackedBosses[];
       } catch (err) {
-        this.store.dispatch("error", err);
-
+        this.error(err);
         return [];
       }
     },
     async reformatStoreBosses() {
       const argosRgx = /^(argos)?$/i;
-      const stored = this.store.getters.supportedBosses;
+      const stored = this.supportedBosses;
 
       const reformatted = [];
       for (const [type, values] of Object.entries(stored)) {
@@ -613,20 +610,20 @@ export default defineComponent({
         );
         return supported;
       } catch (err) {
-        this.store.dispatch("error", err);
+        this.error(err);
         return [];
       }
     },
     isAbyssRaid(id: number) {
-      const abyssRaids = this.store.getters.supportedBosses.abyssRaids;
+      const abyssRaids = this.supportedBosses.abyssRaids;
       return abyssRaids.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     isLegionRaidBoss(id: number) {
-      const legionRaids = this.store.getters.supportedBosses.legionRaids;
+      const legionRaids = this.supportedBosses.legionRaids;
       return legionRaids.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     isAbyssalDungeon(id: number) {
-      const abyssals = this.store.getters.supportedBosses.abyssalDungeons;
+      const abyssals = this.supportedBosses.abyssalDungeons;
       return abyssals.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     async filterForLogs() {
@@ -645,12 +642,9 @@ export default defineComponent({
       }
 
       try {
-        const logs = await axios.post(
-          `${this.store.getters.apiUrl}/logs/filter`,
-          {
-            ...filter,
-          }
-        );
+        const logs = await axios.post(`${this.apiUrl}/logs/filter`, {
+          ...filter,
+        });
 
         setTimeout(() => {
           this.filtered = logs.data.sort(
@@ -660,11 +654,14 @@ export default defineComponent({
           this.loading = false;
         }, 50);
       } catch (err) {
-        this.store.dispatch("error", err);
+        this.error(err);
         this.filtered = [];
         this.loading = false;
       }
     },
+  },
+  computed: {
+    ...mapGetters(["pageLoading", "classes", "supportedBosses", "apiUrl"]),
   },
 });
 </script>

@@ -8,11 +8,10 @@
       </v-col>
     </v-row>
     <v-row justify="center">
-      <v-col cols="auto" lg="1"></v-col>
-      <v-col v-if="store.getters.user" lg="4" md="12" sm="12" cols="12">
+      <v-col v-if="user" lg="4" md="12" sm="12" cols="12">
         <InfoPanel></InfoPanel>
       </v-col>
-      <v-col v-if="store.getters.user" lg="6" md="12" sm="12" cols="12">
+      <v-col v-if="user" lg="6" md="12" sm="12" cols="12">
         <v-row justify="center" class="mb-2">
           <v-col align="left">
             <h2>
@@ -33,8 +32,8 @@
             <v-btn
               :color="colors ? 'blue-darken-3' : ''"
               @click="colors = !colors"
-              ><v-icon icon="mdi-palette"
-            /></v-btn>
+              ><v-icon icon="mdi-palette" />&nbsp;Class Colors</v-btn
+            >
           </v-col>
           <v-col cols="auto" align="right" class="px-1">
             <v-btn
@@ -91,18 +90,8 @@
             <v-btn
               :color="colors ? 'blue-darken-3' : ''"
               @click="colors = !colors"
-              ><v-icon icon="mdi-palette"
-            /></v-btn>
-          </v-col>
-          <v-col cols="auto" align="right">
-            <v-btn
-              color="success"
-              :disabled="publicLoadingSessions"
-              @click="getRecentSessions(100)"
+              ><v-icon icon="mdi-palette" />&nbsp;Class Colors</v-btn
             >
-              <span v-if="publicLoadingSessions">Loading</span>
-              <span v-else>Refresh</span>
-            </v-btn>
           </v-col>
         </v-row>
         <v-row
@@ -135,7 +124,6 @@
           >
         </v-row>
       </v-col>
-      <v-col cols="auto" lg="1"></v-col>
     </v-row>
   </v-container>
 </template>
@@ -143,7 +131,7 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { useCookies } from "vue3-cookies";
-import { useStore } from "vuex";
+import { mapActions, mapGetters, useStore } from "vuex";
 
 import InfoPanel from "@/components/home/info.component.vue";
 import EncounterCard from "@/components/home/encounter.component.vue";
@@ -157,21 +145,18 @@ export default defineComponent({
     EncounterCard,
   },
   mounted() {
-    if (this.store.getters.user) {
+    if (this.user) {
       let retries = 10;
       const loader = setInterval(() => {
         if (retries === 0) {
-          this.store.dispatch("info", "Maxed out retries; Clearing interval");
+          this.info("Maxed out retries; Clearing interval");
           clearInterval(loader);
           this.recentSessions = [];
           this.loadingSessions = false;
         }
 
-        if (this.store.getters.uploadToken !== null) {
-          this.store.dispatch(
-            "info",
-            "Got upload token; Requesting recent sessions"
-          );
+        if (this.uploadToken !== null) {
+          this.info("Got upload token; Requesting recent sessions");
           clearInterval(loader);
           this.getUserRecentSessions(0);
         }
@@ -201,9 +186,10 @@ export default defineComponent({
     };
   },
   methods: {
+    ...mapActions(["info", "error"]),
     emit: function (event: string) {
       this.$io.emit(event, {}, (res: unknown) => {
-        if (res) this.store.dispatch("info", res);
+        if (res) this.info(res);
       });
     },
     getUserRecentSessions: function (timeout = 1000) {
@@ -212,7 +198,7 @@ export default defineComponent({
         this.store
           .dispatch("getUserRecentSessions")
           .then((logs) => {
-            this.store.dispatch("info", `Got ${logs.length} recent logs`);
+            this.info(`Got ${logs.length} recent logs`);
 
             this.recentSessions = logs.sort(
               (a: Session, b: Session) => b.createdAt - a.createdAt
@@ -220,7 +206,7 @@ export default defineComponent({
             this.loadingSessions = false;
           })
           .catch((error) => {
-            this.store.dispatch("error", error);
+            this.error(error);
             this.loadingSessions = false;
           });
       }, timeout);
@@ -231,21 +217,21 @@ export default defineComponent({
         this.store
           .dispatch("getRecentSessions")
           .then((logs) => {
-            this.store.dispatch(
-              "info",
-              `Got ${logs.length} public recent logs`
-            );
+            this.info(`Got ${logs.length} public recent logs`);
             this.publicRecentSessions = logs.sort(
               (a: Session, b: Session) => b.createdAt - a.createdAt
             );
             this.publicLoadingSessions = false;
           })
           .catch((error) => {
-            this.store.dispatch("error", error);
+            this.error(error);
             this.publicLoadingSessions = false;
           });
       }, timeout);
     },
+  },
+  computed: {
+    ...mapGetters(["user", "uploadToken"]),
   },
 });
 </script>

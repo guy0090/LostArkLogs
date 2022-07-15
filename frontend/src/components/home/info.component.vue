@@ -5,14 +5,10 @@
       </v-progress-linear>
       <v-card-content class="mx-3 mb-2">
         <v-row>
-          <h2>
-            {{ store.getters.user.username }}#{{
-              store.getters.user.discriminator
-            }}
-          </h2>
+          <h2>{{ user.username }}#{{ user.discriminator }}</h2>
         </v-row>
         <v-row class="mt-1">
-          <span style="color: grey">ID: {{ store.getters.user.id }}</span>
+          <span style="color: grey">ID: {{ user.id }}</span>
         </v-row>
         <v-row class="mt-3">
           <span style="color: grey"
@@ -21,21 +17,21 @@
               new Intl.DateTimeFormat("en-US", {
                 dateStyle: "full",
                 timeStyle: "short",
-              }).format(new Date(store.getters.user.registered))
+              }).format(new Date(user.registered))
             }}</span
           >
         </v-row>
         <v-row class="mt-3">
-          <span style="font-size: 11pt" v-if="store.getters.uploadToken">
+          <span style="font-size: 11pt" v-if="uploadToken">
             <span style="color: white !important">API Key: </span>
             <span style="color: grey" v-if="!revealToken">
               {{
-                Array.from(store.getters.uploadToken)
+                Array.from(uploadToken)
                   .map((c) => "*")
                   .join("")
               }}
             </span>
-            <span v-else>{{ store.getters.uploadToken }} </span>
+            <span v-else>{{ uploadToken }} </span>
             <v-btn
               v-on:click="revealToken = !revealToken"
               size="small"
@@ -53,20 +49,19 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useStore } from "vuex";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "InfoPanel",
-
-  setup() {
-    const store = useStore();
-    return { store };
-  },
 
   data() {
     return {
       revealToken: false,
     };
+  },
+
+  computed: {
+    ...mapGetters(["user", "uploadToken"]),
   },
 });
 </script>

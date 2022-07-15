@@ -4,6 +4,7 @@
       <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
       <v-col cols="auto" class="align-self-center">
         <v-chip
+          v-if="!isUpload"
           variant="contained-text"
           label
           color="success"
@@ -15,10 +16,16 @@
       </v-col>
       <v-spacer v-if="!$vuetify.display.sm && !$vuetify.display.xs"></v-spacer>
       <v-col
-        v-if="store.getters.uploadToken !== null && isUpload"
         cols="auto"
         class="me-2"
+        v-if="uploadToken !== null && !isUpload && session.creator === user.id"
       >
+        <v-btn color="red-darken-3" v-on:click="tryDelete">
+          <span v-if="deleting === 0">Delete</span>
+          <span v-if="deleting === 1">Confirm</span>
+        </v-btn>
+      </v-col>
+      <v-col v-if="uploadToken !== null && isUpload" cols="auto" class="me-2">
         <v-btn color="success" v-on:click="saveUpload">SAVE</v-btn>
       </v-col>
       <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
@@ -67,7 +74,7 @@
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import { useStore } from "vuex";
+import { mapActions, mapGetters, mapMutations } from "vuex";
 import { Session, Entity } from "@/interfaces/session.interface";
 
 import axios from "axios";
@@ -90,7 +97,7 @@ export default defineComponent({
   },
 
   mounted() {
-    this.store.commit("setPageLoading", true);
+    this.setPageLoading(true);
     if (this.$props.uSession) {
       const session = this.$props.uSession as Session;
       this.loadFileSession(session);
@@ -105,10 +112,10 @@ export default defineComponent({
   },
 
   setup() {
-    const store = useStore();
     const players = ref([] as Entity[]);
+    const deleting = ref(0);
 
-    return { store, players };
+    return { players, deleting };
   },
 
   data() {
@@ -119,34 +126,36 @@ export default defineComponent({
   },
 
   methods: {
+    ...mapActions(["info", "error", "uploadLog", "deleteOwnLog"]),
+    ...mapMutations(["setPageLoading", "addCachedLog"]),
     getSession() {
       const id = this.$route.params.id;
 
-      const exists = this.store.getters.getCached(id);
+      const exists = this.getCachedLog(id);
       if (exists) {
-        this.store.commit("setPageLoading", false);
+        this.setPageLoading(false);
         this.session = exists;
         this.players = this.getPlayerEntities(false);
         return;
       }
 
       axios
-        .post(`${this.store.getters.apiUrl}/logs`, { id })
+        .post(`${this.apiUrl}/logs`, { id })
         .then((response) => {
           setTimeout(() => {
-            this.store.commit("setPageLoading", false);
+            this.setPageLoading(false);
             let session: Session = response.data;
 
             this.session = session;
 
-            this.store.commit("addCached", JSON.parse(JSON.stringify(session)));
+            this.addCachedLog(JSON.parse(JSON.stringify(session)));
             this.players = this.getPlayerEntities(false);
           }, 200);
         })
         .catch((err) => {
-          this.store.dispatch("error", err.message);
+          this.error(err);
 
-          this.store.commit("setPageLoading", false);
+          this.setPageLoading(false);
           this.loadingMessage = `Error loading session ${id}`;
         });
     },
@@ -154,7 +163,7 @@ export default defineComponent({
       this.session = session;
       this.players = this.getPlayerEntities(false);
 
-      this.store.commit("setPageLoading", false);
+      this.setPageLoading(false);
     },
     duplicateEntities(session: Session) {
       return [
@@ -257,17 +266,20 @@ export default defineComponent({
     },
     async saveUpload() {
       const session: Session = JSON.parse(JSON.stringify(this.session));
-      const uploadKey = this.store.getters.uploadToken;
-
-      const upload = { key: uploadKey, data: session };
-
-      const response = await axios.post(
-        `${this.store.getters.apiUrl}/logs/upload`,
-        upload
-      );
-      const createdId = response.data.id;
+      const createdId = await this.uploadLog(session);
       this.$router.push({ path: `/logs/${createdId}` });
     },
+    async tryDelete() {
+      if (this.deleting === 1) {
+        await this.deleteOwnLog(this.session.id);
+        this.$router.push({ name: "home" });
+      } else {
+        this.deleting += 1;
+      }
+    },
+  },
+  computed: {
+    ...mapGetters(["uploadToken", "apiUrl", "getCachedLog", "user"]),
   },
 });
 </script>

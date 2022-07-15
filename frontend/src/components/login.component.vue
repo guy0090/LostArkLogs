@@ -13,7 +13,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useCookies } from "vue3-cookies";
-import { useStore } from "vuex";
+import { mapActions, mapMutations, useStore } from "vuex";
 
 export default defineComponent({
   name: "LoginPage",
@@ -30,13 +30,13 @@ export default defineComponent({
     const params = new URLSearchParams(window.location.search);
     if (params.has("code")) {
       const loggedInH = document.getElementById("logging-in");
-      this.store.commit("setPageLoading", true);
+      this.setPageLoading(true);
       const code = params.get("code");
 
       this.store
         .dispatch("getTokensHTTP", code)
         .then(async (user) => {
-          this.store.commit("setPageLoading", false);
+          this.setPageLoading(false);
 
           if (loggedInH)
             loggedInH.innerText = `Logged in as ${user.username}#${user.discriminator}`;
@@ -44,21 +44,18 @@ export default defineComponent({
           // Reconnect socket to update new headers
           this.$io.disconnect().connect();
           setTimeout(() => {
-            this.store.dispatch("getTokensWS").catch((err) => {
-              this.store.dispatch(
-                "info",
-                `[WS] Refreshing auth tokens failed: ${err.message}`
-              );
-              this.store.dispatch("revokeTokens");
+            this.getTokensWS().catch((err) => {
+              this.info(`[WS] Refreshing auth tokens failed: ${err.message}`);
+              this.revokeTokens();
             });
 
             this.$router.push({ name: "home" });
           }, 1500);
         })
         .catch((err) => {
-          this.store.dispatch("error", err);
+          this.error(err);
 
-          this.store.commit("setPageLoading", false);
+          this.setPageLoading(false);
           if (loggedInH) {
             loggedInH.innerHTML = "Login failed; Redirecting";
           }
@@ -72,6 +69,10 @@ export default defineComponent({
     } else {
       this.$router.push({ name: "home" });
     }
+  },
+  methods: {
+    ...mapActions(["error", "info", "getTokensWS", "revokeTokens"]),
+    ...mapMutations(["setPageLoading"]),
   },
 });
 </script>
