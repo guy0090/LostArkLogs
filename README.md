@@ -3,7 +3,7 @@ This project aims to allow users to self-host DPS logs produced by a custom bran
 
 Packet data is obtained from a customized [LostArkLogger](https://github.com/guy0090/LostArkLogger) (again shoutout to [shalzuth](https://github.com/shalzuth/LostArkLogger) for the original).  
 
-Live version is available [here](https://dps.arsha.io)  
+Live version is available [here](https://lail.ai)  
 
 *Simple version for now, will add in-depth guide soon*  
 
@@ -30,9 +30,11 @@ It is assumed you will be proxying them with [nginx](https://nginx.com) or simil
 An example configuration for nginx using [certbot](https://certbot.eff.org/) to configure SSL can be found in `./nginx`  
 Additionally, the `api` service is currently only tested while running on a sub-domain of the `site` service i.e.: https://api.example.com. Running on a subpath like `/api` is not tested and will most likely not work out of the box.  
 
-*User management is currently not implemented (25.05.2022).*  
+~~*User management is currently not implemented (25.05.2022)*~~  
+*Basic user management is implemented (16.07.2022)*  
 
-You currently have to manually edit user permissions in MongoDB to allow uploading sessions. [Compass](https://www.mongodb.com/products/compass) is an easy to use tool for this. There is a built-in role called `verified` which contains all necessary permissions.  
+When first registering you will need to give yourself the `superadmin` (`id: 3`) role via MongoDB.  
+TODO: Describe this in detail until automated during first startup.  
 
 ## Development  
 If you'd like to contribute to the project, a local development version can be used.  

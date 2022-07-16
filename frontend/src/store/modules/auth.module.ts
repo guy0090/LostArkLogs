@@ -4,6 +4,9 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import { Module } from "vuex";
 
+const isProduction = process.env.NODE_ENV === "production";
+const host = process.env.VUE_APP_HOST;
+
 /**
  * Module containing authentication related functions and variables.
  */
@@ -25,8 +28,7 @@ export const auth: Module<any, any> = {
         Cookies.set("at", cookie.token, {
           expires: new Date(timeout),
           path: "/",
-          domain:
-            process.env.NODE_ENV === "production" ? "dps.arsha.io" : undefined,
+          domain: isProduction ? host : undefined,
         });
       } else {
         state.accessToken = cookie;
