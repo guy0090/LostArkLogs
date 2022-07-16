@@ -1,4 +1,3 @@
-import { DataStoredInToken, TokenData } from '@/interfaces/auth.interface';
 import { Socket } from 'socket.io';
 import AuthService from '@/services/auth.service';
 import cookie from 'cookie';
@@ -7,6 +6,7 @@ import { SECRET_KEY } from '@/config';
 import { verify } from 'jsonwebtoken';
 import SocketController from '@/controllers/socket.controller';
 import { UserObject } from '@/objects/user.object';
+import { DataStoredInToken } from '@/objects/auth.object';
 
 class SocketService {
   public authService = new AuthService();
@@ -18,10 +18,9 @@ class SocketService {
    * @param args The arguments passed by the socket during connection
    * @returns The user object, their API key and the user profile
    */
-  public async refreshToken(args: { rt: DataStoredInToken }): Promise<{ access: TokenData; uploadKey: string; returnedUser: UserObject }> {
+  public async refreshToken(refreshJWT: DataStoredInToken) {
     try {
-      const { rt } = args;
-      const { access, user } = await this.authService.login(rt);
+      const { access, user } = await this.authService.login(refreshJWT);
 
       const returnedUser = new UserObject(user);
       const uploadKey = user.uploadKey;
@@ -37,7 +36,7 @@ class SocketService {
    * @param socket The connected socket
    * @returns The user's ID
    */
-  public async getUserId(socket: Socket): Promise<string> {
+  public async getUserId(socket: Socket) {
     try {
       const socketHeaders = socket.request.headers;
       const refreshToken = socketHeaders['cookie'] ? cookie.parse(socketHeaders['cookie']).Authorization : null;
@@ -57,7 +56,7 @@ class SocketService {
   /**
    * TESTING FOO
    */
-  public async sendUserMessage(userId: string, message: any): Promise<void> {
+  public async sendUserMessage(userId: string, message: any) {
     try {
       const socket = SocketController.getSocket(userId);
       if (!socket) throw new WsException(404, 'Socket Not Found');

@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsBoolean, IsDefined, IsOptional, IsString, Length, MaxLength, Validate, ValidateIf } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsDefined, IsOptional, IsString, Length, MaxLength, ValidateIf } from 'class-validator';
 
 export class UserIdDTO {
   @IsDefined()

@@ -1,7 +1,6 @@
 import { sign } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
 import { HttpException } from '@exceptions/HttpException';
-import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { DiscordOAuthGrant, DiscordOAuth, DiscordUser } from '@interfaces/discord.interface';
 import DiscordService from '@/services/discord.service';
@@ -14,6 +13,7 @@ import UserService from '@/services/users.service';
 import { Permissions } from '@/interfaces/permission.interface';
 import PermissionsService from '@/services/permissions.service';
 import ms from 'ms';
+import { TokenData, DataStoredInToken } from '@/objects/auth.object';
 
 /**
  * @class AuthService
@@ -192,7 +192,7 @@ class AuthService {
     const dataStoredInToken: DataStoredInToken = type === 'refresh' ? { i: `${user._id}` } : { h: sha512(`${user._id}`, user.salt).hash };
     const secretKey: string = SECRET_KEY;
 
-    return { expiresIn, token: sign(dataStoredInToken, secretKey, { expiresIn }) };
+    return new TokenData({ expiresIn, token: sign(dataStoredInToken, secretKey, { expiresIn }) });
   }
 
   /**

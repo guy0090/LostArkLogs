@@ -80,7 +80,7 @@ export const auth: Module<any, any> = {
         const atCookie = getters.accessToken;
 
         io.timeout(5000).emit(
-          "tokens",
+          "login",
           { at: atCookie },
           (
             err: Error,
@@ -204,20 +204,17 @@ export const auth: Module<any, any> = {
           .catch(reject);
       });
     },
-    hasPermission(context, permission): Promise<boolean> {
-      const { commit, rootGetters } = context;
+    hasPermissions({ rootGetters }, permissions: string[]): Promise<boolean> {
       const app = rootGetters.app;
       const io = app.config.globalProperties.$io;
 
       return new Promise((resolve, reject) => {
         // Will timeout on unauthorized
         io.timeout(5000).emit(
-          "permission",
-          { p: permission },
-          (err: Error, res: { p: boolean; rt?: TokenData; u?: User }) => {
+          "has_permissions",
+          { p: permissions },
+          (err: Error, res: { p: boolean }) => {
             if (!err) {
-              if (res.rt) commit("setAccessToken", res.rt);
-              if (res.u) commit("setUser", res.u);
               resolve(res.p);
             } else {
               reject(new Error("failed getting permission status"));

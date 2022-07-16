@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
-import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { SECRET_KEY, CLIENT_DOMAIN, SERVER_DOMAIN } from '@config';
 import AuthService from '@services/auth.service';
@@ -8,6 +7,7 @@ import { HttpException } from '@/exceptions/HttpException';
 import { logger } from '@utils/logger';
 import UserService from '@/services/users.service';
 import { hashMatch } from '@/utils/crypto';
+import { DataStoredInToken, TokenData } from '@/objects/auth.object';
 
 class AuthController {
   public authService = new AuthService();
@@ -28,7 +28,7 @@ class AuthController {
       let refreshToken: TokenData, accessToken: TokenData, user: User;
       if (refresh) {
         const secretKey: string = SECRET_KEY;
-        const refreshVerificationResponse: DataStoredInToken = verify(refresh, secretKey) as DataStoredInToken;
+        const refreshVerificationResponse = verify(refresh, secretKey) as DataStoredInToken;
         user = await this.userService.findUserById(refreshVerificationResponse.i);
 
         if (!user) throw new HttpException(400, 'Invalid User');

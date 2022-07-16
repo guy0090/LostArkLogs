@@ -2,8 +2,7 @@ import { NextFunction, RequestHandler, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
 import { HttpException } from '@exceptions/HttpException';
-import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface';
-import userModel from '@/models/user.model';
+import { RequestWithUser } from '@interfaces/auth.interface';
 import SocketService from '@/controllers/socket.controller';
 import { logger } from '@/utils/logger';
 import { Event, Socket } from 'socket.io';
@@ -13,6 +12,8 @@ import { hashMatch } from '@/utils/crypto';
 import UserService from '@/services/users.service';
 import PermissionsService from '@/services/permissions.service';
 import { WsException } from '@/exceptions/WsException';
+import SocketController from '@/controllers/socket.controller';
+import { DataStoredInToken } from '@/objects/auth.object';
 
 const users = new UserService();
 const perms = new PermissionsService();
@@ -79,11 +80,13 @@ export const httpAuthMiddleware = (permissions?: string[], byPassCache = false) 
  * @param keyLocation Optional: The location of the API key in the request (e.g. 'query', 'body', 'params')
  * @param permissions Optional: the permission to check for the user
  * @param cookieFallback Optional: Whether to fallback to the auth cookie if the API key is not provided
+ * @param byPassCache Optional: Whether to bypass redis cache
  */
 export const apiKeyMiddleware = (
   keyLocation: 'query' | 'body' | 'params' = 'query',
   permissions?: string[],
   cookieFallback = false,
+  byPassCache = false,
 ): RequestHandler => {
   return async (req: RequestWithUser, _res: Response, next: NextFunction) => {
     try {
@@ -102,7 +105,7 @@ export const apiKeyMiddleware = (
             next(new HttpException(403, 'Invalid Authorization'));
           } else {
             const userId = refreshVerificationResponse.i;
-            let findUser: User = await users.findUserById(userId);
+            let findUser: User = await users.findUserById(userId, byPassCache);
 
             let accessVerificationResponse: DataStoredInToken;
             if (accessToken) {
@@ -114,7 +117,7 @@ export const apiKeyMiddleware = (
             }
 
             if (findUser) {
-              const hasPermission = permissions ? await perms.userHasPermissions(findUser._id, permissions) : true;
+              const hasPermission = permissions ? await perms.userHasPermissions(findUser._id, permissions, byPassCache) : true;
               if (hasPermission) {
                 req.user = findUser;
                 next();
@@ -129,8 +132,8 @@ export const apiKeyMiddleware = (
           next(new HttpException(401, 'Authentication Missing'));
         }
       } else {
-        const user = await users.findByApiKey(access);
-        const hasPermission = permissions ? await perms.userHasPermissions(user._id, permissions) : true;
+        const user = await users.findByApiKey(access, byPassCache);
+        const hasPermission = permissions ? await perms.userHasPermissions(user._id, permissions, byPassCache) : true;
 
         if (access === user.uploadKey && hasPermission) {
           req.user = user;
@@ -154,25 +157,30 @@ export const apiKeyMiddleware = (
  * @param next The next function to be called on successful or unsuccessful authentication
  */
 export const socketAuthMiddleware = async (socket: Socket, event: Event, next: { (err?: Error): void; (): void }) => {
+  logger.info(`[WS] Socket ${socket.id} is trying to authenticate on event '${event[0]}'`);
   try {
     const socketHeaders = socket.request.headers;
     const refresh = socketHeaders['cookie'] ? cookie.parse(socketHeaders['cookie']).Authorization : undefined;
 
     if (!event) {
+      logger.error(`[WS] Socket ${socket.id} failed to authenticate: Event Missing`);
       next(new WsException(409, 'Event Missing'));
     } else if (SocketService.requiresAuthorization(event[0])) {
       // If authorization is required, request body must not be missing
       if (!event[1]) {
+        logger.error(`[WS] Socket ${socket.id} failed to authenticate: Event Body Missing`);
         next(new WsException(409, 'Event Body Missing'));
       } else if (refresh) {
+        const socketEvent = SocketController.getSocketEvent(event[0]);
         const secretKey: string = SECRET_KEY;
         const refreshVerificationResponse = verify(refresh, secretKey) as DataStoredInToken;
 
         if (refreshVerificationResponse.exp * 1000 <= Date.now()) {
+          logger.error(`[WS] Socket ${socket.id} failed to authenticate`);
           next(new WsException(401, 'Invalid Authorization'));
         } else {
           const userId = refreshVerificationResponse.i;
-          let findUser = await userModel.findById(userId);
+          let findUser = await users.findUserById(userId);
 
           const access = event[1].at || undefined;
           let accessVerificationResponse = undefined;
@@ -184,23 +192,33 @@ export const socketAuthMiddleware = async (socket: Socket, event: Event, next: {
             if (!hashMatch(userId, userSalt, accessHash)) findUser = undefined;
           }
 
-          if (findUser) {
+          const hasPermission = await perms.userHasPermissions(findUser._id, socketEvent.perms);
+          if (findUser && hasPermission) {
+            logger.info(
+              `[WS] Socket ${socket.id} (${findUser._id}:${findUser.username}) authenticated for event '${event[0]}' with message: ${JSON.stringify(
+                event[1],
+              )}`,
+            );
+
             event[1].u = findUser;
             event[1].rt = refreshVerificationResponse;
             if (accessVerificationResponse) event[1].at = accessVerificationResponse;
+
             next();
           } else {
+            logger.error(`[WS] Socket ${socket.id} failed to authenticate`);
             next(new WsException(401, 'Access Denied'));
           }
         }
       } else {
+        logger.error(`[WS] Socket ${socket.id} failed to authenticate`);
         next(new WsException(404, 'Authentication Token Missing'));
       }
     } else {
       next();
     }
   } catch (error) {
-    logger.error(error.message);
+    logger.error(`[WS] Socket ${socket.id} failed to authenticate: ${error}`);
     next(new HttpException(401, 'Wrong Authentication Token'));
   }
 };

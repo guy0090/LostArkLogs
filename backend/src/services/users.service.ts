@@ -59,7 +59,7 @@ class UserService {
   public async findUserById(userId: mongoose.Types.ObjectId | string, byPassCache = false): Promise<User> {
     try {
       let user: User = undefined;
-      const cached = await RedisService.get(`${userId}`);
+      const cached = await RedisService.get(`user:${userId}`);
       if (cached && !byPassCache) {
         user = JSON.parse(cached);
       } else {
@@ -76,6 +76,31 @@ class UserService {
   }
 
   /**
+   * Find a list of users.
+   *
+   * @param userIds The IDs of the users to find
+   * @returns The found users
+   */
+  public async findUsers(userIds: mongoose.Types.ObjectId[]): Promise<User[]> {
+    try {
+      const cached = await RedisService.mget(userIds.map(id => `user:${id}`));
+      const missing = [];
+      const users = [];
+      cached.forEach((user, index) => {
+        if (!user) missing.push(userIds[index]);
+        else users.push(JSON.parse(user));
+      });
+
+      const found = await this.users.find({ _id: { $in: missing } });
+      for (const f of found) RedisService.set(`user:${f._id}`, JSON.stringify(f), 'PX', ms('10m'));
+
+      return [...users, ...found];
+    } catch (err) {
+      throw new Exception(400, err.message);
+    }
+  }
+
+  /**
    * Find a user by their Discord ID.
    *
    * @param discordId The Discord ID of the user to find
@@ -85,7 +110,7 @@ class UserService {
   public async findUserByDiscordId(discordId: string, byPassCache = false): Promise<User> {
     try {
       let user: User = undefined;
-      const cached = await RedisService.get(discordId);
+      const cached = await RedisService.get(`user:${discordId}`);
       if (cached && !byPassCache) {
         user = JSON.parse(cached);
       } else {
@@ -110,7 +135,7 @@ class UserService {
   public async findByApiKey(apiKey: string, byPassCache = false): Promise<User> {
     try {
       let user: User = undefined;
-      const cached = await RedisService.get(apiKey);
+      const cached = await RedisService.get(`user:${apiKey}`);
       if (cached && !byPassCache) {
         user = JSON.parse(cached);
       } else {
