@@ -6,6 +6,7 @@
       rounded="sm"
       hover
       @click="openLog(session?.id)"
+      @contextmenu="openLogNewTab(session?.id)"
     >
       <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
@@ -161,6 +162,9 @@ export default defineComponent({
   methods: {
     openLog(id: string) {
       this.$router.push({ path: `/logs/${id}` });
+    },
+    openLogNewTab(id: string) {
+      window.open(`/logs/${id}`);
     },
     getDuration(duration: number) {
       const start = new Date(0);
