@@ -304,12 +304,6 @@ export default defineComponent({
           this.error(err);
         });
     },
-    getUser: function () {
-      return this.user;
-    },
-    getAvatar: function () {
-      return this.avatar;
-    },
     setVerifiedClicked: function () {
       this.setVerifiedAlertAccepted(1);
     },

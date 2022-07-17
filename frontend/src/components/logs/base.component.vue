@@ -513,27 +513,32 @@ export default defineComponent({
       return JSON.parse(filters);
     },
     loadFilter(filter: LogFilter) {
-      this.filter.bosses = filter.bosses || [];
-      this.filter.classes = filter.classes || [];
-      this.filter.gearLevel = filter.gearLevel || [302, 1625];
-      this.filter.range = filter.range || ["", ""];
-      this.filter.level = filter.level || [0, 60];
-      this.filter.partyDps = filter.partyDps || 0;
-      this.filter.server = filter.server || "any";
-      this.filter.region = filter.region || "any";
-      if (filter.creator) {
-        this.filter.creator = filter.creator;
-        this.creator = filter.creator;
-      }
+      try {
+        this.filter.bosses = filter.bosses || [];
+        this.filter.classes = filter.classes || [];
+        this.filter.gearLevel = filter.gearLevel || [302, 1625];
+        this.filter.range = filter.range || ["", ""];
+        this.filter.level = filter.level || [0, 60];
+        this.filter.partyDps = filter.partyDps || 0;
+        this.filter.server = filter.server || "any";
+        this.filter.region = filter.region || "any";
+        if (filter.creator) {
+          this.filter.creator = filter.creator;
+          this.creator = filter.creator;
+        }
 
-      if (this.filter.sort) {
-        this.filter.sort = filter.sort;
-        this.sortBy = filter.sort[0] === "dps" ? "DPS" : "Upload Date";
-        this.sortOrder = filter.sort[1] === 1 ? "Ascending" : "Descending";
-      } else {
-        this.filter.sort = ["dps", -1];
-        this.sortBy = "DPS";
-        this.sortOrder = "Descending";
+        if (this.filter.sort) {
+          this.filter.sort = filter.sort;
+          this.sortBy = filter.sort[0] === "dps" ? "DPS" : "Upload Date";
+          this.sortOrder = filter.sort[1] === 1 ? "Ascending" : "Descending";
+        } else {
+          this.filter.sort = ["dps", -1];
+          this.sortBy = "DPS";
+          this.sortOrder = "Descending";
+        }
+      } catch (err) {
+        this.error(`Failed to read saved filter - resetting: ${err}`);
+        localStorage.removeItem("lastFilter");
       }
     },
     saveFilter() {

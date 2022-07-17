@@ -1,15 +1,22 @@
 import { User } from "@/interfaces/user.interface";
 import { Module } from "vuex";
 
+const tryParse = (val: string | null): unknown | undefined => {
+  if (!val) return undefined;
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return undefined;
+  }
+};
+
 /**
  * Module containing user state functions and variables.
  */
 export const user: Module<any, any> = {
   state: () => ({
     avatar: localStorage.getItem("avatar") || "",
-    user: localStorage.getItem("user")
-      ? JSON.parse(localStorage.getItem("user") as string)
-      : null,
+    user: tryParse(localStorage.getItem("user")) as User | undefined,
     verifiedAlertAccepted: localStorage.getItem("verifiedAlertAccepted") || "0",
   }),
   mutations: {
