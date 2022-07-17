@@ -197,7 +197,8 @@ export default defineComponent({
       setTimeout(() => {
         this.store
           .dispatch("getUserRecentSessions")
-          .then((logs) => {
+          .then((res) => {
+            const { logs } = res;
             this.info(`Got ${logs.length} recent logs`);
 
             this.recentSessions = logs.sort(
@@ -216,7 +217,8 @@ export default defineComponent({
       setTimeout(() => {
         this.store
           .dispatch("getRecentSessions")
-          .then((logs) => {
+          .then((res) => {
+            const { logs } = res;
             this.info(`Got ${logs.length} public recent logs`);
             this.publicRecentSessions = logs.sort(
               (a: Session, b: Session) => b.createdAt - a.createdAt

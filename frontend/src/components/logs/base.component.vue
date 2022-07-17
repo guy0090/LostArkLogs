@@ -155,7 +155,7 @@
               <!--END TODO: MOVE THIS TO COMPONENT - CHANGE TO VUEX -->
               <v-divider class="my-2"></v-divider>
               <v-row justify="space-around">
-                <v-col cols="12" sm="12" md="3" lg="3" xl="3">
+                <v-col cols="12" md="3" lg="3" xl="3">
                   <v-row class="my-1">
                     <h3><v-icon icon="mdi-shield"></v-icon>&nbsp;Gear Level</h3>
                   </v-row>
@@ -166,6 +166,7 @@
                         density="comfortable"
                         label="Min"
                         class="pe-2"
+                        :hide-details="true"
                         :model-value="filter.gearLevel[0]"
                         v-on:update:model-value="
                           (v) =>
@@ -182,6 +183,7 @@
                         density="comfortable"
                         label="Max"
                         class="pe-2"
+                        :hide-details="true"
                         :model-value="filter.gearLevel[1]"
                         v-on:update:model-value="
                           (v) =>
@@ -194,7 +196,7 @@
                     </v-col>
                   </v-row>
                 </v-col>
-                <v-col cols="12" sm="12" md="3" lg="3" xl="3">
+                <v-col cols="12" md="3" lg="3" xl="3">
                   <v-row class="my-1">
                     <h3>
                       <v-icon icon="mdi-sword"></v-icon>&nbsp;Min. Party DPS
@@ -207,56 +209,47 @@
                         density="comfortable"
                         label="Minimum DPS"
                         class="pe-2"
+                        :hide-details="true"
                         :model-value="filter.partyDps"
                         v-on:update:model-value="(v) => updateDpsFilter(v)"
                       ></v-text-field>
                     </v-col>
                   </v-row>
                 </v-col>
-                <v-col cols="12" sm="12" md="3" lg="3" xl="3">
+                <v-col cols="12" md="5" lg="5" xl="5">
                   <v-row class="my-1">
                     <h3>
-                      <v-icon icon="mdi-arrow-up-bold"></v-icon>&nbsp;Level
+                      <v-icon icon="mdi-calendar"></v-icon>&nbsp;Time Range
                     </h3>
                   </v-row>
                   <v-row class="pt-2">
-                    <v-col cols="6" class="px-0 pb-0">
+                    <v-col cols="12" lg="6" xl="6" class="ps-0 pe-1 pb-0">
                       <v-text-field
+                        v-model="filter.range[0]"
+                        label="Start"
                         variant="outlined"
                         density="comfortable"
-                        label="Min"
-                        class="pe-2"
-                        :model-value="filter.level[0]"
-                        v-on:update:model-value="
-                          (v) =>
-                            updateRangeFilter('level', 'min', v, {
-                              min: 0,
-                              max: 60,
-                            })
-                        "
+                        :hide-details="true"
+                        type="datetime-local"
                       ></v-text-field>
                     </v-col>
-
-                    <v-col cols="6" class="px-0 pb-0">
+                    <v-col cols="12" lg="6" xl="6" class="ps-1 pe-0 pb-0">
                       <v-text-field
+                        v-model="filter.range[1]"
+                        label="End"
                         variant="outlined"
                         density="comfortable"
-                        label="Max"
-                        class="pe-0"
-                        :model-value="filter.level[1]"
-                        v-on:update:model-value="
-                          (v) =>
-                            updateRangeFilter('level', 'max', v, {
-                              min: 0,
-                              max: 60,
-                            })
-                        "
+                        :hide-details="true"
+                        type="datetime-local"
                       ></v-text-field>
                     </v-col>
                   </v-row>
                 </v-col>
               </v-row>
-              <v-row :justify="$vuetify.display.xs ? 'center' : 'end'">
+              <v-row
+                :justify="$vuetify.display.xs ? 'center' : 'end'"
+                class="mt-4"
+              >
                 <v-col cols="auto" class="px-1">
                   <v-btn
                     color="red-darken-3"
@@ -360,8 +353,8 @@ export default defineComponent({
       bosses: [] as number[],
       gearLevel: [302, 1625],
       // range: [+new Date() - ms("23h"), +new Date()],
-      range: [],
-      level: [50, 60],
+      range: ["", ""],
+      level: [0, 60],
       partyDps: 0,
       server: "any",
       region: "any",
@@ -409,8 +402,8 @@ export default defineComponent({
       this.filter.bosses = filter.bosses || [];
       this.filter.classes = filter.classes || [];
       this.filter.gearLevel = filter.gearLevel || [302, 1625];
-      this.filter.range = filter.range || [];
-      this.filter.level = filter.level || [50, 60];
+      this.filter.range = filter.range || ["", ""];
+      this.filter.level = filter.level || [0, 60];
       this.filter.partyDps = filter.partyDps || 0;
       this.filter.server = filter.server || "any";
       this.filter.region = filter.region || "any";
@@ -424,8 +417,8 @@ export default defineComponent({
       this.filter.classes = [];
       this.filter.gearLevel = [302, 1625];
       // this.filter.range = [+new Date() - ms("1d"), +new Date()];
-      this.filter.range = [];
-      this.filter.level = [50, 60];
+      this.filter.range = ["", ""];
+      this.filter.level = [0, 60];
       this.filter.partyDps = 0;
       this.filter.region = "any";
       this.filter.server = "any";
@@ -630,6 +623,18 @@ export default defineComponent({
       const filter = JSON.parse(JSON.stringify(this.filter));
       const last = JSON.stringify(this.lastFilter);
 
+      if (filter.range.length === 2) {
+        const [begin, end] = filter.range as [number, number];
+        if (!begin || !end) {
+          filter.range = [];
+        } else {
+          filter.range[0] = +new Date(begin);
+          filter.range[1] = +new Date(end);
+        }
+      } else {
+        filter.range = [];
+      }
+
       // Order of keys is consistent
       if (last === JSON.stringify(filter)) {
         this.loading = false;
@@ -642,12 +647,14 @@ export default defineComponent({
       }
 
       try {
-        const logs = await axios.post(`${this.apiUrl}/logs/filter`, {
+        const res = await axios.post(`${this.apiUrl}/logs/filter`, {
           ...filter,
         });
+        const { found, page, pages, logs } = res.data;
+        console.log(found, page, pages, logs);
 
         setTimeout(() => {
-          this.filtered = logs.data.sort(
+          this.filtered = logs.sort(
             (a: Session, b: Session) =>
               b.damageStatistics.dps - a.damageStatistics.dps
           );

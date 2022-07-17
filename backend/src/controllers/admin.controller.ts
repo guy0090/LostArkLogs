@@ -48,7 +48,8 @@ class AdminController {
       const keys = await RedisService.keys();
       const withTtl = [];
       for (const key of keys) {
-        if (key.split(':')[1].length === 32) {
+        const [field, val] = key.split(':');
+        if (field === 'user' && val.length === 32) {
           // Don't add keys with API keys to the list
           continue;
         }

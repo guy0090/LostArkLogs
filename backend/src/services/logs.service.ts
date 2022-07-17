@@ -11,6 +11,7 @@ import UserService from '@/services/users.service';
 import { User } from '@/interfaces/users.interface';
 import RedisService from '@/services/redis.service';
 import ms from 'ms';
+import { md5 } from '@/utils/crypto';
 
 class LogsService {
   public logs = logsModel;
@@ -153,7 +154,7 @@ class LogsService {
    * @param filter The filter to use
    * @returns The list of logs
    */
-  public getFilteredLogs = async (filter: LogFilter): Promise<LogObject[]> => {
+  public getFilteredLogs = async (filter: LogFilter, pageSize = 10) => {
     try {
       let user: User | undefined = undefined;
       if (filter.key) user = await this.users.findByApiKey(filter.key);
@@ -197,6 +198,13 @@ class LogsService {
         };
       }
 
+      if (filter.sort) {
+        const field = `_id.${filter.sort[0]}`;
+        const order = filter.sort[1];
+
+        aggrPipeline.push({ $sort: { [field]: order } });
+      }
+
       // If the filter contains a time range, sort by creation date (by most recent)
       // If it doesn't contain a time range, sort by DPS (by highest)
       // TODO: Add an option to sort by either
@@ -205,9 +213,9 @@ class LogsService {
           $gte: filter.range[0],
           $lte: filter.range[1],
         };
-        aggrPipeline.push({ $sort: { '_id.createdAt': -1 } });
+        if (!filter.sort) aggrPipeline.push({ $sort: { '_id.createdAt': -1 } });
       } else {
-        aggrPipeline.push({ $sort: { '_id.dps': -1 } });
+        if (!filter.sort) aggrPipeline.push({ $sort: { '_id.dps': -1 } });
       }
 
       const secondMatch = {
@@ -230,18 +238,33 @@ class LogsService {
 
       aggrPipeline[0] = { $match: firstMatch };
       aggrPipeline[2] = { $match: secondMatch };
-      aggrPipeline.push({ $limit: 20 });
+      // aggrPipeline.push({ $limit: 20 });
 
-      const foundIds = await this.logs.aggregate(aggrPipeline);
+      const hash = md5(JSON.stringify(aggrPipeline));
+      const cached = await RedisService.get(`filteredLogs:${hash}`);
+      let foundIds = [];
+      if (cached !== null) {
+        foundIds = JSON.parse(cached);
+      } else {
+        foundIds = await this.logs.aggregate(aggrPipeline);
+        RedisService.set(`filteredLogs:${hash}`, JSON.stringify(foundIds), 'PX', ms('5m'));
+      }
+
+      const count = foundIds.length;
+      const pages = Math.ceil(count / pageSize);
+      const page = filter.page ?? 0;
+
+      foundIds = foundIds.slice(page * pageSize, (page + 1) * pageSize);
+
       if (foundIds.length > 0) {
         const logIds = foundIds.map(grp => grp._id.id);
         const findQuery = { _id: { $in: logIds } };
-
         const foundLogs = await this.logs.find(findQuery).lean();
-        return foundLogs.map(log => new LogObject(log));
-      }
 
-      return [];
+        return { found: count, page, pages, logs: foundLogs.map(log => new LogObject(log)) };
+      } else {
+        return { found: 0, page: 0, pages: 0, logs: [] };
+      }
     } catch (err) {
       logger.error(err);
       throw new Exception(500, 'Error getting filtered logs');

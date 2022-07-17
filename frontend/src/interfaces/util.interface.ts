@@ -15,7 +15,7 @@ export interface LogFilter {
   classes: number[];
   bosses: number[];
   gearLevel: [number, number];
-  range: [number, number] | [];
+  range: [number, number] | [string, string];
   level: [number, number];
   partyDps: number;
   server: string;

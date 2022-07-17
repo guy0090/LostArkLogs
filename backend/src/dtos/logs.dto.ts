@@ -84,7 +84,7 @@ export class LogFilterDTO {
   @ValidateIf(o => o.range.length > 0)
   @ArrayMinSize(2)
   @ArrayMaxSize(2)
-  @MaxRangeDifference('24h')
+  // @MaxRangeDifference('24h')
   public range!: [number, number];
 
   @IsDefined()
@@ -110,6 +110,18 @@ export class LogFilterDTO {
   @IsOptional()
   @IsBoolean()
   public removeBreakdowns?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(2)
+  @VerifySort()
+  public sort?: ['dps' | 'createdAt', -1 | 1]; // -1 = desc, 1 = asc
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public page?: number;
 }
 
 export function MaxRangeDifference(maxDifference: number | string) {
@@ -127,6 +139,25 @@ export function MaxRangeDifference(maxDifference: number | string) {
           }
 
           return begin <= end && end - begin <= maxDifference;
+        },
+      },
+    });
+  };
+}
+
+export function VerifySort() {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'maxRangeDifference',
+      target: object.constructor,
+      propertyName: propertyName,
+      validator: {
+        validate(value: any) {
+          const [field, order] = value;
+
+          if (typeof field !== 'string' || !['dps', 'createdAt'].includes(field) || typeof order !== 'number' || ![-1, 1].includes(order))
+            return false;
+          else return true;
         },
       },
     });

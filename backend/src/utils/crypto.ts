@@ -1,4 +1,4 @@
-import { randomBytes, createHmac } from 'crypto';
+import { randomBytes, createHmac, createHash } from 'crypto';
 import { logger } from '@/utils/logger';
 
 /**
@@ -26,6 +26,11 @@ export const sha512 = (toHash: string, salt: string): { salt: string; hash: stri
     salt: salt,
     hash: value,
   };
+};
+
+export const md5 = (toHash: string): string => {
+  const hash = createHash('md5').update(toHash).digest('hex');
+  return hash;
 };
 
 export const hashMatch = (toHash: string, salt: string, comparison: string): boolean => {

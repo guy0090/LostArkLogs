@@ -145,7 +145,7 @@ export default defineComponent({
   },
   mounted() {
     // Async
-    this.getCacheInfo();
+    // this.getCacheInfo();
     this.getCachedKeys();
   },
 

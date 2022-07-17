@@ -19,6 +19,8 @@ export interface LogFilter {
   region?: string;
   key?: string;
   removeBreakdowns?: boolean;
+  sort?: ['dps' | 'createdAt', -1 | 1]; // -1 = desc, 1 = asc
+  page?: number;
 }
 
 export interface Log {
