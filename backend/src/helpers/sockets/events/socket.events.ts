@@ -21,6 +21,7 @@ export const socketEvents = [
   new SocketEvent('get_log', true, []),
   new SocketEvent('upload_log', true, ['log.upload']),
   new SocketEvent('unique_bosses', false, []),
+  new SocketEvent('filter_logs', true, ['ws.logs.filter']),
 
   // Misc
   new SocketEvent('connect', false, []),

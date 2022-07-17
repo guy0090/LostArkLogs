@@ -160,11 +160,24 @@
               class="px-0 mb-0 pt-2"
             >
               <UnverifiedUserCard
-                v-for="user of unverifiedUsers"
+                v-for="user of getPage(
+                  unverifiedPage,
+                  unverifiedUsers,
+                  pageSize
+                )"
                 :key="user.id"
                 :unverifiedUser="user"
                 class="my-2"
               />
+              <v-row justify="center" v-if="unverifiedUsers.length > pageSize">
+                <v-col cols="auto">
+                  <v-pagination
+                    v-model="unverifiedPage"
+                    :length="Math.ceil(unverifiedUsers.length / pageSize)"
+                    :total-visible="5"
+                  ></v-pagination>
+                </v-col>
+              </v-row>
             </v-expansion-panel-text>
             <v-expansion-panel-text v-else>
               <v-row justify="center">
@@ -203,6 +216,15 @@
                 :bannedUser="bUser"
                 class="my-2"
               />
+              <v-row justify="center" v-if="bannedUsers.length > pageSize">
+                <v-col cols="auto">
+                  <v-pagination
+                    v-model="bannedPage"
+                    :length="Math.ceil(bannedUsers.length / pageSize)"
+                    :total-visible="5"
+                  ></v-pagination>
+                </v-col>
+              </v-row>
             </v-expansion-panel-text>
             <v-expansion-panel-text v-else>
               <v-row justify="center">
@@ -239,11 +261,15 @@ export default defineComponent({
     const searchLoading = ref(false);
     const userSearch = ref("");
     const lastSearch = ref("");
+    const unverifiedPage = ref(1);
+    const bannedPage = ref(1);
 
     return {
       searchLoading,
       userSearch,
       lastSearch,
+      unverifiedPage,
+      bannedPage,
     };
   },
 
@@ -297,6 +323,9 @@ export default defineComponent({
       this.setUserSearchResults([]);
       this.lastSearch = "";
     },
+    getPage(page: number, list: any[], pageSize = 10) {
+      return list.slice((page - 1) * pageSize, page * pageSize);
+    },
   },
 
   computed: {
@@ -305,6 +334,7 @@ export default defineComponent({
       "bannedUsers",
       "userSearchResults",
       "user",
+      "pageSize",
     ]),
   },
 });

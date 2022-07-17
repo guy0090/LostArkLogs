@@ -13,6 +13,7 @@ import {
   IsNumber,
   Min,
   IsBoolean,
+  Max,
 } from 'class-validator';
 import ms from 'ms';
 
@@ -119,9 +120,20 @@ export class LogFilterDTO {
   public sort?: ['dps' | 'createdAt', -1 | 1]; // -1 = desc, 1 = asc
 
   @IsOptional()
+  @IsString()
+  @Length(24, 24)
+  public creator?: string;
+
+  @IsOptional()
   @IsNumber()
-  @Min(0)
+  @Min(1)
   public page?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(20)
+  public pageSize?: number;
 }
 
 export function MaxRangeDifference(maxDifference: number | string) {

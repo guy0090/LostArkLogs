@@ -1,5 +1,7 @@
+import { LogFilterDTO } from '@/dtos/logs.dto';
 import { GetLogDTO, GetUserPermissionsDTO, GetUsersDTO, HasPermissionsDTO, PageAccessDTO } from '@/dtos/sockets.dto';
 import { WsException } from '@/exceptions/WsException';
+import { LogFilter } from '@/interfaces/logs.interface';
 import { User } from '@/interfaces/users.interface';
 import { DataStoredInToken } from '@/objects/auth.object';
 import { LogObject } from '@/objects/log.object';
@@ -205,6 +207,22 @@ class SocketHandler {
       } catch (err) {
         logger.error(`[WS] Error getting unique bosses: ${err.message}`);
         callback({ bosses: [] });
+      }
+    },
+
+    /**
+     * Event for getting a list of filtered logs.
+     */
+    filter_logs: async (args: any, callback: any) => {
+      try {
+        const filter: LogFilter = args.filter;
+        await this.validateArgs(filter, true, LogFilterDTO);
+
+        const result = await this.logService.getFilteredLogs(filter);
+        callback(result);
+      } catch (err) {
+        logger.error(`[WS] Error filtering logs: ${err.message}`);
+        callback({ found: 0, pageSize: 0, logs: [] });
       }
     },
     // #endregion

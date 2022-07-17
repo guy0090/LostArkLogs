@@ -2,7 +2,7 @@ import { Session } from "@/interfaces/session.interface";
 import axios from "axios";
 import { Module } from "vuex";
 import ms from "ms";
-import { TrackedBosses } from "@/interfaces/util.interface";
+import { LogFilter, TrackedBosses } from "@/interfaces/util.interface";
 
 /**
  * Module containing log related functions and variables.
@@ -52,6 +52,8 @@ export const logs: Module<any, any> = {
             range: [+new Date() - ms("23h"), +new Date()],
             partyDps: 0,
             key: key,
+            page: 1,
+            pageSize: 20,
           },
           headers: {
             "Content-Type": "application/json",
@@ -81,6 +83,8 @@ export const logs: Module<any, any> = {
             level: [0, 60],
             range: [+new Date() - ms("23h"), +new Date()],
             partyDps: 0,
+            page: 1,
+            pageSize: 20,
           },
           headers: {
             "Content-Type": "application/json",
@@ -168,6 +172,38 @@ export const logs: Module<any, any> = {
         dispatch("error", err);
         return false;
       }
+    },
+    async filterLogs(context, filter: LogFilter) {
+      const { dispatch, getters, rootGetters } = context;
+      const app = rootGetters.app;
+      const atCookie = getters.accessToken;
+
+      dispatch("info", "[WS] Filtering for logs");
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+
+        io.timeout(5000).emit(
+          "filter_logs",
+          { at: atCookie, filter },
+          (
+            err: Error,
+            res: {
+              found: number;
+              page: number;
+              pages: number;
+              logs: Session[];
+            }
+          ) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              if (res) resolve(res);
+              else reject(new Error(`Failed to filter logs`));
+            }
+          }
+        );
+      });
     },
   },
 };

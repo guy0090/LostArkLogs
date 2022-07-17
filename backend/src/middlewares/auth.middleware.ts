@@ -215,6 +215,7 @@ export const socketAuthMiddleware = async (socket: Socket, event: Event, next: {
         next(new WsException(404, 'Authentication Token Missing'));
       }
     } else {
+      logger.info(`[WS] Socket ${socket.id} does not require authentication for '${event[1]}'`);
       next();
     }
   } catch (error) {

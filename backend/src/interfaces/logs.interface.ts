@@ -20,7 +20,9 @@ export interface LogFilter {
   key?: string;
   removeBreakdowns?: boolean;
   sort?: ['dps' | 'createdAt', -1 | 1]; // -1 = desc, 1 = asc
+  creator?: string;
   page?: number;
+  pageSize?: number;
 }
 
 export interface Log {

@@ -91,7 +91,10 @@
                           </tr>
                         </thead>
                         <tbody v-if="cachedKeys.length > 0">
-                          <tr v-for="entry of cachedKeys" :key="entry.key">
+                          <tr
+                            v-for="entry of getPage(keysPage, pageSize)"
+                            :key="entry.key"
+                          >
                             <td>{{ entry.key }}</td>
                             <td>{{ getExpires(entry.ttl) }}</td>
                             <td>
@@ -113,6 +116,16 @@
                           </tr>
                         </tbody>
                       </v-table>
+                    </v-col>
+                  </v-row>
+                  <v-row v-if="cachedKeys.length > pageSize">
+                    <v-col cols="12">
+                      <v-pagination
+                        v-model="keysPage"
+                        :length="Math.ceil(cachedKeys.length / pageSize)"
+                        :total-visible="5"
+                        class="mt-2"
+                      ></v-pagination>
                     </v-col>
                   </v-row>
                 </v-col>
@@ -137,10 +150,12 @@ export default defineComponent({
   setup() {
     const keySearch = ref("");
     const keysLoading = ref(false);
+    const keysPage = ref(1);
 
     return {
       keySearch,
       keysLoading,
+      keysPage,
     };
   },
   mounted() {
@@ -210,10 +225,13 @@ export default defineComponent({
       await this.getCachedKeys();
       this.keysLoading = false;
     },
+    getPage(page: number, pageSize = 10) {
+      return this.cachedKeys.slice((page - 1) * pageSize, page * pageSize);
+    },
   },
 
   computed: {
-    ...mapGetters(["cachedKeys"]),
+    ...mapGetters(["cachedKeys", "pageSize"]),
     cachedKeysHeader() {
       return [
         {

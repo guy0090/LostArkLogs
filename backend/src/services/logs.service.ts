@@ -156,9 +156,6 @@ class LogsService {
    */
   public getFilteredLogs = async (filter: LogFilter, pageSize = 10) => {
     try {
-      let user: User | undefined = undefined;
-      if (filter.key) user = await this.users.findByApiKey(filter.key);
-
       const aggrPipeline: any[] = [
         {
           // Match for filtered bosses, creator and creation date first
@@ -188,8 +185,17 @@ class LogsService {
       ];
 
       const firstMatch = {};
-      if (user) {
-        firstMatch['creator'] = user._id;
+
+      let userId: mongoose.Types.ObjectId | undefined = undefined;
+      if (filter.key) {
+        userId = (await this.users.findByApiKey(filter.key))._id;
+        if (typeof userId === 'string') userId = new mongoose.Types.ObjectId(userId);
+      } else if (filter.creator) {
+        userId = new mongoose.Types.ObjectId(filter.creator);
+      }
+
+      if (userId) {
+        firstMatch['creator'] = userId;
       }
 
       if (filter.bosses.length > 0) {
@@ -238,7 +244,7 @@ class LogsService {
 
       aggrPipeline[0] = { $match: firstMatch };
       aggrPipeline[2] = { $match: secondMatch };
-      // aggrPipeline.push({ $limit: 20 });
+      aggrPipeline.push({ $limit: 200 });
 
       const hash = md5(JSON.stringify(aggrPipeline));
       const cached = await RedisService.get(`filteredLogs:${hash}`);
@@ -251,23 +257,25 @@ class LogsService {
       }
 
       const count = foundIds.length;
-      const pages = Math.ceil(count / pageSize);
-      const page = filter.page ?? 0;
+      const page = filter.page;
+      if (filter.pageSize) pageSize = filter.pageSize;
 
-      foundIds = foundIds.slice(page * pageSize, (page + 1) * pageSize);
+      // If page exists, it must be greater than 0, therefore we 0 index before slicing
+      if (page) foundIds = foundIds.slice((page - 1) * pageSize, page * pageSize);
 
       if (foundIds.length > 0) {
         const logIds = foundIds.map(grp => grp._id.id);
         const findQuery = { _id: { $in: logIds } };
         const foundLogs = await this.logs.find(findQuery).lean();
+        const remapped = foundLogs.map(log => new LogObject(log));
 
-        return { found: count, page, pages, logs: foundLogs.map(log => new LogObject(log)) };
+        return { found: count, pageSize, logs: remapped };
       } else {
-        return { found: 0, page: 0, pages: 0, logs: [] };
+        return { found: 0, pageSize: 0, logs: [] };
       }
     } catch (err) {
-      logger.error(err);
-      throw new Exception(500, 'Error getting filtered logs');
+      logger.error(`Error filtering for logs: ${err.message}`);
+      throw new Exception(400, 'Error getting filtered logs');
     }
   };
 

@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="!pageLoading">
+  <v-container v-if="!pageLoading" fluid>
     <v-row justify="center">
       <v-col
         class="mx-0 px-0 hide-on-sm"
@@ -216,14 +216,59 @@
                     </v-col>
                   </v-row>
                 </v-col>
-                <v-col cols="12" md="5" lg="5" xl="5">
+                <v-col cols="12" md="3" lg="3" xl="3">
+                  <v-row class="my-1">
+                    <h3><v-icon icon="mdi-account"></v-icon>&nbsp;User</h3>
+                    <v-btn
+                      v-if="user && uploadToken"
+                      class="ps-1 pe-1 mx-2"
+                      density="comfortable"
+                      color="success"
+                      v-on:click="creator = user.id"
+                      >Me</v-btn
+                    >
+                  </v-row>
+                  <v-row class="pt-2">
+                    <v-col cols="12" class="ps-0 pe-1 pb-0">
+                      <v-text-field
+                        v-model="creator"
+                        label="User ID"
+                        variant="outlined"
+                        density="comfortable"
+                        :hide-details="false"
+                        :clearable="true"
+                        v-on:click:clear="resetCreator"
+                        :rules="[
+                          (v) =>
+                            v.length === 0 ||
+                            v.length === 24 ||
+                            'ID must be 24 characters long',
+                        ]"
+                        counter
+                        maxlength="24"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-col>
+              </v-row>
+              <v-row justify="space-around" class="mt-0">
+                <v-col cols="12" md="5">
                   <v-row class="my-1">
                     <h3>
                       <v-icon icon="mdi-calendar"></v-icon>&nbsp;Time Range
                     </h3>
                   </v-row>
                   <v-row class="pt-2">
-                    <v-col cols="12" lg="6" xl="6" class="ps-0 pe-1 pb-0">
+                    <v-col
+                      cols="12"
+                      md="12"
+                      lg="auto"
+                      :class="`${
+                        $vuetify.display.lg || $vuetify.display.xl
+                          ? 'ps-0 pe-1'
+                          : 'px-0'
+                      } pb-0`"
+                    >
                       <v-text-field
                         v-model="filter.range[0]"
                         label="Start"
@@ -233,7 +278,16 @@
                         type="datetime-local"
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" lg="6" xl="6" class="ps-1 pe-0 pb-0">
+                    <v-col
+                      cols="12"
+                      md="12"
+                      lg="auto"
+                      :class="`${
+                        $vuetify.display.lg || $vuetify.display.xl
+                          ? 'ps-1 pe-0'
+                          : 'px-0'
+                      } pb-0`"
+                    >
                       <v-text-field
                         v-model="filter.range[1]"
                         label="End"
@@ -242,6 +296,33 @@
                         :hide-details="true"
                         type="datetime-local"
                       ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-col>
+                <v-col cols="12" md="5">
+                  <v-row class="my-1">
+                    <h3><v-icon icon="mdi-sort"></v-icon>&nbsp;Sorting</h3>
+                  </v-row>
+                  <v-row class="pt-2">
+                    <v-col cols="6" class="ps-0 pe-1 pb-0">
+                      <v-select
+                        v-model="sortBy"
+                        :items="['DPS', 'Upload Date']"
+                        label="Sort By"
+                        variant="outlined"
+                        density="comfortable"
+                        v-on:update:model-value="updateSortBy"
+                      ></v-select>
+                    </v-col>
+                    <v-col cols="6" class="ps-1 pe-0 pb-0">
+                      <v-select
+                        v-model="sortOrder"
+                        :items="['Descending', 'Ascending']"
+                        label="Order"
+                        variant="outlined"
+                        density="comfortable"
+                        v-on:update:model-value="updateSortOrder"
+                      ></v-select>
                     </v-col>
                   </v-row>
                 </v-col>
@@ -273,7 +354,7 @@
                     color="green-darken-3"
                     @click="filterForLogs"
                     :loading="loading"
-                    :disabled="loading"
+                    :disabled="loading || !isValidCreator()"
                     :prepend-icon="!loading ? 'mdi-magnify' : ''"
                   >
                     <span v-if="!loading">Search</span>
@@ -299,13 +380,31 @@
             </v-row>
           </v-col>
         </v-row>
-        <v-row class="mt-3 mx-0 px-0" v-else>
+        <v-row class="mt-2" v-if="pages > 1" justify="center">
+          <v-col cols="auto">
+            <v-pagination
+              v-model="page"
+              :length="Math.ceil(resultsFound / pageSize)"
+              :total-visible="5"
+            ></v-pagination>
+          </v-col>
+        </v-row>
+        <v-row class="mt-3 mx-0 px-0" v-if="filtered.length > 0">
           <EncounterCard
             class="mb-2"
-            v-for="(session, index) in filtered"
+            v-for="(session, index) in getPagedResults(page)"
             :key="index"
             :session="session"
           ></EncounterCard>
+        </v-row>
+        <v-row class="mt-2" v-if="pages > 1" justify="center">
+          <v-col cols="auto">
+            <v-pagination
+              v-model="page"
+              :length="Math.ceil(resultsFound / pageSize)"
+              :total-visible="5"
+            ></v-pagination>
+          </v-col>
         </v-row>
       </v-col>
       <v-col
@@ -358,21 +457,36 @@ export default defineComponent({
       partyDps: 0,
       server: "any",
       region: "any",
+      sort: ["dps", -1],
     } as LogFilter);
+    const page = ref();
+    const pages = ref(0);
+    const pageSize = ref(0);
+    const resultsFound = ref(0);
     const lastFilter = ref({} as LogFilter);
     const savedFilters = ref([]);
     const onlyTracked = localStorage.getItem("onlyTracked") || "1";
     const filtered = ref([] as Session[]);
+    const creator = ref();
+    const sortBy = ref("DPS");
+    const sortOrder = ref("Descending");
 
     return {
       open,
       supported,
       tracked,
       filter,
+      page,
+      pages,
+      pageSize,
+      resultsFound,
       lastFilter,
       savedFilters,
       onlyTracked,
       filtered,
+      creator,
+      sortBy,
+      sortOrder,
     };
   },
 
@@ -391,7 +505,7 @@ export default defineComponent({
   },
 
   methods: {
-    ...mapActions(["error", "info", "getUniqueBosses"]),
+    ...mapActions(["error", "info", "getUniqueBosses", "filterLogs"]),
     ...mapMutations(["setPageLoading"]),
     loadFilters() {
       const filters = localStorage.getItem("filters");
@@ -407,6 +521,20 @@ export default defineComponent({
       this.filter.partyDps = filter.partyDps || 0;
       this.filter.server = filter.server || "any";
       this.filter.region = filter.region || "any";
+      if (filter.creator) {
+        this.filter.creator = filter.creator;
+        this.creator = filter.creator;
+      }
+
+      if (this.filter.sort) {
+        this.filter.sort = filter.sort;
+        this.sortBy = filter.sort[0] === "dps" ? "DPS" : "Upload Date";
+        this.sortOrder = filter.sort[1] === 1 ? "Ascending" : "Descending";
+      } else {
+        this.filter.sort = ["dps", -1];
+        this.sortBy = "DPS";
+        this.sortOrder = "Descending";
+      }
     },
     saveFilter() {
       const newFilter = JSON.parse(JSON.stringify(this.filter));
@@ -422,7 +550,19 @@ export default defineComponent({
       this.filter.partyDps = 0;
       this.filter.region = "any";
       this.filter.server = "any";
+      this.filter.sort = ["dps", -1];
+      if (this.filter.creator) {
+        delete this.filter.creator;
+      }
 
+      this.creator = "";
+      this.sortBy = "DPS";
+      this.sortOrder = "Descending";
+
+      this.page = undefined;
+      this.pages = 0;
+      this.pageSize = 0;
+      this.resultsFound = 0;
       this.filtered = [];
       this.lastFilter = {} as LogFilter;
 
@@ -467,7 +607,7 @@ export default defineComponent({
 
         if (type === "max") {
           if (isNaN(newVal) || newVal > defaults.max) newVal = defaults.max;
-          if (newVal < min) newVal = min;
+          // if (newVal < min) newVal = min;
 
           this.filter[key][1] = newVal;
         }
@@ -487,6 +627,14 @@ export default defineComponent({
         this.error(err);
         this.filter.partyDps = 0;
       }
+    },
+    updateSortBy(v: string) {
+      if (v === "DPS") this.filter.sort[0] = "dps";
+      else this.filter.sort[0] = "createdAt";
+    },
+    updateSortOrder(v: string) {
+      if (v === "Ascending") this.filter.sort[1] = 1;
+      else this.filter.sort[1] = -1;
     },
     async getTrackedBosses() {
       try {
@@ -620,7 +768,7 @@ export default defineComponent({
       return abyssals.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     async filterForLogs() {
-      const filter = JSON.parse(JSON.stringify(this.filter));
+      const filter = JSON.parse(JSON.stringify(this.filter)) as LogFilter;
       const last = JSON.stringify(this.lastFilter);
 
       if (filter.range.length === 2) {
@@ -635,6 +783,10 @@ export default defineComponent({
         filter.range = [];
       }
 
+      const creatorId = this.creator;
+      if (creatorId && creatorId.length > 0) filter.creator = creatorId;
+      if (filter.key) delete filter.key;
+
       // Order of keys is consistent
       if (last === JSON.stringify(filter)) {
         this.loading = false;
@@ -646,29 +798,95 @@ export default defineComponent({
         this.loading = true;
       }
 
+      // Add user upload key if it exists
+      // Doing this after same filter check to ensure key isn't persisted in storage
+      if (this.uploadToken && this.user && filter.creator === this.user.id) {
+        delete filter.creator;
+        filter.key = this.uploadToken;
+      }
+
       try {
-        const res = await axios.post(`${this.apiUrl}/logs/filter`, {
+        // TODO: Testing via socket
+        // const data = await this.filterLogs(filter);
+
+        const { data } = await axios.post(`${this.apiUrl}/logs/filter`, {
           ...filter,
         });
-        const { found, page, pages, logs } = res.data;
-        console.log(found, page, pages, logs);
 
-        setTimeout(() => {
-          this.filtered = logs.sort(
-            (a: Session, b: Session) =>
-              b.damageStatistics.dps - a.damageStatistics.dps
-          );
-          this.loading = false;
-        }, 50);
+        const { found, pageSize, logs } = data;
+        this.pageSize = pageSize;
+        this.resultsFound = found;
+        this.pages = Math.ceil(found / pageSize);
+
+        this.filtered = this.sortResults(logs);
+        this.loading = false;
       } catch (err) {
-        this.error(err);
         this.filtered = [];
+        this.pageSize = 0;
+        this.resultsFound = 0;
+        this.pages = 0;
         this.loading = false;
       }
     },
+    getPagedResults(page: number | undefined) {
+      if (!page || page < 0) page = 1;
+
+      const results = this.filtered.slice(
+        (page - 1) * this.pageSize,
+        page * this.pageSize
+      );
+      return results;
+    },
+    sortResults(
+      data: Session[],
+      by?: "dps" | "createdAt" | undefined,
+      order?: -1 | 1 | undefined
+    ) {
+      const copy = JSON.parse(JSON.stringify(data)) as Session[];
+      if (!by) by = this.filter.sort[0];
+      if (!order) order = this.filter.sort[1];
+
+      if (by === "dps") {
+        copy.sort((a, b) => {
+          if (order === -1) {
+            return b.damageStatistics.dps - a.damageStatistics.dps;
+          } else {
+            return a.damageStatistics.dps - b.damageStatistics.dps;
+          }
+        });
+      } else {
+        copy.sort((a, b) => {
+          if (order === -1) {
+            return b.createdAt - a.createdAt;
+          } else {
+            return a.createdAt - b.createdAt;
+          }
+        });
+      }
+      return copy;
+    },
+    resetCreator() {
+      if (this.filter.creator) delete this.filter.creator;
+    },
+    isValidCreator() {
+      if (
+        !this.creator ||
+        this.creator.length === 0 ||
+        this.creator.length === 24
+      )
+        return true;
+      else return false;
+    },
   },
   computed: {
-    ...mapGetters(["pageLoading", "classes", "supportedBosses", "apiUrl"]),
+    ...mapGetters([
+      "pageLoading",
+      "classes",
+      "supportedBosses",
+      "apiUrl",
+      "user",
+      "uploadToken",
+    ]),
   },
 });
 </script>

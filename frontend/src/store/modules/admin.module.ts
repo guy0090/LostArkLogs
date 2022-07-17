@@ -12,6 +12,7 @@ export const admin: Module<any, any> = {
     userSearchResults: [] as User[],
     cachedKeys: [] as string[],
     adminTab: "users",
+    pageSize: 10,
   }),
   getters: {
     unverifiedUsers(state) {
@@ -28,6 +29,9 @@ export const admin: Module<any, any> = {
     },
     adminTab(state) {
       return state.adminTab;
+    },
+    pageSize(state) {
+      return state.pageSize;
     },
   },
   mutations: {
