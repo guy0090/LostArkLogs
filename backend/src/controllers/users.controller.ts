@@ -217,8 +217,8 @@ class UsersController {
       const { userId, roles } = req.body;
       const updatedRoles = await this.permissionsService.setUserRoles(userId, roles);
       res.status(200).json({ message: 'Roles updated', permissions: updatedRoles });
-    } catch (err) {
-      next(err);
+    } catch (error) {
+      next(error);
     }
   };
 

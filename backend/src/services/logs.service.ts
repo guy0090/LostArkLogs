@@ -8,7 +8,6 @@ import { NODE_ENV } from '@/config';
 import { bosses } from '@/config/supported-bosses';
 import { logger } from '@/utils/logger';
 import UserService from '@/services/users.service';
-import { User } from '@/interfaces/users.interface';
 import RedisService from '@/services/redis.service';
 import ms from 'ms';
 import { md5 } from '@/utils/crypto';

@@ -4,7 +4,6 @@ import { User } from '@interfaces/users.interface';
 import { SECRET_KEY, CLIENT_DOMAIN, SERVER_DOMAIN } from '@config';
 import AuthService from '@services/auth.service';
 import { HttpException } from '@/exceptions/HttpException';
-import { logger } from '@utils/logger';
 import UserService from '@/services/users.service';
 import { hashMatch } from '@/utils/crypto';
 import { DataStoredInToken, TokenData } from '@/objects/auth.object';
@@ -73,9 +72,8 @@ class AuthController {
       };
 
       res.status(200).json({ message: 'logged in', when: Date.now(), user: returnUser });
-    } catch (err) {
-      logger.error(err.message);
-      next(new HttpException(409, 'Invalid Authorization'));
+    } catch (error) {
+      next(error);
     }
   };
 

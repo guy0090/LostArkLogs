@@ -1,4 +1,3 @@
-import { NODE_ENV } from '@/config';
 import { Exception } from '@/exceptions/Exception';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { LogFilter } from '@/interfaces/logs.interface';
@@ -6,7 +5,6 @@ import { Log } from '@/interfaces/logs.interface';
 import { LogObject } from '@/objects/log.object';
 import LogsService from '@/services/logs.service';
 import { NextFunction, Request, Response } from 'express';
-
 class LogsController {
   public logService = new LogsService();
 
@@ -25,7 +23,7 @@ class LogsController {
 
       res.status(200).json(findLog);
     } catch (error) {
-      next(new Exception(500, 'Error getting log'));
+      next(error);
     }
   };
 
@@ -48,7 +46,7 @@ class LogsController {
 
       res.status(200).json({ created: true, id: createdLog.id });
     } catch (error) {
-      next(new Exception(400, NODE_ENV === 'production' ? 'Error creating log' : error.message));
+      next(error);
     }
   };
 
@@ -66,7 +64,7 @@ class LogsController {
 
       res.status(200).json({ id: logId, deleted: true });
     } catch (error) {
-      next(new Exception(500, 'Error deleting log'));
+      next(error);
     }
   };
 
@@ -91,8 +89,8 @@ class LogsController {
       } else {
         throw new Exception(403, 'You do not have permission to delete this log');
       }
-    } catch (err) {
-      next(new Exception(500, 'Error deleting log'));
+    } catch (error) {
+      next(error);
     }
   };
 
@@ -107,8 +105,8 @@ class LogsController {
     try {
       const bosses = await this.logService.getUniqueEntities();
       res.status(200).json(bosses);
-    } catch (err) {
-      next(new Exception(500, 'Error getting bosses'));
+    } catch (error) {
+      next(error);
     }
   };
 
@@ -122,10 +120,10 @@ class LogsController {
   public getFilteredLogs = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filter: LogFilter = req.body;
-      const logs: LogObject[] = await this.logService.getFilteredLogs(filter);
+      const logs: { found: number; pageSize: number; logs: LogObject[] } = await this.logService.getFilteredLogs(filter);
       res.status(200).json(logs);
-    } catch (err) {
-      next(new Exception(500, 'Error getting logs'));
+    } catch (error) {
+      next(error);
     }
   };
 }
