@@ -4,7 +4,6 @@ import logsModel from '@/models/logs.model';
 import { LogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
 import { validate, ValidationError } from 'class-validator';
-import { NODE_ENV } from '@/config';
 import { bosses } from '@/config/supported-bosses';
 import { logger } from '@/utils/logger';
 import UserService from '@/services/users.service';
@@ -332,6 +331,35 @@ class LogsService {
     }
 
     return errors;
+  }
+
+  /**
+   * Find logs that are potential duplicates based on the log's creation date,
+   * duration and encounter ID.
+   *
+   * TODO: this is most likely not fool-proof, testing required
+   *
+   * @param upload The upload object to compare against
+   * @param range The time range to allow between session creation and duration
+   * @returns A list of similar logs if any are found
+   */
+  public async findDuplicateUploads(upload: LogObject, range = 15000) {
+    const { npcId } = upload.getBoss();
+
+    const filter = {
+      createdAt: {
+        $gte: upload.createdAt - range,
+        $lte: upload.createdAt + range,
+      },
+      duration: {
+        $gte: upload.duration - range,
+        $lte: upload.duration + range,
+      },
+      'entities.npcId': npcId,
+    };
+
+    const res = await this.logs.find(filter).lean();
+    return res;
   }
 }
 

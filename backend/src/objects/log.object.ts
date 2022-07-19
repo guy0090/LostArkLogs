@@ -300,4 +300,8 @@ export class LogObject {
       throw err;
     }
   }
+
+  getBoss() {
+    return this.entities.find(entity => entity.isBoss() || entity.isGuardian());
+  }
 }

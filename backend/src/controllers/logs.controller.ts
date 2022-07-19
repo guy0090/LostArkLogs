@@ -4,7 +4,9 @@ import { LogFilter } from '@/interfaces/logs.interface';
 import { Log } from '@/interfaces/logs.interface';
 import { LogObject } from '@/objects/log.object';
 import LogsService from '@/services/logs.service';
+import { logger } from '@/utils/logger';
 import { NextFunction, Request, Response } from 'express';
+
 class LogsController {
   public logService = new LogsService();
 
@@ -41,10 +43,17 @@ class LogsController {
       const toValidate = new LogObject(log);
       await this.logService.validateLog(toValidate);
 
-      const createdLog: LogObject = await this.logService.createLog(toValidate);
-      if (!createdLog) throw new Exception(500, 'Error creating log');
+      const dupes = await this.logService.findDuplicateUploads(toValidate);
+      if (dupes.length > 0) {
+        logger.info(`Rejecting duplicate log for ${toValidate.creator}. Encounter ID: ${toValidate.getBoss().npcId}`);
 
-      res.status(200).json({ created: true, id: createdLog.id });
+        res.status(200).json({ created: false, dupe: true, id: dupes[0]._id });
+      } else {
+        const createdLog: LogObject = await this.logService.createLog(toValidate);
+        if (!createdLog) throw new Exception(500, 'Error creating log');
+
+        res.status(200).json({ created: true, dupe: false, id: createdLog.id });
+      }
     } catch (error) {
       next(error);
     }
