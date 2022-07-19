@@ -289,7 +289,6 @@ class LogsService {
     try {
       const errors: ValidationError[] = await validate(log, { validationError: { target: false, value: false } });
       if (errors.length > 0) {
-        if (NODE_ENV !== 'development') throw new Exception(400, 'Invalid log structure');
         let allErrors = [];
 
         errors.forEach(error => {
