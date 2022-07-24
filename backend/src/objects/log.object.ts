@@ -57,6 +57,11 @@ export class LogDamageStatisticsObject {
 }
 
 export class LogEntitySkillStatsObject {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public casts: number;
+
   @IsNumber()
   @Min(0)
   public hits: number;
@@ -86,6 +91,7 @@ export class LogEntitySkillStatsObject {
   public topDamage: number;
 
   constructor(stats: LogEntitySkillStats) {
+    this.casts = stats.casts || 0;
     this.hits = stats.hits;
     this.crits = stats.crits;
     this.backHits = stats.backHits;

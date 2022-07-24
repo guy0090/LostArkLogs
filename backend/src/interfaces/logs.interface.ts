@@ -62,6 +62,7 @@ export interface LogEntitySkill {
 }
 
 export interface LogEntitySkillStats {
+  casts: number;
   hits: number;
   crits: number;
   backHits: number;
