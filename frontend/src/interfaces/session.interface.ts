@@ -74,6 +74,7 @@ export interface SkillBreakdown {
 }
 
 export interface SkillStats {
+  casts: number;
   hits: number;
   crits: number;
   backHits: number;

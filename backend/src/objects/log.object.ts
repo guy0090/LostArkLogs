@@ -117,6 +117,11 @@ export class LogEntitySkillObject {
 }
 
 export class LogEntityStatObject {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public casts: number;
+
   @IsNumber()
   @Min(0)
   public hits: number;
@@ -164,6 +169,7 @@ export class LogEntityStatObject {
   dpsOverTime: number[];
 
   constructor(stat: LogEntityStats) {
+    this.casts = stat.casts || 0;
     this.hits = stat.hits;
     this.crits = stat.crits;
     this.backHits = stat.backHits;
