@@ -4337,6 +4337,7 @@ export default {
     "480006": "Destroyer Lucas",
     "480007": "Demon Beast Commander Valtan",
     "480008": "Torn Demon Beast Lord",
+    "42060070": "Torn Demon Beast Lord",
     "480009": "Dark Mountain Predator",
     "480010": "Dark Mountain Predator",
     "480011": "Dark Mountain Predator",

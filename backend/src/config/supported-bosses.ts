@@ -12,6 +12,7 @@ export const bosses = [
   480006, // Destroyer Lucas
   480007, // Demon Beast Commander Valtan
   480008, // Torn Demon Beast Lord (Valtan ghost phase?)
+  42060070, // ^ same?
   480009, // Dark Mountain Predator (Lucas/Lugaru single form)
   480010, // Dark Mountain Predator (^)
   480011, // Dark Mountain Predator (^)
