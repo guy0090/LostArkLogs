@@ -223,7 +223,7 @@ export class LogEntityObject {
   @ValidateIf(o => o.type === ENTITY_TYPE.PLAYER)
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(40)
   @ValidateNested({ each: true })
   @Type(() => LogEntitySkillObject)
   public skills: LogEntitySkillObject[];
