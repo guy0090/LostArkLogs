@@ -1,14 +1,16 @@
 import { Exception } from '@/exceptions/Exception';
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { LogFilter } from '@/interfaces/logs.interface';
+import { LogFilter, LogFilterResult } from '@/interfaces/logs.interface';
 import { Log } from '@/interfaces/logs.interface';
 import { LogObject } from '@/objects/log.object';
+import ConfigService from '@/services/config.service';
 import LogsService from '@/services/logs.service';
 import { logger } from '@/utils/logger';
 import { NextFunction, Request, Response } from 'express';
 
 class LogsController {
   public logService = new LogsService();
+  public configService = new ConfigService();
 
   /**
    * Get a DPS log.
@@ -39,11 +41,18 @@ class LogsController {
    */
   public uploadLog = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const log: Log = { ...req.body.data, creator: req.user._id, createdAt: +new Date() };
+      const config = await this.configService.getConfig();
+      const { allowUploads } = config;
+      if (!allowUploads) throw new Exception(403, 'Uploads are disabled');
+
+      const user = req.user;
+      if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
+
+      const log: Log = { ...req.body.data, creator: user._id, createdAt: +new Date() };
       const toValidate = new LogObject(log);
       await this.logService.validateLog(toValidate);
 
-      const dupes = await this.logService.findDuplicateUploads(toValidate);
+      const dupes = await this.logService.findDuplicateUploads(toValidate, 5000);
       if (dupes.length > 0) {
         logger.info(`Rejecting duplicate log for ${toValidate.creator}. Encounter ID: ${toValidate.getBoss().npcId}`);
 
@@ -126,10 +135,14 @@ class LogsController {
    * @param res The passed response from express middleware
    * @param next The next function to be called on fail to pass along to error middleware
    */
-  public getFilteredLogs = async (req: Request, res: Response, next: NextFunction) => {
+  public getFilteredLogs = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
+      const user = req.user;
+      let includeUnlisted = false;
+      if (user) includeUnlisted = true;
+
       const filter: LogFilter = req.body;
-      const logs: { found: number; pageSize: number; logs: LogObject[] } = await this.logService.getFilteredLogs(filter);
+      const logs: LogFilterResult = await this.logService.getFilteredLogs(filter, { includeUnlisted });
       res.status(200).json(logs);
     } catch (error) {
       next(error);

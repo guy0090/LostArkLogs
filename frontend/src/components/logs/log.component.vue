@@ -9,9 +9,21 @@
           label
           color="success"
           rounded="sm"
+          prepend-icon="mdi-cloud-upload"
           style="margin-left: 6px !important"
         >
           UPLOADED {{ timeSince(session.createdAt).toUpperCase() }}
+        </v-chip>
+        <v-chip
+          v-if="session.unlisted"
+          variant="contained-text"
+          label
+          color="indigo-accent-3"
+          rounded="sm"
+          class="ms-2"
+          prepend-icon="mdi-incognito"
+        >
+          UNLISTED
         </v-chip>
       </v-col>
       <v-spacer v-if="!$vuetify.display.sm && !$vuetify.display.xs"></v-spacer>

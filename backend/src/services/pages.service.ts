@@ -42,7 +42,7 @@ class PageService {
 
       return createPage;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -58,7 +58,7 @@ class PageService {
 
       return updatePage;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -74,7 +74,7 @@ class PageService {
 
       return;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -90,7 +90,7 @@ class PageService {
 
       return findPage;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -106,7 +106,7 @@ class PageService {
 
       return findPage;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -129,7 +129,7 @@ class PageService {
 
       return updatePage;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 
@@ -153,7 +153,7 @@ class PageService {
 
       return updatePage;
     } catch (err) {
-      throw new Error(err.message);
+      throw err;
     }
   }
 }

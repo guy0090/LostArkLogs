@@ -814,8 +814,14 @@ export default defineComponent({
         // TODO: Testing via socket
         // const data = await this.filterLogs(filter);
 
-        const { data } = await axios.post(`${this.apiUrl}/logs/filter`, {
-          ...filter,
+        const { data } = await axios({
+          method: "POST",
+          url: `${this.apiUrl}/logs/filter`,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          data: { ...filter },
         });
 
         const { found, pageSize, logs } = data;

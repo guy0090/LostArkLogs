@@ -34,6 +34,7 @@ export interface UEntity {
 
 export interface Session {
   id: string;
+  unlisted: boolean;
   server?: string;
   region?: string;
   creator: string;

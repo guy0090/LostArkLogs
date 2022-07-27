@@ -14,6 +14,7 @@ import { Permissions } from '@/interfaces/permission.interface';
 import PermissionsService from '@/services/permissions.service';
 import ms from 'ms';
 import { TokenData, DataStoredInToken } from '@/objects/auth.object';
+import ConfigService from '@/services/config.service';
 
 /**
  * @class AuthService
@@ -24,8 +25,9 @@ class AuthService {
   public users = userModel;
   public discordGrants = discordAuthModel;
   public Discord = new DiscordService();
-  public UserService = new UserService();
+  public userService = new UserService();
   public Permissions = new PermissionsService();
+  public configService = new ConfigService();
 
   /**
    * Register the user or log the user in if they already exist.
@@ -60,11 +62,12 @@ class AuthService {
       discordOAuth = await this.updateGrant(user._id, grant);
       if (!discordOAuth) throw new HttpException(500, 'Error Updating Discord Auth');
     } else {
-      const createdUser = await this.UserService.createUser(discordUser);
+      const createdUser = await this.userService.createUser(discordUser);
       if (!createdUser) throw new HttpException(500, 'Error Creating User');
       user = createdUser;
 
-      const newPermissions: Permissions = await this.Permissions.createPermissions(createdUser._id, [], [0]);
+      const { defaultRole } = await this.configService.getConfig();
+      const newPermissions: Permissions = await this.Permissions.createPermissions(createdUser._id, [], [defaultRole]);
       if (!newPermissions) throw new HttpException(500, 'Error creating permissions');
 
       discordOAuth = await this.Discord.createGrant(user._id, grant);
@@ -164,7 +167,7 @@ class AuthService {
    */
   private async updateUser(id: mongoose.Types.ObjectId, user: DiscordUser): Promise<User> {
     try {
-      const updateUser = await this.UserService.updateUser(id, {
+      const updateUser = await this.userService.updateUser(id, {
         discordId: user.id,
         username: user.username,
         discriminator: parseInt(user.discriminator),

@@ -73,6 +73,46 @@ export const httpAuthMiddleware = (permissions?: string[], byPassCache = false) 
   };
 };
 
+export const optionalHttpAuthMiddleware = (permissions?: string[], byPassCache = false) => {
+  return async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const refresh = req.cookies['Authorization'] || req.header('Authorization');
+      const access = req.cookies['at'] || req.header('at');
+
+      req.user = null;
+      if (refresh) {
+        const secretKey: string = SECRET_KEY;
+        const refreshVerificationResponse = verify(refresh, secretKey) as DataStoredInToken;
+
+        if (refreshVerificationResponse.exp * 1000 >= Date.now()) {
+          const userId = refreshVerificationResponse.i;
+          let findUser: User = await users.findUserById(userId, byPassCache);
+
+          let accessVerificationResponse: DataStoredInToken;
+          if (access) {
+            accessVerificationResponse = verify(access, secretKey) as DataStoredInToken;
+            const userSalt = findUser.salt;
+            const accessHash = accessVerificationResponse.h;
+
+            if (!hashMatch(userId, userSalt, accessHash)) findUser = undefined;
+          }
+
+          if (findUser) {
+            const hasPermission = permissions ? await perms.userHasPermissions(findUser._id, permissions, byPassCache) : true;
+            if (hasPermission) {
+              req.user = findUser;
+            }
+          }
+        }
+      }
+      next();
+    } catch (err) {
+      logger.error(`Error in optional HTTP auth: ${err.message}`);
+      next();
+    }
+  };
+};
+
 /**
  * Express middleware to handle requests with API keys and optionally permissions.
  * Permission check defaults to `true` if no permissions are provided; TODO: change this?

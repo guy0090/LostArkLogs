@@ -21,6 +21,7 @@ import SocketController from '@/controllers/socket.controller';
 import RoleService from '@/services/roles.service';
 import PageService from '@/services/pages.service';
 import RedisService from '@/services/redis.service';
+import ConfigService from './services/config.service';
 
 class App {
   public app: express.Application;
@@ -35,13 +36,19 @@ class App {
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
 
-    this.connectToRedis();
-    this.connectToDatabase();
-    this.initializeMiddlewares();
-    this.initializeRoutes(routes);
-    // this.initializeSwagger();
-    this.initializeErrorHandling();
-    this.initializeDefaultCollections();
+    Promise.all([this.connectToRedis(), this.connectToDatabase()])
+      .then(() => {
+        logger.info('Connected to Redis and MongoDB');
+        this.initializeMiddlewares();
+        this.initializeRoutes(routes);
+        // this.initializeSwagger();
+        this.initializeErrorHandling();
+        this.initializeDefaultCollections();
+      })
+      .catch(err => {
+        logger.error(`Error connecting to Redis and MongoDB: ${err.message}`);
+        process.exit(1);
+      });
   }
 
   public listen() {
@@ -83,16 +90,16 @@ class App {
     return this.app;
   }
 
-  private connectToRedis() {
-    RedisService.connect(redisConnection.port, redisConnection.host);
+  private async connectToRedis() {
+    await RedisService.connect(redisConnection.port, redisConnection.host);
   }
 
-  private connectToDatabase() {
+  private async connectToDatabase() {
     if (this.env !== 'production') {
       set('debug', true);
     }
 
-    connect(dbConnection.url, dbConnection.options);
+    await connect(dbConnection.url, dbConnection.options);
   }
 
   private initializeMiddlewares() {
@@ -101,8 +108,8 @@ class App {
     this.app.use(hpp());
     this.app.use(helmet());
     this.app.use(compression());
-    this.app.use(express.json({ limit: '50mb' }));
-    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
     this.app.use(cookieParser());
   }
 
@@ -135,6 +142,7 @@ class App {
   private async initializeDefaultCollections() {
     // Initialize default collections
     try {
+      await ConfigService.initializeConfig();
       await RoleService.initializeRoles();
       await PageService.initializePages();
     } catch (err) {

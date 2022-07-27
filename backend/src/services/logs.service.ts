@@ -1,19 +1,20 @@
 import { Exception } from '@/exceptions/Exception';
 import { ENTITY_TYPE, Log, LogFilter } from '@/interfaces/logs.interface';
 import logsModel from '@/models/logs.model';
-import { LogObject } from '@/objects/log.object';
+import { LogFilterOptions, LogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
 import { validate, ValidationError } from 'class-validator';
-import { bosses } from '@/config/supported-bosses';
 import { logger } from '@/utils/logger';
 import UserService from '@/services/users.service';
 import RedisService from '@/services/redis.service';
 import ms from 'ms';
 import { md5 } from '@/utils/crypto';
+import ConfigService from './config.service';
 
 class LogsService {
   public logs = logsModel;
   public users = new UserService();
+  public configService = new ConfigService();
 
   /**
    * Create a new DPS log.
@@ -150,9 +151,14 @@ class LogsService {
    * TODO: Describe this in more detail
    *
    * @param filter The filter to use
+   * @param options The options to use
    * @returns The list of logs
    */
-  public getFilteredLogs = async (filter: LogFilter, pageSize = 10) => {
+  public getFilteredLogs = async (filter: LogFilter, options?: LogFilterOptions) => {
+    options = new LogFilterOptions(options);
+    // eslint-disable-next-line prefer-const
+    let { pageSize, includeUnlisted } = options;
+
     try {
       const aggrPipeline: any[] = [
         {
@@ -182,15 +188,24 @@ class LogsService {
         },
       ];
 
-      const firstMatch = {};
+      const firstMatch = {
+        // Only include publicly listed logs
+        unlisted: false,
+      };
 
       let userId: mongoose.Types.ObjectId | undefined = undefined;
       if (filter.key) {
         userId = (await this.users.findByApiKey(filter.key))._id;
         if (typeof userId === 'string') userId = new mongoose.Types.ObjectId(userId);
+
+        // If a user is requesting their own logs, include all logs
+        delete firstMatch.unlisted;
       } else if (filter.creator) {
         userId = new mongoose.Types.ObjectId(filter.creator);
       }
+
+      // If the requesting user has access to view unlisted logs, show them as well
+      if (includeUnlisted && firstMatch.unlisted !== undefined) delete firstMatch.unlisted;
 
       if (userId) {
         firstMatch['creator'] = userId;
@@ -302,8 +317,9 @@ class LogsService {
       if (players.length === 0) throw new Exception(400, 'No players found in log');
 
       const nonPlayers = log.entities.filter(entity => entity.type !== ENTITY_TYPE.PLAYER).map(entity => entity.npcId);
+      const { supportedBosses } = await this.configService.getConfig();
       for (const npcId of nonPlayers) {
-        if (!bosses.includes(npcId)) throw new Exception(400, `${npcId} is not a supported boss`);
+        if (!supportedBosses.includes(npcId)) throw new Exception(400, `${npcId} is not a supported boss`);
       }
 
       return;
@@ -358,7 +374,7 @@ class LogsService {
       'entities.npcId': npcId,
     };
 
-    const res = await this.logs.find(filter).lean();
+    const res: Log[] = await this.logs.find(filter).lean();
     return res;
   }
 }

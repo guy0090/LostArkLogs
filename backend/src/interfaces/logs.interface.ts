@@ -1,3 +1,4 @@
+import { LogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
 
 export enum ENTITY_TYPE {
@@ -25,8 +26,20 @@ export interface LogFilter {
   pageSize?: number;
 }
 
+export interface LogFilterResult {
+  found: number;
+  pageSize: number;
+  logs: LogObject[];
+}
+
+export interface LogFilterOptions {
+  pageSize?: number;
+  includeUnlisted?: boolean;
+}
+
 export interface Log {
   _id: mongoose.Types.ObjectId;
+  unlisted?: boolean;
   server?: string;
   region?: string;
   encounter?: string;

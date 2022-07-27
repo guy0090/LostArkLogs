@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Routes } from '@interfaces/routes.interface';
-import { apiKeyMiddleware } from '@middlewares/auth.middleware';
+import { apiKeyMiddleware, optionalHttpAuthMiddleware } from '@middlewares/auth.middleware';
 import { limiterUsers } from '@/middlewares/limiting.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
 import { LogDeleteDTO, LogIdDTO, LogUploadDTO, LogFilterDTO } from '@/dtos/logs.dto';
@@ -20,7 +20,11 @@ class LogsRoute implements Routes {
     this.router.post(`${this.path}`, [limiterUsers, validationMiddleware(LogIdDTO, 'body')], this.logsController.getLog);
 
     // Get logs by filter
-    this.router.post(`${this.path}/filter`, [limiterUsers, validationMiddleware(LogFilterDTO, 'body')], this.logsController.getFilteredLogs);
+    this.router.post(
+      `${this.path}/filter`,
+      [limiterUsers, validationMiddleware(LogFilterDTO, 'body'), optionalHttpAuthMiddleware(['logs.unlisted'])],
+      this.logsController.getFilteredLogs,
+    );
 
     // Upload log
     this.router.post(

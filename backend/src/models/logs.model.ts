@@ -7,6 +7,11 @@ const logsSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     required: true,
   },
+  unlisted: {
+    type: Boolean,
+    required: true,
+    default: true,
+  },
   duration: {
     type: Number,
     required: true,

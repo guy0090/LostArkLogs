@@ -6,6 +6,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNumber,
   IsObject,
@@ -297,13 +298,18 @@ export class LogObject {
   @Type(() => LogDamageStatisticsObject)
   public damageStatistics: LogDamageStatisticsObject;
 
+  @IsOptional()
+  @IsBoolean()
+  public unlisted: boolean;
+
   constructor(log: Log) {
     try {
       this.id = log._id ? `${log._id}` : undefined;
+      this.unlisted = log.unlisted || true;
       this.creator = `${log.creator}`;
       this.duration = log.firstPacket && log.lastPacket ? log.lastPacket - log.firstPacket : log.duration;
-      this.server = log.server ?? 'Unknown';
-      this.region = log.region ?? 'Unknown';
+      this.server = log.server || 'Unknown';
+      this.region = log.region || 'Unknown';
       this.createdAt = log.createdAt;
       this.entities = log.entities.map(entity => new LogEntityObject(entity));
       this.damageStatistics = new LogDamageStatisticsObject(log.damageStatistics);
@@ -315,5 +321,19 @@ export class LogObject {
 
   getBoss() {
     return this.entities.find(entity => entity.isBoss() || entity.isGuardian());
+  }
+}
+
+/**
+ * Misc. Helper Objects
+ */
+
+export class LogFilterOptions {
+  public pageSize?: number;
+  public includeUnlisted?: boolean;
+
+  constructor(options: LogFilterOptions) {
+    this.pageSize = options.pageSize || 10;
+    this.includeUnlisted = options.includeUnlisted || false;
   }
 }

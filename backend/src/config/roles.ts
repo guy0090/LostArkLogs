@@ -23,6 +23,7 @@ export const roles = [
     inherits: [1],
     permissions: [
       'admin',
+      'logs.unlisted',
       'users.manage',
       'users.manage.moderate',
       'users.manage.permissions',
