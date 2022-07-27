@@ -42,6 +42,9 @@ class LogsRoute implements Routes {
 
     // Get currently tracked bosses (bosses that exist in logs)
     this.router.get(`${this.path}/bosses`, [limiterUsers], this.logsController.getUniqueBosses);
+
+    // Get IDs of supported bosses
+    this.router.get(`${this.path}/supported`, [limiterUsers], this.logsController.getSupportedBosses);
   }
 }
 

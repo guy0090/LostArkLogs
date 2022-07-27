@@ -6,6 +6,7 @@ import { User } from '@/interfaces/users.interface';
 import { DataStoredInToken } from '@/objects/auth.object';
 import { LogObject } from '@/objects/log.object';
 import { UserObject } from '@/objects/user.object';
+import ConfigService from '@/services/config.service';
 import LogsService from '@/services/logs.service';
 import PageService from '@/services/pages.service';
 import PermissionsService from '@/services/permissions.service';
@@ -21,6 +22,7 @@ class SocketHandler {
   public static permissionService = new PermissionsService();
   public static logService = new LogsService();
   public static userService = new UserService();
+  public static configService = new ConfigService();
 
   public static handlers = {
     // #region | Authentication
@@ -207,6 +209,19 @@ class SocketHandler {
       } catch (err) {
         logger.error(`[WS] Error getting unique bosses: ${err.message}`);
         callback({ bosses: [] });
+      }
+    },
+
+    /**
+     * Event for getting a list of supported bosses.
+     */
+    supported_bosses: async (_args: any, callback: any) => {
+      try {
+        const { supportedBosses } = await this.configService.getConfig();
+        callback({ supportedBosses });
+      } catch (err) {
+        logger.error(`[WS] Error getting supported bosses: ${err.message}`);
+        callback({ supportedBosses: [] });
       }
     },
 

@@ -129,6 +129,22 @@ class LogsController {
   };
 
   /**
+   * Get a list of IDs of all supported bosses
+   *
+   * @param req The passed request from express middleware with the filter to use
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
+  public getSupportedBosses = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { supportedBosses } = await this.configService.getConfig();
+      res.status(200).json(supportedBosses);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Get a list of all logs that match a provided filter.
    *
    * @param req The passed request from express middleware with the log filter
