@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { Routes } from '@interfaces/routes.interface';
 import { apiKeyMiddleware, optionalHttpAuthMiddleware } from '@middlewares/auth.middleware';
-import { limiterUsers } from '@/middlewares/limiting.middleware';
+import { limiterUsers, rawLimiter } from '@/middlewares/limiting.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
 import { LogDeleteDTO, LogIdDTO, LogUploadDTO, LogFilterDTO, RawLogIdDTO } from '@/dtos/logs.dto';
 import LogsController from '@/controllers/logs.controller';
@@ -42,11 +42,7 @@ class LogsRoute implements Routes {
     );
 
     // Upload raw log
-    this.router.post(
-      `${this.path}/raw/upload`,
-      [limiterUsers, apiKeyMiddleware('headers', ['log.upload']), gzipDecompress],
-      this.logsController.uploadRawLog,
-    );
+    this.router.post(`${this.path}/raw/upload`, [rawLimiter, gzipDecompress], this.logsController.uploadRawLog);
 
     // Delete a log
     this.router.post(

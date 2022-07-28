@@ -7,6 +7,7 @@ import ConfigService from '@/services/config.service';
 import LogsService from '@/services/logs.service';
 import { logger } from '@/utils/logger';
 import { NextFunction, Request, Response } from 'express';
+import mongoose from 'mongoose';
 
 class LogsController {
   public logService = new LogsService();
@@ -93,10 +94,12 @@ class LogsController {
       const { allowUploads } = config;
       if (!allowUploads) throw new Exception(403, 'Uploads are disabled');
 
-      const user = req.user;
-      if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
+      // const user = req.user;
+      // if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
 
-      const toValidate: RawLog = { unlisted: true, creator: user._id, createdAt: +new Date(), logLines: req.log };
+      // Test user, temp until auth is re-implemented
+      const creator = new mongoose.Types.ObjectId('62e2155766a63b6311df989b');
+      const toValidate: RawLog = { unlisted: true, creator: creator, createdAt: +new Date(), logLines: req.log };
       this.logService.validateRawLog(toValidate.logLines);
 
       const createdLog = await this.logService.createRawLog(toValidate);
