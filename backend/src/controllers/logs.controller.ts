@@ -1,8 +1,8 @@
 import { Exception } from '@/exceptions/Exception';
-import { RequestWithUser } from '@/interfaces/auth.interface';
-import { LogFilter, LogFilterResult } from '@/interfaces/logs.interface';
+import { RequestWithUser, RequestWithUserAndLog } from '@/interfaces/auth.interface';
+import { LogFilter, LogFilterResult, RawLog } from '@/interfaces/logs.interface';
 import { Log } from '@/interfaces/logs.interface';
-import { LogObject } from '@/objects/log.object';
+import { LogObject, RawLogObject } from '@/objects/log.object';
 import ConfigService from '@/services/config.service';
 import LogsService from '@/services/logs.service';
 import { logger } from '@/utils/logger';
@@ -23,6 +23,25 @@ class LogsController {
     try {
       const logId = req.body.id as string;
       const findLog: LogObject = await this.logService.getLogById(logId);
+      if (!findLog) throw new Exception(404, 'Log not found');
+
+      res.status(200).json(findLog);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get a raw DPS log.
+   *
+   * @param req The passed request from express middleware with log ID
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
+  public getRawLog = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const logId = req.query.id as string;
+      const findLog: RawLogObject = await this.logService.getRawLogById(logId);
       if (!findLog) throw new Exception(404, 'Log not found');
 
       res.status(200).json(findLog);
@@ -63,6 +82,27 @@ class LogsController {
 
         res.status(200).json({ created: true, dupe: false, id: createdLog.id });
       }
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public uploadRawLog = async (req: RequestWithUserAndLog, res: Response, next: NextFunction) => {
+    try {
+      const config = await this.configService.getConfig();
+      const { allowUploads } = config;
+      if (!allowUploads) throw new Exception(403, 'Uploads are disabled');
+
+      const user = req.user;
+      if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
+
+      const toValidate: RawLog = { unlisted: true, creator: user._id, createdAt: +new Date(), logLines: req.log };
+      this.logService.validateRawLog(toValidate.logLines);
+
+      const createdLog = await this.logService.createRawLog(toValidate);
+      if (!createdLog) throw new Exception(500, 'Error creating log');
+
+      res.status(200).json({ created: true, dupe: false, id: createdLog.id });
     } catch (error) {
       next(error);
     }

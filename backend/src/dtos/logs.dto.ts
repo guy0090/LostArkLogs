@@ -136,6 +136,18 @@ export class LogFilterDTO {
   public pageSize?: number;
 }
 
+export class RawLogIdDTO {
+  @IsDefined()
+  @IsString()
+  @Length(24, 24)
+  public id!: string;
+
+  @IsDefined()
+  @IsString()
+  @Length(32, 32)
+  public key!: string;
+}
+
 export function MaxRangeDifference(maxDifference: number | string) {
   return function (object: Object, propertyName: string) {
     registerDecorator({

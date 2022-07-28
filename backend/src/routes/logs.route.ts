@@ -3,8 +3,9 @@ import { Routes } from '@interfaces/routes.interface';
 import { apiKeyMiddleware, optionalHttpAuthMiddleware } from '@middlewares/auth.middleware';
 import { limiterUsers } from '@/middlewares/limiting.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
-import { LogDeleteDTO, LogIdDTO, LogUploadDTO, LogFilterDTO } from '@/dtos/logs.dto';
+import { LogDeleteDTO, LogIdDTO, LogUploadDTO, LogFilterDTO, RawLogIdDTO } from '@/dtos/logs.dto';
 import LogsController from '@/controllers/logs.controller';
+import { gzipDecompress } from '@/middlewares/compression.middleware';
 
 class LogsRoute implements Routes {
   public path = '/logs';
@@ -19,6 +20,13 @@ class LogsRoute implements Routes {
     // Get logs
     this.router.post(`${this.path}`, [limiterUsers, validationMiddleware(LogIdDTO, 'body')], this.logsController.getLog);
 
+    // Get Raw Log | Contains user names
+    this.router.get(
+      `${this.path}/raw`,
+      [limiterUsers, validationMiddleware(RawLogIdDTO, 'query'), apiKeyMiddleware('query', ['logs.raw'])],
+      this.logsController.getRawLog,
+    );
+
     // Get logs by filter
     this.router.post(
       `${this.path}/filter`,
@@ -31,6 +39,13 @@ class LogsRoute implements Routes {
       `${this.path}/upload`,
       [limiterUsers, validationMiddleware(LogUploadDTO, 'body'), apiKeyMiddleware('body', ['log.upload'])],
       this.logsController.uploadLog,
+    );
+
+    // Upload raw log
+    this.router.post(
+      `${this.path}/raw/upload`,
+      [limiterUsers, apiKeyMiddleware('headers', ['log.upload']), gzipDecompress],
+      this.logsController.uploadRawLog,
     );
 
     // Delete a log

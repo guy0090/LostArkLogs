@@ -108,3 +108,11 @@ export interface LogDamageStatistics {
   dps: number;
   dpsIntervals: number[];
 }
+
+export interface RawLog {
+  _id?: mongoose.Types.ObjectId;
+  unlisted?: boolean;
+  creator: mongoose.Types.ObjectId;
+  createdAt: number;
+  logLines: string[];
+}

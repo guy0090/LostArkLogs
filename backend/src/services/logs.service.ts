@@ -1,7 +1,7 @@
 import { Exception } from '@/exceptions/Exception';
-import { ENTITY_TYPE, Log, LogFilter } from '@/interfaces/logs.interface';
+import { ENTITY_TYPE, Log, LogFilter, RawLog } from '@/interfaces/logs.interface';
 import logsModel from '@/models/logs.model';
-import { LogFilterOptions, LogObject } from '@/objects/log.object';
+import { LogFilterOptions, LogObject, RawLogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
 import { validate, ValidationError } from 'class-validator';
 import { logger } from '@/utils/logger';
@@ -10,9 +10,11 @@ import RedisService from '@/services/redis.service';
 import ms from 'ms';
 import { md5 } from '@/utils/crypto';
 import ConfigService from './config.service';
+import rawLogsModel from '@/models/rawlogs.model';
 
 class LogsService {
   public logs = logsModel;
+  public rawLogs = rawLogsModel;
   public users = new UserService();
   public configService = new ConfigService();
 
@@ -30,6 +32,17 @@ class LogsService {
       RedisService.set(`log:${created._id}`, JSON.stringify(created), 'PX', ms('5m'));
 
       return new LogObject(created);
+    } catch (err) {
+      throw new Exception(400, err.message);
+    }
+  };
+
+  public createRawLog = async (log: RawLog) => {
+    try {
+      const created = await this.rawLogs.create(log);
+      if (!created) throw new Exception(500, 'Error creating log');
+
+      return new RawLogObject(created);
     } catch (err) {
       throw new Exception(400, err.message);
     }
@@ -54,6 +67,17 @@ class LogsService {
       }
 
       return new LogObject(log);
+    } catch (err) {
+      throw new Exception(400, err.message);
+    }
+  };
+
+  public getRawLogById = async (id: mongoose.Types.ObjectId | string) => {
+    try {
+      const log = await this.rawLogs.findById(id).lean();
+      if (!log) throw new Exception(404, 'Raw log not found');
+
+      return new RawLogObject(log);
     } catch (err) {
       throw new Exception(400, err.message);
     }
@@ -347,6 +371,18 @@ class LogsService {
     }
 
     return errors;
+  }
+
+  public validateRawLog(lines: string[]) {
+    const linesLength = lines.length;
+    if (linesLength <= 100) throw new Error('Log is too short');
+
+    // const lastLine = lines[linesLength - 1];
+    // if (!lastLine.startsWith('2|')) throw new Error('Log does not end correctly');
+
+    // TODO: Better validation
+
+    return;
   }
 
   /**

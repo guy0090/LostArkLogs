@@ -1,4 +1,13 @@
-import { ENTITY_TYPE, Log, LogDamageStatistics, LogEntity, LogEntitySkill, LogEntitySkillStats, LogEntityStats } from '@/interfaces/logs.interface';
+import {
+  ENTITY_TYPE,
+  Log,
+  LogDamageStatistics,
+  LogEntity,
+  LogEntitySkill,
+  LogEntitySkillStats,
+  LogEntityStats,
+  RawLog,
+} from '@/interfaces/logs.interface';
 import { getRandomString } from '@/utils/crypto';
 import { logger } from '@/utils/logger';
 import { Type } from 'class-transformer';
@@ -321,6 +330,26 @@ export class LogObject {
 
   getBoss() {
     return this.entities.find(entity => entity.isBoss() || entity.isGuardian());
+  }
+}
+
+/**
+ * Raw Log DTOs
+ */
+
+export class RawLogObject {
+  public id?: string;
+  public unlisted?: boolean;
+  public creator?: string;
+  public createdAt: number;
+  public logLines: string[];
+
+  constructor(log: RawLog) {
+    this.id = log._id ? `${log._id}` : undefined;
+    this.unlisted = log.unlisted || true;
+    this.creator = `${log.creator}`;
+    this.createdAt = log.createdAt;
+    this.logLines = log.logLines;
   }
 }
 

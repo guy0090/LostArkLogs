@@ -7,3 +7,7 @@ export interface RequestWithUser extends Request {
   rt?: DataStoredInToken;
   at?: DataStoredInToken;
 }
+
+export interface RequestWithUserAndLog extends RequestWithUser {
+  log: string[];
+}

@@ -123,7 +123,7 @@ export const optionalHttpAuthMiddleware = (permissions?: string[], byPassCache =
  * @param byPassCache Optional: Whether to bypass redis cache
  */
 export const apiKeyMiddleware = (
-  keyLocation: 'query' | 'body' | 'params' = 'query',
+  keyLocation: 'query' | 'body' | 'params' | 'headers' = 'query',
   permissions?: string[],
   cookieFallback = false,
   byPassCache = false,
