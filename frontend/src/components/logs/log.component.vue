@@ -4,7 +4,7 @@
       <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
       <v-col cols="auto" class="align-self-center">
         <v-chip
-          v-if="!isUpload"
+          v-if="!isUpload && !session.unlisted"
           variant="contained-text"
           label
           color="success"

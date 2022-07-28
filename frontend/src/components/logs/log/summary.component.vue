@@ -19,7 +19,7 @@
             <v-row>
               <h2>{{ bossName }}</h2>
             </v-row>
-            <v-row>{{ encounterName }}</v-row>
+            <v-row class="pt-1">{{ encounterName }}</v-row>
           </v-col>
         </v-row>
       </v-card-content>
@@ -38,7 +38,7 @@
             <v-row>
               <h2>ENCOUNTER STATS</h2>
             </v-row>
-            <v-row class="pt-2">
+            <v-row class="pt-1">
               CLEARED IN
               {{ getDuration(session?.duration) }}
             </v-row>

@@ -222,11 +222,6 @@ export class LogEntityObject {
 
   @IsNumber()
   @Min(0)
-  @Max(60)
-  public level: number;
-
-  @IsNumber()
-  @Min(0)
   @Max(1625)
   public gearLevel: number;
 
@@ -247,7 +242,6 @@ export class LogEntityObject {
     this.npcId = entity.npcId;
     this.type = entity.type;
     this.classId = entity.classId;
-    this.level = entity.level;
     this.gearLevel = entity.gearLevel || 0;
     if (entity.skills && entity.type === ENTITY_TYPE.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
     else this.skills = [];

@@ -23,7 +23,8 @@ class LogsController {
   public getLog = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const logId = req.body.id as string;
-      const findLog: LogObject = await this.logService.getLogById(logId);
+      const findLog: LogObject = (await this.logService.getLogById(logId)) || (await this.logService.getRawLogById(logId));
+
       if (!findLog) throw new Exception(404, 'Log not found');
 
       res.status(200).json(findLog);

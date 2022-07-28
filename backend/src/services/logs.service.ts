@@ -11,6 +11,8 @@ import ms from 'ms';
 import { md5 } from '@/utils/crypto';
 import ConfigService from './config.service';
 import rawLogsModel from '@/models/rawlogs.model';
+import { PacketParser } from '@/helpers/log-parsing/parser';
+import { createBrotliCompress } from 'zlib';
 
 class LogsService {
   public logs = logsModel;
@@ -62,7 +64,8 @@ class LogsService {
         log = JSON.parse(cached);
       } else {
         log = await this.logs.findById(id).lean();
-        if (!log) throw new Exception(500, 'Error finding log');
+        if (!log) return undefined;
+
         await RedisService.set(`log:${id}`, JSON.stringify(log), 'PX', ms('5m'));
       }
 
@@ -74,10 +77,30 @@ class LogsService {
 
   public getRawLogById = async (id: mongoose.Types.ObjectId | string) => {
     try {
-      const log = await this.rawLogs.findById(id).lean();
-      if (!log) throw new Exception(404, 'Raw log not found');
+      const cached = await RedisService.get(`rawlog:${id}`);
+      if (cached) {
+        return JSON.parse(cached);
+      } else {
+        const log = await this.rawLogs.findById(id).lean();
+        if (!log) return undefined;
 
-      return new RawLogObject(log);
+        const { logLines } = log;
+
+        const startIdx = logLines.findIndex(line => line.startsWith('1|'));
+        const endIdx = logLines.findIndex(line => line.startsWith('2|'));
+
+        const linesToParse = logLines.slice(startIdx, endIdx + 1);
+
+        const { supportedBosses } = await this.configService.getConfig();
+        const parser = new PacketParser(supportedBosses);
+
+        const parsed = parser.parseLines(linesToParse);
+        const logObject = new LogObject({ _id: log._id, creator: log.creator, createdAt: log.createdAt, ...parsed });
+        await RedisService.set(`rawlog:${id}`, JSON.stringify(logObject), 'PX', ms('5m'));
+
+        return logObject;
+        // return new RawLogObject(log);
+      }
     } catch (err) {
       throw new Exception(400, err.message);
     }

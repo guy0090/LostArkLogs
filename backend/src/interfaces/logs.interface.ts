@@ -58,9 +58,7 @@ export interface LogEntity {
   npcId: number | undefined;
   name: string;
   type: ENTITY_TYPE;
-  class: string | undefined;
   classId: number;
-  level: number;
   gearLevel: number;
   currentHp: number;
   maxHp: number;

@@ -58,6 +58,7 @@
                 </v-col>
                 <v-col cols="auto" class="align-self-center px-0 py-0"
                   ><v-badge
+                    v-if="entity?.gearLevel !== 0"
                     inline
                     color="red-darken-3"
                     :rounded="0"
