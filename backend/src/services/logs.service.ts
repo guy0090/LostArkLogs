@@ -75,31 +75,45 @@ class LogsService {
     }
   };
 
-  public getRawLogById = async (id: mongoose.Types.ObjectId | string) => {
+  /**
+   * Get a raw LostArkLogger log.
+   *
+   * @param id The ID of the log to fetch
+   * @param raw Whether to return the original raw data or a parsed version
+   * @returns The log if found in raw or parsed format.
+   */
+  public getRawLogById = async (id: mongoose.Types.ObjectId | string, raw = true) => {
     try {
-      const cached = await RedisService.get(`rawlog:${id}`);
-      if (cached) {
-        return JSON.parse(cached);
-      } else {
+      if (raw) {
         const log = await this.rawLogs.findById(id).lean();
         if (!log) return undefined;
 
-        const { logLines } = log;
+        return new RawLogObject(log);
+      } else {
+        const cached = await RedisService.get(`rawlog:${id}`);
+        if (cached) {
+          return JSON.parse(cached);
+        } else {
+          const log = await this.rawLogs.findById(id).lean();
+          if (!log) return undefined;
 
-        const startIdx = logLines.findIndex(line => line.startsWith('1|'));
-        const endIdx = logLines.findIndex(line => line.startsWith('2|'));
+          const { logLines } = log;
 
-        const linesToParse = logLines.slice(startIdx, endIdx + 1);
+          const startIdx = logLines.findIndex(line => line.startsWith('1|'));
+          const endIdx = logLines.findIndex(line => line.startsWith('2|'));
 
-        const { supportedBosses } = await this.configService.getConfig();
-        const parser = new PacketParser(supportedBosses);
+          const linesToParse = logLines.slice(startIdx, endIdx + 1);
 
-        const parsed = parser.parseLines(linesToParse);
-        const logObject = new LogObject({ _id: log._id, creator: log.creator, createdAt: log.createdAt, ...parsed });
-        await RedisService.set(`rawlog:${id}`, JSON.stringify(logObject), 'PX', ms('5m'));
+          const { supportedBosses } = await this.configService.getConfig();
+          const parser = new PacketParser(supportedBosses);
 
-        return logObject;
-        // return new RawLogObject(log);
+          const parsed = parser.parseLines(linesToParse);
+          const logObject = new LogObject({ _id: log._id, creator: log.creator, createdAt: log.createdAt, ...parsed });
+          await RedisService.set(`rawlog:${id}`, JSON.stringify(logObject), 'PX', ms('5m'));
+
+          return logObject;
+          // return new RawLogObject(log);
+        }
       }
     } catch (err) {
       throw new Exception(400, err.message);
