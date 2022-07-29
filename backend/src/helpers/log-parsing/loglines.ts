@@ -4,43 +4,6 @@ import { ENTITY_TYPE } from './objects';
 
 export const LINE_SPLIT_CHAR = '|';
 
-// logId = -1
-export class LogMessage {
-  timestamp: number;
-  message: string | unknown;
-  constructor(lineSplit: string[]) {
-    this.timestamp = +new Date(lineSplit[1]);
-    this.message = lineSplit[2];
-  }
-}
-
-// logId = 0
-export class LogInitPc {
-  timestamp: number;
-  id: string;
-  name: string;
-  classId: number;
-  class: string;
-  level: number;
-  gearLevel: number;
-  currentHp: number;
-  maxHp: number;
-  type: ENTITY_TYPE;
-
-  constructor(lineSplit: string[]) {
-    this.timestamp = +new Date(lineSplit[1]);
-    this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
-    this.classId = tryParseNum(lineSplit[4]);
-    this.class = lineSplit[5] || 'Unknown Class';
-    this.level = tryParseNum(lineSplit[6]);
-    this.gearLevel = tryParseNum(lineSplit[7], true);
-    this.currentHp = tryParseNum(lineSplit[8]);
-    this.maxHp = tryParseNum(lineSplit[9]);
-    this.type = ENTITY_TYPE.PLAYER;
-  }
-}
-
 // logId = 1
 export class LogInitEnv {
   timestamp: number;
@@ -54,13 +17,6 @@ export class LogInitEnv {
     this.playerName = lineSplit[3];
     this.playerGearLevel = tryParseNum(lineSplit[4], true);
   }
-}
-
-export enum RAID_RESULT {
-  UNK = -1,
-  RAID_RESULT = 0, // Raid ended; Not sure when it procs
-  GUARDIAN_DEAD = 1, // Guardian died; Also procs on every Argos phase
-  RAID_END = 2, // Non-guardian boss died; Party wiped (does not proc on guardian wipes)
 }
 
 // logId = 2
@@ -90,9 +46,29 @@ export class LogPhaseTransition {
 }
 
 // logId = 3
-export class LogNewPc extends LogInitPc {
+export class LogNewPc {
+  timestamp: number;
+  id: string;
+  name: string;
+  classId: number;
+  class: string;
+  level: number;
+  gearLevel: number;
+  currentHp: number;
+  maxHp: number;
+  type: ENTITY_TYPE;
+
   constructor(lineSplit: string[]) {
-    super(lineSplit);
+    this.timestamp = +new Date(lineSplit[1]);
+    this.id = lineSplit[2];
+    this.name = lineSplit[3] || 'Unknown Entity';
+    this.classId = tryParseNum(lineSplit[4]);
+    this.class = lineSplit[5] || 'Unknown Class';
+    this.level = tryParseNum(lineSplit[6]);
+    this.gearLevel = tryParseNum(lineSplit[7], true);
+    this.currentHp = tryParseNum(lineSplit[8]);
+    this.maxHp = tryParseNum(lineSplit[9]);
+    this.type = ENTITY_TYPE.PLAYER;
   }
 }
 
@@ -182,10 +158,7 @@ export class LogDamage {
   targetId: string;
   targetName: string;
   damage: number;
-  damageModifier: number;
-  isCrit: boolean;
-  isBackAttack: boolean;
-  isFrontAttack: boolean;
+  damageModifier: HitFlag;
   currentHp: number;
   maxHp: number;
   constructor(lineSplit: string[]) {
@@ -200,11 +173,8 @@ export class LogDamage {
     this.targetName = lineSplit[9] || 'Unknown Entity';
     this.damage = tryParseNum(lineSplit[10]);
     this.damageModifier = tryParseNum(lineSplit[11], false, 0, 16);
-    this.isCrit = lineSplit[12] === '1';
-    this.isBackAttack = lineSplit[13] === '1';
-    this.isFrontAttack = lineSplit[14] === '1';
-    this.currentHp = tryParseNum(lineSplit[15]);
-    this.maxHp = tryParseNum(lineSplit[16]);
+    this.currentHp = tryParseNum(lineSplit[12]);
+    this.maxHp = tryParseNum(lineSplit[13]);
   }
 }
 
@@ -264,4 +234,31 @@ export class LogCounterAttack {
     this.targetId = lineSplit[4];
     this.targetName = lineSplit[5] || 'Unknown Entity';
   }
+}
+
+export enum RAID_RESULT {
+  UNK = -1,
+  RAID_RESULT = 0, // Raid ended; Not sure when it procs
+  GUARDIAN_DEAD = 1, // Guardian died; Also procs on every Argos phase
+  RAID_END = 2, // Non-guardian boss died; Party wiped (does not proc on guardian wipes)
+}
+
+export enum HitFlag {
+  HIT_FLAG_NORMAL = 0,
+  HIT_FLAG_CRITICAL = 1,
+  HIT_FLAG_MISS = 2,
+  HIT_FLAG_INVINCIBLE = 3,
+  HIT_FLAG_DOT = 4,
+  HIT_FLAG_IMMUNE = 5,
+  HIT_FLAG_IMMUNE_SILENCED = 6,
+  HIT_FLAG_FONT_SILENCED = 7,
+  HIT_FLAG_DOT_CRITICAL = 8,
+  HIT_FLAG_DODGE = 9,
+  HIT_FLAG_REFLECT = 10,
+  HIT_FLAG_DAMAGE_SHARE = 11,
+  HIT_FLAG_DODGE_HIT = 12,
+  HIT_FLAG_MAX = 13,
+  HIT_OPTION_BACK_ATTACK = 1 << (0 + 4),
+  HIT_OPTION_FRONTAL_ATTACK = 1 << (1 + 4),
+  HIT_OPTION_FLANK_ATTACK = 1 << (2 + 4),
 }

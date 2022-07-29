@@ -52,7 +52,7 @@ export const gzipDecompress = async (req: RequestWithUserAndLog, res: Response, 
       const data = Buffer.concat(body);
 
       const decompressedData = await Gzip.decompress(data);
-      const lines = decompressedData.trim().split('\r\n');
+      const lines = decompressedData.trim().split('\n');
 
       req.log = lines;
       return next();

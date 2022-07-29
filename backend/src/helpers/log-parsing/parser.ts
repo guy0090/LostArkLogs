@@ -5,27 +5,19 @@ import {
   LogHeal,
   LogDeath,
   LogNewPc,
-  LogInitPc,
   LogDamage,
   LogNewNpc,
   LogInitEnv,
-  LogMessage,
   LogCounterAttack,
-  LogPhaseTransition,
-  RAID_RESULT,
+  /*LogPhaseTransition,*/
   LogSkillStart,
+  HitFlag,
 } from './loglines';
 
 import { Entity, ENTITY_TYPE, Session, Skill, SkillBreakdown } from './objects';
 import { generateIntervals, getEntityData, getEntityDps, getTotalDps, tryParseNum, trySetClassFromSkills } from './util';
 import { logger } from '@/utils/logger';
 
-// TODO: Time player out if they havent been updated in 25min
-export const PLAYER_ENTITY_TIMEOUT = 60 * 1000 * 25;
-// TODO: Time bosses out if they havent been updated in 25min
-export const BOSS_ENTITY_TIMEOUT = 60 * 1000 * 25;
-// TODO: Time everything else out if they havent been updated in 30min
-export const DEFAULT_ENTITY_TIMEOUT = 60 * 1000 * 30;
 export interface ActiveUser {
   id: string;
   name: string;
@@ -127,17 +119,11 @@ export class PacketParser extends EventEmitter {
       const timestamp = +new Date(lineSplit[1]);
 
       switch (logType) {
-        case 0:
-          this.onMessage(new LogMessage(lineSplit));
-          break;
-        //case 0:
-        //  this.onInitPc(new LogInitPc(lineSplit));
-        //  break;
         case 1:
           this.onInitEnv(new LogInitEnv(lineSplit));
           break;
         case 2:
-          this.onPhaseTransition(new LogPhaseTransition(lineSplit));
+          this.onPhaseTransition(/*new LogPhaseTransition(lineSplit)*/);
           break;
         case 3:
           this.onNewPc(new LogNewPc(lineSplit));
@@ -183,20 +169,6 @@ export class PacketParser extends EventEmitter {
     }
   }
 
-  // logId = -1
-  onMessage(packet: LogMessage): void {
-    logger.info('onMessage', packet);
-  }
-
-  // logId = 0
-  onInitPc(packet: LogInitPc): void {
-    this.activeUser.id = packet.id;
-    this.activeUser.classId = packet.classId;
-    this.activeUser.level = packet.level > 60 || packet.level < 0 ? 0 : packet.level;
-    this.activeUser.realName = packet.name;
-    this.activeUser.gearLevel = packet.gearLevel;
-  }
-
   // logId = 1 | On: Most loading screens
   onInitEnv(packet: LogInitEnv) {
     const player = this.getEntity(this.activeUser.id);
@@ -208,7 +180,7 @@ export class PacketParser extends EventEmitter {
   }
 
   // logId = 2 | On: Any encounter (with a boss?) ending, wiping or transitioning phases
-  onPhaseTransition(_packet: LogPhaseTransition) {
+  onPhaseTransition(/*packet: LogPhaseTransition*/) {
     this.done = true;
 
     this.session.cleanEntities();
@@ -338,7 +310,7 @@ export class PacketParser extends EventEmitter {
 
   // logId = 8 | On: Any damage event
   onDamage(packet: LogDamage) {
-    if (Object.keys(packet).length < 16) {
+    if (Object.keys(packet).length < 13) {
       logger.warn(`onDamage is too short: ${JSON.stringify(packet)}`);
       return;
     }
@@ -397,28 +369,15 @@ export class PacketParser extends EventEmitter {
       trySetClassFromSkills(target);
     }
 
-    /*
-    if (
-      source.type === ENTITY_TYPE.PLAYER &&
-      packet.skillId === 0 &&
-      packet.skillEffectId !== 0
-    ) {
-      logger.parser(
-        `onDamage: ${source.id}:${source.name} => Unknown skill with effect: ${packet.skillEffectId}:${packet.skillEffect}`
-      );
-    }
-    */
+    const damageModifier = packet.damageModifier;
 
-    // Test removing broken damage from Valtan Gate 1 fight
-    // if (
-    //   (packet.skillName === 'Bleed' || packet.skillId === 0) &&
-    //   [480005, 480006, 480009, 480010, 480011, 480026, 480031, 480032].includes(target.npcId)
-    // )
-    //   return;
+    const isCrit = (damageModifier & (HitFlag.HIT_FLAG_CRITICAL | HitFlag.HIT_FLAG_DOT_CRITICAL)) > 0;
+    const isBackAttack = (damageModifier & HitFlag.HIT_OPTION_BACK_ATTACK) > 0;
+    const isFrontAttack = (damageModifier & HitFlag.HIT_OPTION_FRONTAL_ATTACK) > 0;
 
-    const critCount = packet.isCrit ? 1 : 0;
-    const backAttackCount = packet.isBackAttack ? 1 : 0;
-    const frontAttackCount = packet.isFrontAttack ? 1 : 0;
+    const critCount = isCrit ? 1 : 0;
+    const backAttackCount = isBackAttack ? 1 : 0;
+    const frontAttackCount = isFrontAttack ? 1 : 0;
 
     activeSkill.stats.damageDealt += packet.damage;
     if (packet.damage > activeSkill.stats.topDamage) activeSkill.stats.topDamage = packet.damage;
@@ -441,9 +400,9 @@ export class PacketParser extends EventEmitter {
         new SkillBreakdown({
           timestamp: packet.timestamp,
           damage: packet.damage,
-          isCrit: packet.isCrit,
-          isBackHit: packet.isBackAttack,
-          isFrontHit: packet.isFrontAttack,
+          isCrit: isCrit,
+          isBackHit: isBackAttack,
+          isFrontHit: isFrontAttack,
           targetEntity: target.id,
         }),
       );

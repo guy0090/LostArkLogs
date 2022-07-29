@@ -412,7 +412,7 @@ class LogsService {
 
   public validateRawLog(lines: string[]) {
     const linesLength = lines.length;
-    if (linesLength <= 100) throw new Error('Log is too short');
+    if (linesLength <= 50) throw new Error(`Log is too short: ${linesLength} lines (must be at least 50)`);
 
     // const lastLine = lines[linesLength - 1];
     // if (!lastLine.startsWith('2|')) throw new Error('Log does not end correctly');
