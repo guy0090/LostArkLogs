@@ -1,30 +1,46 @@
 import { HttpException } from '@/exceptions/HttpException';
 import { RequestWithUserAndLog } from '@/interfaces/auth.interface';
-import { Brotli, Gzip } from '@/utils/compression';
 import { logger } from '@/utils/logger';
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import zlib from 'zlib';
 import bytes from 'bytes';
 
-export const brotliDecompress = async (req: Request, res: Response, next: NextFunction) => {
+export const brotliDecompress = async (req: RequestWithUserAndLog, res: Response, next: NextFunction) => {
   try {
-    const buffer = [];
-    req.on('data', chunk => {
-      buffer.push(chunk);
+    const body = [];
+    const maxBodySize = bytes('30MB'); // TODO: adjust; a full Vykas clear was ~15MB
+    let readBytes = 0;
+
+    const brotli = zlib.createBrotliDecompress();
+    req.pipe(brotli);
+
+    brotli.on('data', chunk => {
+      body.push(chunk);
+      readBytes += chunk.length;
+
+      if (readBytes > maxBodySize) {
+        brotli.destroy();
+        next(new HttpException(413, 'Request Entity Too Large'));
+      }
     });
 
-    req.on('end', async () => {
-      const decompressedData = JSON.parse(await Brotli.decompress(Buffer.concat(buffer)));
-      const apiKey = decompressedData.key;
-      const { data } = decompressedData.data;
+    brotli.on('end', async () => {
+      const data = Buffer.concat(body).toString();
+      const lines = data.trim().split('\r\n');
 
-      const decompressedLog = JSON.parse(await Brotli.decompress(Buffer.from(data)));
-
-      req.body = { key: apiKey, data: decompressedLog };
+      req.log = lines;
       next();
+    });
+
+    brotli.on('error', error => {
+      logger.error(`Error decompressing brotli data: ${error}`);
+      brotli.destroy();
+      next(new HttpException(500, 'Bad Entity'));
     });
 
     req.on('error', error => {
       logger.error(`Error decompressing brotli data: ${error}`);
+      if (brotli) brotli.destroy();
       next(new HttpException(500, 'Bad Entity'));
     });
   } catch (error) {
@@ -35,32 +51,40 @@ export const brotliDecompress = async (req: Request, res: Response, next: NextFu
 export const gzipDecompress = async (req: RequestWithUserAndLog, res: Response, next: NextFunction) => {
   try {
     const body = [];
-    const maxBodySize = bytes('1MB');
+    const maxBodySize = bytes('30MB'); // TODO: adjust; a full Vykas clear was ~15MB
     let readBytes = 0;
 
-    req.on('data', chunk => {
+    const gunzip = zlib.createGunzip();
+    req.pipe(gunzip);
+
+    gunzip.on('data', chunk => {
       body.push(chunk);
       readBytes += chunk.length;
 
       if (readBytes > maxBodySize) {
-        req.destroy();
+        gunzip.destroy();
         next(new HttpException(413, 'Request Entity Too Large'));
       }
     });
 
-    req.on('end', async () => {
-      const data = Buffer.concat(body);
-
-      const decompressedData = await Gzip.decompress(data);
-      const lines = decompressedData.trim().split('\n');
+    gunzip.on('end', async () => {
+      const data = Buffer.concat(body).toString();
+      const lines = data.trim().split('\r\n');
 
       req.log = lines;
-      return next();
+      next();
+    });
+
+    gunzip.on('error', error => {
+      logger.error(`Error decompressing gzip data: ${error}`);
+      gunzip.destroy();
+      next(new HttpException(500, 'Bad Entity'));
     });
 
     req.on('error', error => {
       logger.error(`Error decompressing gzip data: ${error}`);
-      return next(new HttpException(500, 'Bad Entity'));
+      if (gunzip) gunzip.destroy();
+      next(new HttpException(500, 'Bad Entity'));
     });
   } catch (error) {
     logger.error(`Error in gzipDecompress: ${error.message}`);

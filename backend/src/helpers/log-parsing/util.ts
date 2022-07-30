@@ -58,6 +58,8 @@ export const getEntityDPS = (duration: number, damage: number) => {
 };
 
 export const generateIntervals = (started: number, ended: number) => {
+  if (started === 0 || ended === 0) return [];
+
   const duration = ended - started;
   const intervals = [];
 
