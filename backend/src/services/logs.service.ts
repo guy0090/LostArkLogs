@@ -12,7 +12,6 @@ import { md5 } from '@/utils/crypto';
 import ConfigService from './config.service';
 import rawLogsModel from '@/models/rawlogs.model';
 import { PacketParser } from '@/helpers/log-parsing/parser';
-import { createBrotliCompress } from 'zlib';
 
 class LogsService {
   public logs = logsModel;
@@ -26,12 +25,12 @@ class LogsService {
    * @param log The log to create
    * @returns The created log
    */
-  public createLog = async (log: LogObject) => {
+  public createLog = async (log: LogObject, cache = true) => {
     try {
       const created = await this.logs.create(log);
       if (!created) throw new Exception(500, 'Error creating log');
 
-      RedisService.set(`log:${created._id}`, JSON.stringify(created), 'PX', ms('5m'));
+      if (cache) RedisService.set(`log:${created._id}`, JSON.stringify(created), 'PX', ms('5m'));
 
       return new LogObject(created);
     } catch (err) {
@@ -39,13 +38,50 @@ class LogsService {
     }
   };
 
+  /**
+   * Creates a new raw log and if found, any encounters contained within.
+   *
+   * @param log The raw log to create
+   * @returns The created log ID and the IDs of additional encounters created
+   */
   public createRawLog = async (log: RawLog) => {
-    try {
-      const created = await this.rawLogs.create(log);
-      if (!created) throw new Exception(500, 'Error creating log');
+    const clientSession = await mongoose.startSession();
+    clientSession.startTransaction();
 
-      return new RawLogObject(created);
+    try {
+      const created = await this.rawLogs.create([log], { session: clientSession });
+      if (!created) {
+        await clientSession.abortTransaction();
+        clientSession.endSession();
+
+        throw new Exception(500, 'Error creating log');
+      }
+
+      const { logLines, creator, createdAt, _id } = created[0];
+      const { supportedBosses } = await this.configService.getConfig();
+
+      const parser = new PacketParser(supportedBosses);
+      const parsedEncounters = parser.parseLog(logLines);
+
+      let children = [];
+      if (parsedEncounters.length > 0) {
+        const encounters = parsedEncounters.map(s => new LogObject({ ...s, creator, createdAt }));
+        for (const encounter of encounters) {
+          await this.validateLog(encounter);
+          encounter.parent = `${_id}`;
+        }
+
+        const logs = await this.logs.create(encounters, { session: clientSession });
+        children = logs.map((l: Log) => l._id);
+      }
+      await clientSession.commitTransaction();
+      clientSession.endSession();
+
+      return { children, raw: new RawLogObject(created[0]) };
     } catch (err) {
+      await clientSession.abortTransaction();
+      clientSession.endSession();
+
       throw new Exception(400, err.message);
     }
   };
@@ -79,41 +115,18 @@ class LogsService {
    * Get a raw LostArkLogger log.
    *
    * @param id The ID of the log to fetch
-   * @param raw Whether to return the original raw data or a parsed version
    * @returns The log if found in raw or parsed format.
    */
-  public getRawLogById = async (id: mongoose.Types.ObjectId | string, raw = true) => {
+  public getRawLogById = async (id: mongoose.Types.ObjectId | string) => {
     try {
-      if (raw) {
+      const cached = await RedisService.get(`rawlog:${id}`);
+      if (cached) {
+        return JSON.parse(cached);
+      } else {
         const log = await this.rawLogs.findById(id).lean();
         if (!log) return undefined;
 
         return new RawLogObject(log);
-      } else {
-        const cached = await RedisService.get(`rawlog:${id}`);
-        if (cached) {
-          return JSON.parse(cached);
-        } else {
-          const log = await this.rawLogs.findById(id).lean();
-          if (!log) return undefined;
-
-          const { logLines } = log;
-
-          const startIdx = logLines.findIndex(line => line.startsWith('1|'));
-          const endIdx = logLines.findIndex(line => line.startsWith('2|'));
-
-          const linesToParse = logLines.slice(startIdx, endIdx + 1);
-
-          const { supportedBosses } = await this.configService.getConfig();
-          const parser = new PacketParser(supportedBosses);
-
-          const parsed = parser.parseLines(linesToParse);
-          const logObject = new LogObject({ _id: log._id, creator: log.creator, createdAt: log.createdAt, ...parsed });
-          await RedisService.set(`rawlog:${id}`, JSON.stringify(logObject), 'PX', ms('5m'));
-
-          return logObject;
-          // return new RawLogObject(log);
-        }
       }
     } catch (err) {
       throw new Exception(400, err.message);
@@ -299,10 +312,6 @@ class LogsService {
       }
 
       const secondMatch = {
-        'entities.level': {
-          $gte: filter.level[0], // default 0
-          $lte: filter.level[1], // default 60
-        },
         'entities.gearLevel': {
           $gte: filter.gearLevel[0], // default 302
           $lte: filter.gearLevel[1], // default 1625
@@ -385,6 +394,7 @@ class LogsService {
 
       return;
     } catch (err) {
+      logger.error(`Error validating log: ${err.message}`);
       throw new Exception(400, err.message);
     }
   }
@@ -426,15 +436,13 @@ class LogsService {
    * Find logs that are potential duplicates based on the log's creation date,
    * duration and encounter ID.
    *
-   * TODO: this is most likely not fool-proof, testing required
+   * TODO: this is not guaranteed to find all duplicates and may find false matches
    *
    * @param upload The upload object to compare against
    * @param range The time range to allow between session creation and duration
    * @returns A list of similar logs if any are found
    */
   public async findDuplicateUploads(upload: LogObject, range = 15000) {
-    const { npcId } = upload.getBoss();
-
     const filter = {
       createdAt: {
         $gte: upload.createdAt - range,
@@ -444,11 +452,26 @@ class LogsService {
         $gte: upload.duration - range,
         $lte: upload.duration + range,
       },
-      'entities.npcId': npcId,
     };
+
+    const { npcId } = upload.getBoss();
+    if (npcId) filter['entities.npcId'] = npcId;
 
     const res: Log[] = await this.logs.find(filter).lean();
     return res;
+  }
+
+  /**
+   * Find other raw logs that may be duplicates
+   *
+   * TODO: is there some guaranteed way of doing this even?
+   *
+   * @param rawLog The raw log to find dupes for
+   */
+  public async findDuplicateRawLogs(rawLog: RawLog) {
+    const dupes = await this.rawLogs.find({ hash: rawLog.hash }).count();
+
+    return dupes;
   }
 }
 

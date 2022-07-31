@@ -48,8 +48,10 @@ export const resources: Module<any, any> = {
         },
         {
           dungeonName: "Vykas",
-          disabled: true,
+          disabled: false,
           bosses: [
+            480208, // Incubus Morphe
+            480209, // Nightmarish Morphe
             480210, // Covetous Devourer Vykas (?)
             480211, // Covetous Devourer Vykas (?)
           ],

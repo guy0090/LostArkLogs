@@ -1,4 +1,4 @@
-import { getClassId, getClassName } from '@/utils/game-classes';
+import { getClassId, getClassName } from './lib/game-classes';
 import { EventEmitter } from 'events';
 import {
   LINE_SPLIT_CHAR,
@@ -13,10 +13,10 @@ import {
   LogSkillStart,
   HitFlag,
   HitOption,
-} from './loglines';
+} from './lib/loglines';
 
-import { Entity, ENTITY_TYPE, Session, Skill, SkillBreakdown } from './objects';
-import { generateIntervals, getEntityData, getEntityDps, getTotalDps, tryParseNum, trySetClassFromSkills } from './util';
+import { Entity, ENTITY_TYPE, Session, SimpleSession, Skill, SkillBreakdown } from './lib/objects';
+import { generateIntervals, getEntityData, getEntityDps, getTotalDps, tryParseNum, trySetClassFromSkills } from './lib/util';
 import { logger } from '@/utils/logger';
 
 export interface ActiveUser {
@@ -33,7 +33,6 @@ export interface PacketParserConfig {
 }
 
 export class PacketParser extends EventEmitter {
-  private done = false;
   private session: Session;
   private removeOverkillDamage: boolean;
   private hasBossEntity: boolean;
@@ -55,15 +54,47 @@ export class PacketParser extends EventEmitter {
       level: 1,
       gearLevel: 0,
     };
+
     // Init
     this.supportedBosses = supportedBosses;
     this.session = new Session();
   }
 
-  parseLines(lines: string[]) {
-    lines.forEach(line => this.parse(line));
+  parseLog(logData: string[]) {
+    const encounters: SimpleSession[] = [];
+    const phaseRanges = this.getPhaseRanges(logData);
 
-    return this.session.toSimpleObject();
+    // logger.info(`Parsing ${phaseRanges.length} potential encounters`);
+    for (const phaseRange of phaseRanges) {
+      const lines = logData.slice(phaseRange[0], phaseRange[1] + 1);
+      lines.forEach(line => this.parse(line));
+
+      if (this.session.firstPacket > 0) encounters.push(this.session.toSimpleObject());
+
+      this.session = new Session();
+      this.hasBossEntity = false;
+    }
+    // logger.info(`Parser found ${encounters.length} encounters (dropped ${phaseRanges.length - encounters.length})`);
+
+    return encounters;
+  }
+
+  getPhaseRanges(lines: string[]): number[] {
+    const phaseIndices: number[] = lines.reduce((acc, line, index) => {
+      if (line.startsWith('2|')) acc.push(index);
+      return acc;
+    }, []);
+
+    const phaseRanges = [];
+    phaseIndices.forEach((envIndex, i) => {
+      if (i === 0) {
+        phaseRanges.push([0, envIndex]);
+      } else {
+        phaseRanges.push([phaseRanges[i - 1][1] + 1, envIndex]);
+      }
+    });
+
+    return phaseRanges;
   }
 
   getSession(): Session {
@@ -107,7 +138,7 @@ export class PacketParser extends EventEmitter {
   }
 
   parse(line: string) {
-    if (!line || this.done) {
+    if (!line) {
       return;
     }
 
@@ -135,7 +166,6 @@ export class PacketParser extends EventEmitter {
         case 5:
           this.onDeath(new LogDeath(lineSplit));
           break;
-
         case 6:
           this.onSkillStart(new LogSkillStart(lineSplit));
           break;
@@ -166,7 +196,7 @@ export class PacketParser extends EventEmitter {
       this.session.lastPacket = timestamp;
       // this.broadcastSessionChange();
     } catch (err) {
-      logger.error(`Failed to parse log line: ${(err as Error).message}`);
+      // logger.error(`Failed to parse log line: ${(err as Error).message}`);
     }
   }
 
@@ -182,8 +212,6 @@ export class PacketParser extends EventEmitter {
 
   // logId = 2 | On: Any encounter (with a boss?) ending, wiping or transitioning phases
   onPhaseTransition(/*packet: LogPhaseTransition*/) {
-    this.done = true;
-
     this.session.cleanEntities();
     this.session.damageStatistics.dps = getTotalDps(this.session);
 
@@ -201,8 +229,6 @@ export class PacketParser extends EventEmitter {
         e.stats.dpsOverTime = getEntityData(intervals, e, this.session.firstPacket);
       }
     }
-
-    // FOO ALL DONE
   }
 
   // logId = 3 | On: A new player character is found (can be the user if the meter was started after a loading screen)
@@ -291,7 +317,7 @@ export class PacketParser extends EventEmitter {
   // logId = 6
   onSkillStart(packet: LogSkillStart) {
     const source = this.getEntity(packet.id);
-    if (source && source.type === ENTITY_TYPE.PLAYER) {
+    if (source && source.type === ENTITY_TYPE.PLAYER && this.session.firstPacket > 0) {
       source.stats.casts += 1;
 
       if (!(packet.skillId in source.skills)) {

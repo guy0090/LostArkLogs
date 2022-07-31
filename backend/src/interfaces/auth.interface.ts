@@ -9,5 +9,6 @@ export interface RequestWithUser extends Request {
 }
 
 export interface RequestWithUserAndLog extends RequestWithUser {
+  hash: string;
   log: string[];
 }

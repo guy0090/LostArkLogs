@@ -3,6 +3,10 @@ import { model, Document, Schema } from 'mongoose';
 import { Log } from '@interfaces/logs.interface';
 
 const logsSchema: Schema = new Schema({
+  parent: {
+    type: Schema.Types.ObjectId,
+    required: false,
+  },
   creator: {
     type: Schema.Types.ObjectId,
     required: true,

@@ -108,7 +108,7 @@ export const optionalHttpAuthMiddleware = (permissions?: string[], byPassCache =
       next();
     } catch (err) {
       logger.error(`Error in optional HTTP auth: ${err.message}`);
-      next();
+      next(new HttpException(500, 'Error during optional HTTP auth'));
     }
   };
 };
@@ -128,7 +128,7 @@ export const apiKeyMiddleware = (
   cookieFallback = false,
   byPassCache = false,
 ): RequestHandler => {
-  return async (req: RequestWithUser, _res: Response, next: NextFunction) => {
+  return async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const access = req[keyLocation].key as string;
 
@@ -185,6 +185,72 @@ export const apiKeyMiddleware = (
     } catch (err) {
       logger.error('Error in API Key Middleware: ', err);
       next(new HttpException(401, 'Invalid Authorization'));
+    }
+  };
+};
+
+/**
+ * Express middleware to handle requests with API keys and optionally permissions.
+ * Permission check defaults to `true` if no permissions are provided; TODO: change this?
+ *
+ * @param keyLocation Optional: The location of the API key in the request (e.g. 'query', 'body', 'params')
+ * @param permissions Optional: the permission to check for the user
+ * @param cookieFallback Optional: Whether to fallback to the auth cookie if the API key is not provided
+ * @param byPassCache Optional: Whether to bypass redis cache
+ */
+export const optionalApiKeyMiddleware = (
+  keyLocation: 'query' | 'body' | 'params' | 'headers' = 'query',
+  permissions?: string[],
+  cookieFallback = false,
+  byPassCache = false,
+): RequestHandler => {
+  return async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const apiKey = req[keyLocation].key as string;
+
+      req.user = null;
+      if (!apiKey && cookieFallback) {
+        logger.debug('No API key found in request, falling back to cookie');
+        const refreshToken = req.cookies['Authorization'] || req.header('Authorization');
+        const accessToken = req.cookies['at'] || req.header('at');
+
+        if (refreshToken) {
+          const secretKey: string = SECRET_KEY;
+          const refreshVerificationResponse = verify(refreshToken, secretKey) as DataStoredInToken;
+
+          if (refreshVerificationResponse.exp * 1000 >= Date.now()) {
+            const userId = refreshVerificationResponse.i;
+            let findUser: User = await users.findUserById(userId, byPassCache);
+
+            let accessVerificationResponse: DataStoredInToken;
+            if (accessToken) {
+              accessVerificationResponse = verify(accessToken, secretKey) as DataStoredInToken;
+              const userSalt = findUser.salt;
+              const accessHash = accessVerificationResponse.h;
+
+              if (!hashMatch(userId, userSalt, accessHash)) findUser = undefined;
+            }
+
+            if (findUser) {
+              const hasPermission = permissions ? await perms.userHasPermissions(findUser._id, permissions, byPassCache) : true;
+              if (hasPermission) {
+                req.user = findUser;
+              }
+            }
+          }
+        }
+      } else {
+        const user = await users.findByApiKey(apiKey, byPassCache);
+        const hasPermission = permissions ? await perms.userHasPermissions(user._id, permissions, byPassCache) : true;
+
+        if (apiKey === user.uploadKey && hasPermission) {
+          req.user = user;
+        }
+      }
+      next();
+    } catch (err) {
+      logger.error('Error in optional API Key Middleware: ', err);
+      next(new HttpException(500, 'Error in optional API key auth'));
     }
   };
 };

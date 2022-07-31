@@ -4,6 +4,7 @@ import { logger } from '@/utils/logger';
 import { Response, NextFunction } from 'express';
 import zlib from 'zlib';
 import bytes from 'bytes';
+import { md5 } from '@/utils/crypto';
 
 export const brotliDecompress = async (req: RequestWithUserAndLog, res: Response, next: NextFunction) => {
   try {
@@ -25,9 +26,10 @@ export const brotliDecompress = async (req: RequestWithUserAndLog, res: Response
     });
 
     brotli.on('end', async () => {
-      const data = Buffer.concat(body).toString();
-      const lines = data.trim().split('\r\n');
+      const data = Buffer.concat(body).toString().replace(/\r?\n/g, '\n');
+      const lines = data.trim().split(/\n/g);
 
+      req.hash = md5(data);
       req.log = lines;
       next();
     });
@@ -68,9 +70,10 @@ export const gzipDecompress = async (req: RequestWithUserAndLog, res: Response, 
     });
 
     gunzip.on('end', async () => {
-      const data = Buffer.concat(body).toString();
-      const lines = data.trim().split('\r\n');
+      const data = Buffer.concat(body).toString().replace(/\r?\n/g, '\n');
+      const lines = data.trim().split(/\n/g);
 
+      req.hash = md5(data);
       req.log = lines;
       next();
     });

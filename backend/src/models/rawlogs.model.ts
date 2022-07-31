@@ -21,6 +21,10 @@ const rawLogsSchema: Schema = new Schema({
     required: false,
     default: +new Date(),
   },
+  hash: {
+    type: String,
+    required: true,
+  },
   logLines: {
     type: [String],
     required: true,

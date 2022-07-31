@@ -276,7 +276,7 @@ export class SimpleSession {
     // Only keep players with skills
     this.entities = this.entities.filter(e => {
       if (e.type === ENTITY_TYPE.BOSS || e.type == ENTITY_TYPE.GUARDIAN) return true;
-      else if (e.type === ENTITY_TYPE.PLAYER && Object.keys(e.skills).length > 0) return true;
+      else if (e.type === ENTITY_TYPE.PLAYER && Object.keys(e.skills).length > 2) return true;
       else return false;
     });
 

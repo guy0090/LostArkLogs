@@ -1,5 +1,5 @@
-import { getClassName } from '@/utils/game-classes';
-import { getClassIdFromSkillId } from '@/utils/skills';
+import { getClassName } from './game-classes';
+import { getClassIdFromSkillId } from './skills';
 import ms from 'ms';
 import { Session, ENTITY_TYPE, Entity, SkillBreakdown } from './objects';
 
@@ -90,7 +90,7 @@ export const tryParseNum = (intString: string, float = false, defaultValue = 0, 
     intNum = float ? parseFloat(intString.replace(/,/g, '.')) : parseInt(intString, radix);
     if (isNaN(intNum)) intNum = defaultValue;
   } catch (err) {
-    console.log('Failed to parse', intString, err.message);
+    // console.log('Failed to parse', intString, err.message);
     intNum = defaultValue;
   }
 

@@ -17,6 +17,8 @@ export const bosses = [
   480010, // Dark Mountain Predator (^)
   480011, // Dark Mountain Predator (^)
   // Vykas Legion Raid
+  480208, // Incubus Morphe
+  480209, // Nightmarish Morphe
   480210, // Covetous Devourer Vykas (?)
   480211, // Covetous Legion Commander Vykas
   /* Argos */

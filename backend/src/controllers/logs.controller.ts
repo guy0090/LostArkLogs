@@ -23,7 +23,7 @@ class LogsController {
   public getLog = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const logId = req.body.id as string;
-      const findLog: LogObject = (await this.logService.getLogById(logId)) || (await this.logService.getRawLogById(logId, false));
+      const findLog: LogObject = await this.logService.getLogById(logId);
 
       if (!findLog) throw new Exception(404, 'Log not found');
 
@@ -64,7 +64,7 @@ class LogsController {
     try {
       const config = await this.configService.getConfig();
       const { allowUploads } = config;
-      if (!allowUploads) throw new Exception(403, 'Uploads are disabled');
+      if (!allowUploads) throw new Exception(503, 'Uploads are disabled');
 
       const user = req.user;
       if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
@@ -89,24 +89,35 @@ class LogsController {
     }
   };
 
+  /**
+   * Attempt to create a new raw DPS log.
+   * If a log with the same hash already exists, it will be rejected.
+   * If no user is present, the log will be uploaded anonymously.
+   *
+   * @param req The passed request with the new log and possibly the uploader's information
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
   public uploadRawLog = async (req: RequestWithUserAndLog, res: Response, next: NextFunction) => {
     try {
       const config = await this.configService.getConfig();
       const { allowUploads } = config;
-      if (!allowUploads) throw new Exception(403, 'Uploads are disabled');
+      if (!allowUploads) throw new Exception(503, 'Uploads are disabled');
 
-      // const user = req.user;
-      // if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
+      const user = req.user;
+      if (user && user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
 
-      // Test user, temp until auth is re-implemented
-      const creator = new mongoose.Types.ObjectId('62e2155766a63b6311df989b');
-      const toValidate: RawLog = { unlisted: true, creator: creator, createdAt: +new Date(), logLines: req.log };
+      const creator = user ? user._id : new mongoose.Types.ObjectId('62e2155766a63b6311df989b');
+      const toValidate: RawLog = { unlisted: true, creator: creator, createdAt: +new Date(), hash: req.hash, logLines: req.log };
       this.logService.validateRawLog(toValidate.logLines);
 
-      const createdLog = await this.logService.createRawLog(toValidate);
-      if (!createdLog) throw new Exception(500, 'Error creating log');
+      const dupes = await this.logService.findDuplicateRawLogs(toValidate);
+      if (dupes > 0) throw new Exception(418, 'Duplicate log');
 
-      res.status(200).json({ created: true, dupe: false, id: createdLog.id });
+      const create = await this.logService.createRawLog(toValidate);
+      if (!create) throw new Exception(500, 'Error creating log');
+
+      res.status(200).json({ id: create.raw.id, children: create.children });
     } catch (error) {
       next(error);
     }

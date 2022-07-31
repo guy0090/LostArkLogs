@@ -4,7 +4,7 @@ import ms from 'ms';
 
 export const limiterAuth = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'production' ? 30 : 99999, // limit each IP to 100 requests per windowMs
+  max: NODE_ENV === 'production' ? 30 : 99999, // limit each IP to X requests per windowMs
 });
 
 // Need to properly test this in prod
@@ -15,10 +15,10 @@ export const limiterUsers = rateLimit({
   legacyHeaders: false,
 });
 
-// Max 100 raw uploads an hour per IP
+// Max 10 raw uploads every 10 minutes per IP
 export const rawLimiter = rateLimit({
-  windowMs: NODE_ENV === 'production' ? ms('1hr') : 1000, // 1 hour
-  max: NODE_ENV === 'production' ? 100 : 99999, // limit each IP to X requests per windowMs
+  windowMs: NODE_ENV === 'production' ? ms('10m') : 1000, // 10 min
+  max: NODE_ENV === 'production' ? 10 : 99999, // limit each IP to X requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
 });

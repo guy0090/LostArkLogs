@@ -38,7 +38,8 @@ export interface LogFilterOptions {
 }
 
 export interface Log {
-  _id: mongoose.Types.ObjectId;
+  _id?: mongoose.Types.ObjectId;
+  parent?: mongoose.Types.ObjectId;
   unlisted?: boolean;
   server?: string;
   region?: string;
@@ -112,5 +113,6 @@ export interface RawLog {
   unlisted?: boolean;
   creator: mongoose.Types.ObjectId;
   createdAt: number;
+  hash: string;
   logLines: string[];
 }
