@@ -3,7 +3,7 @@ import { Routes } from '@interfaces/routes.interface';
 import { apiKeyMiddleware, optionalApiKeyMiddleware, optionalHttpAuthMiddleware } from '@middlewares/auth.middleware';
 import { limiterUsers, rawLimiter } from '@/middlewares/limiting.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
-import { LogDeleteDTO, LogIdDTO, LogUploadDTO, LogFilterDTO, RawLogIdDTO } from '@/dtos/logs.dto';
+import { LogDeleteDTO, LogIdDTO, LogUploadDTO, LogFilterDTO, RawLogIdDTO, RawLogUploadDTO } from '@/dtos/logs.dto';
 import LogsController from '@/controllers/logs.controller';
 import { gzipDecompress } from '@/middlewares/compression.middleware';
 
@@ -44,7 +44,7 @@ class LogsRoute implements Routes {
     // Upload raw log
     this.router.post(
       `${this.path}/raw/upload`,
-      [rawLimiter, optionalApiKeyMiddleware('headers', [], true), gzipDecompress],
+      [rawLimiter, validationMiddleware(RawLogUploadDTO, 'query'), optionalApiKeyMiddleware('headers', ['log.upload'], true), gzipDecompress],
       this.logsController.uploadRawLog,
     );
 

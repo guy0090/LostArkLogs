@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { tryParseNum } from './util';
-import { ENTITY_TYPE } from './objects';
+import { tryParseNum } from "./util";
+import { ENTITY_TYPE } from "./objects";
 
-export const LINE_SPLIT_CHAR = '|';
+export const LINE_SPLIT_CHAR = "|";
 
 // logId = 1
 export class LogInitEnv {
@@ -61,13 +61,11 @@ export class LogNewPc {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.classId = tryParseNum(lineSplit[4]);
-    this.class = lineSplit[5] || 'Unknown Class';
+    this.class = lineSplit[5] || "Unknown Class";
     this.level = tryParseNum(lineSplit[6]);
     this.gearLevel = tryParseNum(lineSplit[7], true);
-    if (this.gearLevel > 1625 || this.gearLevel < 0) this.gearLevel = 0;
-
     this.currentHp = tryParseNum(lineSplit[8]);
     this.maxHp = tryParseNum(lineSplit[9]);
     this.type = ENTITY_TYPE.PLAYER;
@@ -88,7 +86,7 @@ export class LogNewNpc {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
     this.npcId = tryParseNum(lineSplit[3]);
-    this.name = lineSplit[4] || 'Unknown Entity';
+    this.name = lineSplit[4] || "Unknown Entity";
     this.currentHp = tryParseNum(lineSplit[5]);
     this.maxHp = tryParseNum(lineSplit[6]);
     this.type = ENTITY_TYPE.UNKNOWN;
@@ -106,9 +104,9 @@ export class LogDeath {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.killerId = lineSplit[4];
-    this.killerName = lineSplit[5] || 'Unknown Entity';
+    this.killerName = lineSplit[5] || "Unknown Entity";
   }
 }
 
@@ -123,9 +121,9 @@ export class LogSkillStart {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.skillId = tryParseNum(lineSplit[4]);
-    this.skillName = lineSplit[5] || 'Unknown Skill';
+    this.skillName = lineSplit[5] || "Unknown Skill";
   }
 }
 
@@ -141,9 +139,9 @@ export class LogSkillStage {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.skillId = tryParseNum(lineSplit[4]);
-    this.skillName = lineSplit[5] || 'Unknown Skill';
+    this.skillName = lineSplit[5] || "Unknown Skill";
     this.skillStage = tryParseNum(lineSplit[6]);
   }
 }
@@ -166,13 +164,13 @@ export class LogDamage {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.sourceId = lineSplit[2];
-    this.sourceName = lineSplit[3] || 'Unknown Entity';
+    this.sourceName = lineSplit[3] || "Unknown Entity";
     this.skillId = tryParseNum(lineSplit[4]);
-    this.skillName = lineSplit[5] || 'Unknown Skill';
+    this.skillName = lineSplit[5] || "Unknown Skill";
     this.skillEffectId = tryParseNum(lineSplit[6]);
     this.skillEffect = lineSplit[7];
     this.targetId = lineSplit[8];
-    this.targetName = lineSplit[9] || 'Unknown Entity';
+    this.targetName = lineSplit[9] || "Unknown Entity";
     this.damage = tryParseNum(lineSplit[10]);
     this.damageModifier = tryParseNum(lineSplit[11], false, 0, 16);
     this.currentHp = tryParseNum(lineSplit[12]);
@@ -190,7 +188,7 @@ export class LogHeal {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.healAmount = tryParseNum(lineSplit[4]);
     this.currentHp = tryParseNum(lineSplit[5]);
   }
@@ -211,12 +209,12 @@ export class LogBuff {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.buffId = lineSplit[4];
-    this.buffName = lineSplit[5] || 'Unknown Buff';
-    this.isNew = lineSplit[6] === '1';
+    this.buffName = lineSplit[5] || "Unknown Buff";
+    this.isNew = lineSplit[6] === "1";
     this.sourceId = lineSplit[7];
-    this.sourceName = lineSplit[8] || 'Unknown Entity';
+    this.sourceName = lineSplit[8] || "Unknown Entity";
     this.shieldAmount = tryParseNum(lineSplit[9], true, 0);
   }
 }
@@ -232,9 +230,9 @@ export class LogCounterAttack {
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
     this.id = lineSplit[2];
-    this.name = lineSplit[3] || 'Unknown Entity';
+    this.name = lineSplit[3] || "Unknown Entity";
     this.targetId = lineSplit[4];
-    this.targetName = lineSplit[5] || 'Unknown Entity';
+    this.targetName = lineSplit[5] || "Unknown Entity";
   }
 }
 

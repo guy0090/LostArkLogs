@@ -29,6 +29,10 @@ export const brotliDecompress = async (req: RequestWithUserAndLog, res: Response
       const data = Buffer.concat(body).toString().replace(/\r?\n/g, '\n');
       const lines = data.trim().split(/\n/g);
 
+      const unlisted = req.query['unlisted'];
+      if (unlisted && unlisted === '0') req.unlisted = false;
+      else req.unlisted = true;
+
       req.hash = md5(data);
       req.log = lines;
       next();
@@ -72,6 +76,10 @@ export const gzipDecompress = async (req: RequestWithUserAndLog, res: Response, 
     gunzip.on('end', async () => {
       const data = Buffer.concat(body).toString().replace(/\r?\n/g, '\n');
       const lines = data.trim().split(/\n/g);
+
+      const unlisted = req.query['unlisted'];
+      if (unlisted && unlisted === '0') req.unlisted = false;
+      else req.unlisted = true;
 
       req.hash = md5(data);
       req.log = lines;

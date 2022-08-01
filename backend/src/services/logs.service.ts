@@ -69,6 +69,7 @@ class LogsService {
         for (const encounter of encounters) {
           await this.validateLog(encounter);
           encounter.parent = `${_id}`;
+          encounter.unlisted = log.unlisted;
         }
 
         const logs = await this.logs.create(encounters, { session: clientSession });

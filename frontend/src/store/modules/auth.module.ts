@@ -34,6 +34,9 @@ export const auth: Module<any, any> = {
         state.accessToken = cookie;
       }
     },
+    removeUploadToken(state) {
+      state.uploadToken = null;
+    },
     removeAccessToken(state) {
       state.accessToken = null;
       state.expiresAt = null;
@@ -197,6 +200,7 @@ export const auth: Module<any, any> = {
             commit("removeAvatar");
             commit("removeAccessToken");
             commit("setPermissions", []);
+            commit("removeUploadToken");
             // Reopen WS to reset headers
             io.disconnect().connect();
             resolve();

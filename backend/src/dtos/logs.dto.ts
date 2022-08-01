@@ -148,6 +148,13 @@ export class RawLogIdDTO {
   public key!: string;
 }
 
+export class RawLogUploadDTO {
+  @IsOptional()
+  @IsString()
+  @Length(1)
+  public unlisted: string;
+}
+
 export function MaxRangeDifference(maxDifference: number | string) {
   return function (object: Object, propertyName: string) {
     registerDecorator({

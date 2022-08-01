@@ -108,7 +108,7 @@ class LogsController {
       if (user && user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
 
       const creator = user ? user._id : new mongoose.Types.ObjectId('62e2155766a63b6311df989b');
-      const toValidate: RawLog = { unlisted: true, creator: creator, createdAt: +new Date(), hash: req.hash, logLines: req.log };
+      const toValidate: RawLog = { unlisted: req.unlisted, creator: creator, createdAt: +new Date(), hash: req.hash, logLines: req.log };
       this.logService.validateRawLog(toValidate.logLines);
 
       const dupes = await this.logService.findDuplicateRawLogs(toValidate);

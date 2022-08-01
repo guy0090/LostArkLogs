@@ -8,7 +8,11 @@
       @click="openLog(session?.id)"
       @contextmenu="openLogNewTab(session?.id)"
     >
-      <v-progress-linear model-value="100" height="7" color="indigo">
+      <v-progress-linear
+        model-value="100"
+        height="7"
+        :color="raw ? 'green-darken-3' : 'indigo'"
+      >
       </v-progress-linear>
       <v-card-content class="pa-3" v-if="!$vuetify.display.xs">
         <v-row :class="$vuetify.display.xs ? 'pb-2' : 'py-1'">
@@ -143,6 +147,8 @@ export default defineComponent({
   props: {
     session: Object,
     colors: Boolean,
+    raw: Boolean,
+    result: Boolean,
   },
 
   data() {
@@ -161,9 +167,12 @@ export default defineComponent({
 
   methods: {
     openLog(id: string) {
+      if (this.$props.raw || this.$props.result) return;
+
       this.$router.push({ path: `/logs/${id}` });
     },
     openLogNewTab(id: string) {
+      if (this.$props.raw) return;
       window.open(`/logs/${id}`);
     },
     getDuration(duration: number) {

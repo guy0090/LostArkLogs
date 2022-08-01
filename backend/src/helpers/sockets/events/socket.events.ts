@@ -18,7 +18,7 @@ export const socketEvents = [
   new SocketEvent('get_permissions', true, []),
 
   // Logs
-  new SocketEvent('get_log', true, []),
+  new SocketEvent('get_log', false, []),
   new SocketEvent('upload_log', true, ['log.upload']),
   new SocketEvent('unique_bosses', false, []),
   new SocketEvent('supported_bosses', false, []),

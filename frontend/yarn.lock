@@ -1300,6 +1300,11 @@
   "resolved" "https://registry.npmmirror.com/@types/estree/-/estree-0.0.39.tgz"
   "version" "0.0.39"
 
+"@types/events@^3.0.0":
+  "integrity" "sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g=="
+  "resolved" "https://registry.npmjs.org/@types/events/-/events-3.0.0.tgz"
+  "version" "3.0.0"
+
 "@types/express-serve-static-core@*", "@types/express-serve-static-core@^4.17.18":
   "integrity" "sha512-P1BJAEAW3E2DJUlkgq4tOL3RyMunoWXqbSCygWo5ZIWTjUgN1YnaXWW4VWl/oc8vs/XoYibEGBKP0uZyF4AHig=="
   "resolved" "https://registry.npmmirror.com/@types/express-serve-static-core/-/express-serve-static-core-4.17.28.tgz"

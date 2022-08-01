@@ -174,7 +174,7 @@ class SocketHandler {
         await this.validateArgs(args, true, GetLogDTO);
 
         const log = await this.logService.getLogById(logId);
-        callback(log);
+        callback({ log });
       } catch (err) {
         logger.error(`[WS] Error getting log ${logId} => ${err.message}`);
         callback(null);

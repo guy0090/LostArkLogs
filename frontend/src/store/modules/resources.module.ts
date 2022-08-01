@@ -6,6 +6,7 @@ import { Module } from "vuex";
  */
 export const resources: Module<any, any> = {
   state: () => ({
+    supportedBossIds: [] as number[],
     supportedBosses: {
       abyssRaids: [
         {
@@ -85,6 +86,7 @@ export const resources: Module<any, any> = {
     ],
   }),
   getters: {
+    supportedBossIds: (state) => state.supportedBossIds,
     supportedBosses(state) {
       return state.supportedBosses;
     },
@@ -110,5 +112,41 @@ export const resources: Module<any, any> = {
 
         return bossIds.includes(id);
       },
+  },
+  mutations: {
+    setSupportedBossIds(state, payload: number[]) {
+      state.supportedBossIds = payload;
+    },
+  },
+  actions: {
+    getSupportedBosses(context) {
+      const { dispatch, getters, rootGetters, commit } = context;
+      const app = rootGetters.app;
+
+      if (getters.supportedBossIds.length > 0)
+        return JSON.parse(JSON.stringify(getters.supportedBossIds));
+      dispatch("info", "[WS] Getting supported boss IDs");
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+        io.timeout(5000).emit(
+          "supported_bosses",
+          {},
+          (
+            err: Error,
+            res: {
+              supportedBosses: number[];
+            }
+          ) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              commit("setSupportedBossIds", res.supportedBosses);
+              resolve(res.supportedBosses);
+            }
+          }
+        );
+      });
+    },
   },
 };

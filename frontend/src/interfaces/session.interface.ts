@@ -1,3 +1,5 @@
+import { SimpleSession } from "@/log-parsing/lib/objects";
+
 export enum ENTITY_TYPE {
   UNKNOWN = -1,
   MONSTER = 0,
@@ -25,7 +27,6 @@ export interface UEntity {
   lastUpdate: number;
   type: ENTITY_TYPE;
   classId: number;
-  level: number;
   gearLevel: string | number;
   skills: { [key: string]: Skill } | Skill[];
   stats: Stats;
@@ -34,6 +35,7 @@ export interface UEntity {
 
 export interface Session {
   id: string;
+  parent?: string;
   unlisted: boolean;
   server?: string;
   region?: string;
@@ -51,7 +53,6 @@ export interface Entity {
   npcId: number | undefined;
   type: ENTITY_TYPE;
   classId: number;
-  level: number;
   gearLevel: number;
   skills: Skill[];
   stats: Stats;
@@ -106,4 +107,15 @@ export interface DamageStatistics {
   topDamageTaken: number;
   dps: number;
   dpsIntervals: number[];
+}
+
+export interface RawSessionDetails {
+  data: string;
+  name: string;
+  date: Date;
+  parsed: number;
+  found: number;
+  dropped: number;
+  encounters: SimpleSession[];
+  results: Session[];
 }

@@ -225,6 +225,14 @@ export class LogEntityObject {
   @Max(1625)
   public gearLevel: number;
 
+  @IsOptional()
+  @IsNumber()
+  public currentHp: number;
+
+  @IsOptional()
+  @IsNumber()
+  public maxHp: number;
+
   @ValidateIf(o => o.type === ENTITY_TYPE.PLAYER)
   @IsArray()
   @ArrayMinSize(1)
@@ -243,6 +251,8 @@ export class LogEntityObject {
     this.type = entity.type;
     this.classId = entity.classId;
     this.gearLevel = entity.gearLevel || 0;
+    this.currentHp = entity.currentHp;
+    this.maxHp = entity.maxHp;
     if (entity.skills && entity.type === ENTITY_TYPE.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
     else this.skills = [];
     this.stats = new LogEntityStatObject(entity.stats);
@@ -313,7 +323,7 @@ export class LogObject {
   constructor(log: Log) {
     try {
       this.id = log._id ? `${log._id}` : undefined;
-      this.unlisted = log.unlisted || true;
+      this.unlisted = log.unlisted ?? true;
       this.parent = log.parent ? `${log.parent}` : undefined;
       this.creator = `${log.creator}`;
       this.duration = log.firstPacket && log.lastPacket ? log.lastPacket - log.firstPacket : log.duration;

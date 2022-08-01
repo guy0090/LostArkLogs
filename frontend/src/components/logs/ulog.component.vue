@@ -4,53 +4,248 @@
       <v-col cols="4">
         <v-file-input
           prepend-icon="mdi-upload"
-          accept=".enc"
+          accept=".enc,.log"
           label="Log File"
           v-on:change="onFileChange"
+          variant="outlined"
         ></v-file-input>
       </v-col>
     </v-row>
   </v-container>
-  <Log v-else :uSession="session" :isUpload="true"></Log>
+  <Log v-else-if="logType === 'enc'" :uSession="session" :isUpload="true"></Log>
+  <v-container fluid v-else>
+    <v-row class="my-1" justify="center">
+      <v-col cols="7">
+        <v-row class="mb-5 px-1">
+          <v-btn color="warning" v-on:click="goBack">Back</v-btn>
+        </v-row>
+        <v-row class="mb-2">
+          <RawDetails :details="rawDetails" />
+        </v-row>
+        <v-row class="mt-1 mb-0" v-if="unlistedUpload" justify="center">
+          <v-col cols="auto" align-self="center">
+            <h3>
+              <v-icon icon="mdi-information" color="white" /> Encounters
+              associated with an unlisted log will not show up when searching
+              encounters.
+            </h3>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-spacer />
+          <v-col cols="auto">
+            <v-checkbox
+              v-model="unlistedUpload"
+              label="Unlisted"
+              color="success"
+              hide-details
+            ></v-checkbox>
+          </v-col>
+          <v-col cols="auto">
+            <v-checkbox
+              v-model="guestUpload"
+              label="Upload as guest"
+              color="success"
+              hide-details
+              :disabled="!uploadToken"
+            ></v-checkbox>
+          </v-col>
+          <v-col cols="auto" align-self="center">
+            <v-btn
+              v-if="!uploaded"
+              color="indigo"
+              v-on:click="uploadRawLog"
+              :disabled="uploading || uploadError !== ''"
+              >{{ uploading ? "Uploading..." : "Upload" }}</v-btn
+            >
+            <v-btn v-else color="success"> Uploaded! </v-btn>
+          </v-col>
+        </v-row>
+        <v-row justify="center" v-if="uploadError !== ''">
+          <v-col class="px-0" cols="8">
+            <v-alert
+              class="my-2"
+              prominent
+              closable
+              icon="mdi-alert-circle-outline"
+              :elevation="0"
+              color="red-darken-3"
+            >
+              Failed to upload: {{ uploadError }}
+            </v-alert>
+          </v-col>
+        </v-row>
+        <v-row class="mt-2 mb-2 px-1">
+          <h3 style="color: grey">
+            Parsed
+            <span style="color: white">{{ rawDetails.found }}</span>
+            potential encounters and found
+            <span style="color: white">{{ rawDetails.parsed }}</span>
+            valid encounter{{ rawDetails.parsed === 1 ? "" : "s" }}.
+          </h3>
+        </v-row>
+        <v-row class="my-3">
+          <v-expansion-panels>
+            <v-expansion-panel v-if="rawDetails.results.length === 0">
+              <v-progress-linear model-value="100" height="7" color="indigo">
+              </v-progress-linear>
+              <v-expansion-panel-title class="ps-4">
+                <v-row>
+                  <v-col cols="auto">
+                    <v-avatar color="indigo" icon="mdi-upload"></v-avatar>
+                  </v-col>
+                  <v-col class="align-self-center">
+                    <v-row>
+                      <h2>Valid Encounters</h2>
+                    </v-row>
+                    <v-row class="pt-3">
+                      Any encounters listed here will be uploaded as well.
+                    </v-row>
+                  </v-col>
+                </v-row>
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-row class="mt-1">
+                  <EncounterCard
+                    class="mb-1"
+                    v-for="(session, index) in rawDetails.encounters"
+                    :key="index"
+                    :session="session"
+                    :raw="true"
+                    :colors="false"
+                  />
+                </v-row>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+            <v-expansion-panel v-else>
+              <v-progress-linear model-value="100" height="7" color="indigo">
+              </v-progress-linear>
+              <v-expansion-panel-title class="ps-4">
+                <v-row>
+                  <v-col cols="auto">
+                    <v-avatar color="indigo" icon="mdi-check"></v-avatar>
+                  </v-col>
+                  <v-col class="align-self-center">
+                    <v-row>
+                      <h2>Uploaded Encounters</h2>
+                    </v-row>
+                    <v-row class="pt-3">
+                      Right click any encounter to open in a new tab.
+                    </v-row>
+                  </v-col>
+                </v-row>
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-row class="mt-1">
+                  <EncounterCard
+                    class="mb-1"
+                    v-for="(session, index) in rawDetails.results"
+                    :key="index"
+                    :session="session"
+                    :raw="false"
+                    :result="true"
+                    :colors="false"
+                  />
+                </v-row>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, reactive, ref } from "vue";
+import { mapGetters, mapActions } from "vuex";
 import pako from "pako";
 import { v4 as uuidv4 } from "uuid";
-
+import { PacketParser } from "@/log-parsing/parser";
 import {
   ENTITY_TYPE,
+  RawSessionDetails,
   SkillBreakdown,
   UEntity,
   USession,
 } from "@/interfaces/session.interface";
 
 import Log from "@/components/logs/log.component.vue";
+import RawDetails from "@/components/logs/log/raw/details.component.vue";
+import EncounterCard from "@/components/home/encounter.component.vue";
+import axios, { AxiosRequestConfig } from "axios";
+import { Session } from "@/interfaces/session.interface";
 
 export default defineComponent({
   name: "UploadedLog",
 
   components: {
     Log,
+    RawDetails,
+    EncounterCard,
+  },
+
+  mounted() {
+    if (!this.uploadToken) this.guestUpload = true;
   },
 
   setup() {
     let fileLoaded = ref(false);
     let session = ref({} as USession | undefined);
+    let logType = ref("" as "" | "enc" | "raw");
+    let unlistedUpload = ref(false);
+    let guestUpload = ref(false);
+    let rawDetails = reactive({
+      data: "",
+      name: "",
+      date: new Date(),
+      parsed: 0,
+      found: 0,
+      dropped: 0,
+      encounters: [],
+      results: [],
+    } as RawSessionDetails);
+    let uploadError = ref("");
+    let uploading = ref(false);
+    let uploaded = ref(false);
 
     return {
       fileLoaded,
       session,
+      logType,
+      unlistedUpload,
+      guestUpload,
+      rawDetails,
+      uploadError,
+      uploading,
+      uploaded,
     };
   },
 
   methods: {
+    ...mapActions(["getSupportedBosses", "info", "error", "getLogWS"]),
     async onFileChange(e: any) {
-      const file = e.target.files[0] as File;
-      const data = await file.arrayBuffer();
+      try {
+        const file = e.target.files[0] as File;
+        this.rawDetails.name = file.name;
+        if (file.name.endsWith(".log")) {
+          this.logType = "raw";
 
-      this.readSession(data);
+          const data = await file.text();
+          this.rawDetails.data = data;
+
+          console.log("Reading in raw log");
+          this.readRawSession(data);
+        } else if (file.name.endsWith(".enc")) {
+          this.logType = "enc";
+
+          const data = await file.arrayBuffer();
+          this.readSession(data);
+        }
+      } catch (err) {
+        this.uploadError = (err as Error).message;
+        console.error(err);
+      }
     },
     reformatUpload(session: USession) {
       const clone: USession = JSON.parse(JSON.stringify(session));
@@ -102,6 +297,25 @@ export default defineComponent({
 
       return clone;
     },
+    async readRawSession(data: string) {
+      const bosses = await this.getSupportedBosses();
+      const guardians = this.supportedBosses.guardians;
+
+      const parser = new PacketParser(bosses, guardians);
+
+      const lines = data.trim().replace(/\r?\n/g, "\n").split("\n");
+      const { encounters, parsed, found, dropped } = parser.parseLog(lines);
+
+      if (encounters.length > 0) {
+        this.rawDetails.date = new Date(encounters[0].firstPacket);
+        this.rawDetails.parsed = parsed;
+        this.rawDetails.found = found;
+        this.rawDetails.dropped = dropped;
+        this.rawDetails.encounters = encounters;
+
+        this.fileLoaded = true;
+      }
+    },
     async readSession(data: ArrayBuffer) {
       try {
         console.time("readSession");
@@ -120,9 +334,9 @@ export default defineComponent({
         this.fileLoaded = true;
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
-
     generateIntervals(started: number, ended: number) {
       const duration = ended - started;
       const intervals = [];
@@ -134,7 +348,6 @@ export default defineComponent({
       }
       return intervals;
     },
-
     getEntityData(intervals: number[], player: UEntity, started: number) {
       const data: number[] = [];
 
@@ -165,6 +378,84 @@ export default defineComponent({
     getEntityDPS(duration: number, damage: number) {
       return damage > 0 ? (damage / duration).toFixed(2) : "0";
     },
+    resetRawDetails() {
+      this.rawDetails.name = "";
+      this.rawDetails.date = new Date();
+      this.rawDetails.parsed = 0;
+      this.rawDetails.found = 0;
+      this.rawDetails.dropped = 0;
+      this.rawDetails.encounters = [];
+      this.rawDetails.results = [];
+    },
+    goBack() {
+      this.resetRawDetails();
+      this.logType = "";
+      this.uploadError = "";
+      this.uploading = false;
+      this.uploaded = false;
+      this.fileLoaded = false;
+    },
+    uploadRawLog() {
+      this.uploading = true;
+      // Timeout to let uploading ref update; Compression will hang UI even on semi-large files
+      setTimeout(() => {
+        try {
+          if (this.rawDetails.data === "") throw new Error("Upload is invalid");
+          const compressed = pako.gzip(this.rawDetails.data);
+
+          const request = {
+            url: `${this.apiUrl}/logs/raw/upload?unlisted=${
+              this.unlistedUpload ? "1" : "0"
+            }`,
+            method: "POST",
+            withCredentials: !this.guestUpload,
+            headers: {
+              "Content-Type": "application/octet-stream",
+            },
+            data: compressed,
+          } as AxiosRequestConfig;
+
+          axios(request)
+            .then(async (response) => {
+              this.uploaded = true;
+
+              const associated = response.data.children;
+              const logs: Session[] = [];
+              for (const id of associated) {
+                const log = await this.getLog(id);
+                logs.push(log);
+              }
+
+              this.rawDetails.encounters = [];
+              this.rawDetails.results = logs;
+            })
+            .catch((uploadErr) => {
+              const err = uploadErr.response.data
+                ? uploadErr.response.data.message
+                : uploadErr.message;
+
+              this.uploadError = err;
+              console.error("Upload error", err);
+            });
+        } catch (e) {
+          this.uploadError = (e as Error).message;
+          console.error("Error uploading raw log", (e as Error).message);
+          throw e;
+        }
+      }, 10);
+    },
+    async getLog(id: string) {
+      try {
+        const log: Session = await this.getLogWS(id);
+        return log;
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    },
+  },
+  computed: {
+    ...mapGetters(["supportedBosses", "uploadToken", "apiUrl"]),
   },
 });
 </script>

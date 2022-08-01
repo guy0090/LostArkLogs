@@ -157,6 +157,32 @@ export const logs: Module<any, any> = {
         );
       });
     },
+    getLogWS(context, id: string) {
+      const { dispatch, rootGetters } = context;
+      const app = rootGetters.app;
+
+      dispatch("info", "[WS] Getting log");
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+        io.timeout(5000).emit(
+          "get_log",
+          { logId: id },
+          (
+            err: Error,
+            res: {
+              log: Session;
+            }
+          ) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              resolve(res.log);
+            }
+          }
+        );
+      });
+    },
     async deleteOwnLog({ dispatch, getters }, id: string) {
       try {
         const key = getters.uploadToken;
