@@ -1,6 +1,6 @@
 <template>
   <v-row justify="center">
-    <v-card rounded="sm">
+    <v-card rounded="sm" width="400px">
       <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
       <v-card-content class="mx-3 mb-2">

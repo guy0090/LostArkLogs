@@ -224,6 +224,7 @@ export default defineComponent({
 
   methods: {
     ...mapActions(["getSupportedBosses", "info", "error", "getLogWS"]),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async onFileChange(e: any) {
       try {
         const file = e.target.files[0] as File;
@@ -234,12 +235,14 @@ export default defineComponent({
           const data = await file.text();
           this.rawDetails.data = data;
 
-          console.log("Reading in raw log");
+          this.info("Reading in raw log");
           this.readRawSession(data);
         } else if (file.name.endsWith(".enc")) {
           this.logType = "enc";
 
           const data = await file.arrayBuffer();
+
+          this.info("Reading in enc log");
           this.readSession(data);
         }
       } catch (err) {

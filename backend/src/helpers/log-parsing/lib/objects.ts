@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { tryParseNum } from './util';
 
-export enum ENTITY_TYPE {
+export enum EntityType {
   UNKNOWN = -1,
   MONSTER = 0,
   BOSS = 1,
@@ -45,14 +45,14 @@ export class Session {
     this.damageStatistics = session?.damageStatistics || new DamageStatistics();
   }
 
-  cleanEntities(entityFilter: ENTITY_TYPE[] | undefined = [ENTITY_TYPE.GUARDIAN, ENTITY_TYPE.BOSS, ENTITY_TYPE.PLAYER]) {
+  cleanEntities(entityFilter: EntityType[] | undefined = [EntityType.GUARDIAN, EntityType.BOSS, EntityType.PLAYER]) {
     if (entityFilter) {
       this.entities = this.entities.filter(e => entityFilter.includes(e.type));
     }
 
     this.entities = this.entities.filter(e => {
-      if (e.type === ENTITY_TYPE.BOSS || e.type == ENTITY_TYPE.GUARDIAN) return true;
-      else if (e.type === ENTITY_TYPE.PLAYER && Object.keys(e.skills).length > 0) return true;
+      if (e.type === EntityType.BOSS || e.type == EntityType.GUARDIAN) return true;
+      else if (e.type === EntityType.PLAYER && Object.keys(e.skills).length > 0) return true;
       else return false;
     });
   }
@@ -64,7 +64,7 @@ export class Session {
   }
 
   getBoss(): Entity | undefined {
-    const bosses = this.entities.filter(e => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN);
+    const bosses = this.entities.filter(e => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN);
 
     let boss: Entity | undefined = undefined;
     if (bosses.length > 1) {
@@ -113,7 +113,7 @@ export class Entity {
   public id: string;
   public npcId: number;
   public name: string;
-  public type: ENTITY_TYPE;
+  public type: EntityType;
   public class: string;
   public classId: number;
   public level: number;
@@ -129,7 +129,7 @@ export class Entity {
     this.id = entity.id || 0;
     this.npcId = tryParseNum(entity.npcId);
     this.name = entity.name || 'Unknown Entity';
-    this.type = entity.type || ENTITY_TYPE.UNKNOWN;
+    this.type = entity.type || EntityType.UNKNOWN;
     this.class = entity.class || 'Unknown Class';
     this.classId = entity.classId || 0;
     this.level = entity.level || 0;
@@ -275,8 +275,8 @@ export class SimpleSession {
 
     // Only keep players with skills
     this.entities = this.entities.filter(e => {
-      if (e.type === ENTITY_TYPE.BOSS || e.type == ENTITY_TYPE.GUARDIAN) return true;
-      else if (e.type === ENTITY_TYPE.PLAYER && Object.keys(e.skills).length > 2) return true;
+      if (e.type === EntityType.BOSS || e.type == EntityType.GUARDIAN) return true;
+      else if (e.type === EntityType.PLAYER && Object.keys(e.skills).length > 2) return true;
       else return false;
     });
 
@@ -289,7 +289,7 @@ export class SimpleEntity {
   public id: string;
   public npcId: number;
   public name: string;
-  public type: ENTITY_TYPE;
+  public type: EntityType;
   public classId: number;
   public gearLevel: number;
   public currentHp: number;

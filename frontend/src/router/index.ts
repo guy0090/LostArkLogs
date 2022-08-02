@@ -8,6 +8,7 @@ import {
 import { Store } from "vuex";
 import HomeView from "@/views/home.view.vue";
 import LoginView from "@/views/login.view.vue";
+import UserView from "@/views/user.view.vue";
 import LogsView from "@/views/logs.view.vue";
 import AdminView from "@/views/admin.view.vue";
 
@@ -29,6 +30,12 @@ const routes: Array<RouteRecordRaw> = [
     path: "/login",
     name: "login",
     component: LoginView,
+    props: true,
+  },
+  {
+    path: "/profile",
+    name: "user",
+    component: UserView,
     props: true,
   },
   {

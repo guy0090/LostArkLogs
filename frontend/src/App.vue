@@ -122,6 +122,16 @@
           <v-list-item-title>Admin</v-list-item-title>
         </v-list-item>
         <v-list-item
+          v-if="user && uploadToken"
+          value="user"
+          v-on:click="$router.push({ name: 'user' })"
+        >
+          <v-list-item-avatar>
+            <v-icon color="white"> mdi-account </v-icon>
+          </v-list-item-avatar>
+          <v-list-item-title>Profile</v-list-item-title>
+        </v-list-item>
+        <v-list-item
           value="logs"
           v-on:click="$router.push({ name: 'logsBase' })"
         >
@@ -328,6 +338,7 @@ export default defineComponent({
       "currentRoute",
       "pageLoading",
       "verifiedAlertAccepted",
+      "uploadToken",
     ]),
   },
 });

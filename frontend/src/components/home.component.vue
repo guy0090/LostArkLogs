@@ -1,88 +1,12 @@
 <template>
   <v-container>
-    <v-row class="text-center">
-      <v-col class="mb-0">
-        <h1 class="display-2 font-weight-bold mb-3">
-          <v-avatar image="/img/sprites/ewip.webp" /> SOON&trade;
-        </h1>
-      </v-col>
-    </v-row>
-    <v-row justify="center">
-      <v-col v-if="user" lg="4" md="12" sm="12" cols="12">
-        <InfoPanel></InfoPanel>
-      </v-col>
-      <v-col v-if="user" lg="6" md="12" sm="12" cols="12">
-        <v-row justify="center" class="mb-2">
-          <v-col align="left">
-            <h2>
-              <span v-if="!globalLogs">Your&nbsp;</span>Recent Uploads
-              <small style="font-size: 10pt">(24hrs)</small>
-            </h2>
-          </v-col>
-          <v-spacer></v-spacer>
-          <v-col hidden cols="auto" align="right" class="px-1">
-            <v-btn
-              :color="globalLogs ? 'blue-darken-3' : ''"
-              @click="globalLogs = !globalLogs"
-            >
-              <v-icon icon="mdi-earth" />
-            </v-btn>
-          </v-col>
-          <v-col cols="auto" align="right" class="px-1">
-            <v-btn
-              :color="colors ? 'blue-darken-3' : ''"
-              @click="colors = !colors"
-              ><v-icon icon="mdi-palette" />&nbsp;Class Colors</v-btn
-            >
-          </v-col>
-          <v-col cols="auto" align="right" class="px-1">
-            <v-btn
-              color="success"
-              :disabled="loadingSessions"
-              @click="getUserRecentSessions(100)"
-            >
-              <span v-if="loadingSessions">Loading</span>
-              <span v-else>Refresh</span>
-            </v-btn>
-          </v-col>
-        </v-row>
-        <v-row
-          v-if="!loadingSessions && recentSessions.length > 0"
-          class="align-baseline"
-          justify="space-around"
-        >
-          <EncounterCard
-            class="mb-0"
-            v-for="(session, index) in !globalLogs
-              ? recentSessions
-              : publicRecentSessions"
-            :key="index"
-            :session="session"
-            :colors="colors"
-          ></EncounterCard>
-        </v-row>
-        <v-row
-          v-else-if="!loadingSessions && recentSessions.length === 0"
-          justify="center"
-        >
-          <v-col cols="auto">NO RECENT ENCOUNTERS</v-col>
-        </v-row>
-        <v-row v-else-if="loadingSessions" justify="center">
-          <v-col cols="6" class="text-center">
-            <v-progress-linear
-              indeterminate
-              color="indigo darken-2"
-              class="mb-2"
-            ></v-progress-linear>
-            <span>LOADING ENCOUNTERS</span>
-          </v-col>
-        </v-row>
-      </v-col>
-      <v-col v-else lg="7" md="12" sm="12" align="center">
+    <v-row class="mt-5" justify="center">
+      <v-col lg="8" md="12" sm="12" align="center">
         <v-row justify="center" class="mb-5">
           <v-col align="left">
             <h2>
-              Recent Uploads <small style="font-size: 10pt">(24hrs)</small>
+              Recent Uploads
+              <small style="font-size: 11pt">(Last 24 hours)</small>
             </h2>
           </v-col>
           <v-spacer></v-spacer>
@@ -133,7 +57,6 @@ import { defineComponent, ref } from "vue";
 import { useCookies } from "vue3-cookies";
 import { mapActions, mapGetters, useStore } from "vuex";
 
-import InfoPanel from "@/components/home/info.component.vue";
 import EncounterCard from "@/components/home/encounter.component.vue";
 import { Session } from "@/interfaces/session.interface";
 
@@ -141,30 +64,9 @@ export default defineComponent({
   // eslint-disable-next-line vue/multi-word-component-names
   name: "HomePage",
   components: {
-    InfoPanel,
     EncounterCard,
   },
   mounted() {
-    if (this.user) {
-      let retries = 10;
-      const loader = setInterval(() => {
-        if (retries === 0) {
-          this.info("Maxed out retries; Clearing interval");
-          clearInterval(loader);
-          this.recentSessions = [];
-          this.loadingSessions = false;
-        }
-
-        if (this.uploadToken !== null) {
-          this.info("Got upload token; Requesting recent sessions");
-          clearInterval(loader);
-          this.getUserRecentSessions(0);
-        }
-
-        retries--;
-      }, 200);
-    }
-
     this.getRecentSessions(100);
   },
   setup() {

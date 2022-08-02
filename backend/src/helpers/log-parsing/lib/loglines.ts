@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { tryParseNum } from './util';
-import { ENTITY_TYPE } from './objects';
+import { EntityType } from './objects';
 
 export const LINE_SPLIT_CHAR = '|';
 
@@ -22,7 +22,7 @@ export class LogInitEnv {
 // logId = 2
 export class LogPhaseTransition {
   timestamp: number;
-  raidResultType: RAID_RESULT;
+  raidResultType: RaidResult;
 
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
@@ -30,16 +30,16 @@ export class LogPhaseTransition {
 
     switch (type) {
       case 0:
-        this.raidResultType = RAID_RESULT.RAID_RESULT;
+        this.raidResultType = RaidResult.RAID_RESULT;
         break;
       case 1:
-        this.raidResultType = RAID_RESULT.GUARDIAN_DEAD;
+        this.raidResultType = RaidResult.GUARDIAN_DEAD;
         break;
       case 2:
-        this.raidResultType = RAID_RESULT.RAID_END;
+        this.raidResultType = RaidResult.RAID_END;
         break;
       default:
-        this.raidResultType = RAID_RESULT.UNK;
+        this.raidResultType = RaidResult.UNK;
         break;
     }
   }
@@ -56,7 +56,7 @@ export class LogNewPc {
   gearLevel: number;
   currentHp: number;
   maxHp: number;
-  type: ENTITY_TYPE;
+  type: EntityType;
 
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
@@ -70,7 +70,7 @@ export class LogNewPc {
 
     this.currentHp = tryParseNum(lineSplit[8]);
     this.maxHp = tryParseNum(lineSplit[9]);
-    this.type = ENTITY_TYPE.PLAYER;
+    this.type = EntityType.PLAYER;
   }
 }
 
@@ -82,7 +82,7 @@ export class LogNewNpc {
   name: string;
   currentHp: number;
   maxHp: number;
-  type: ENTITY_TYPE;
+  type: EntityType;
 
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
@@ -91,7 +91,7 @@ export class LogNewNpc {
     this.name = lineSplit[4] || 'Unknown Entity';
     this.currentHp = tryParseNum(lineSplit[5]);
     this.maxHp = tryParseNum(lineSplit[6]);
-    this.type = ENTITY_TYPE.UNKNOWN;
+    this.type = EntityType.UNKNOWN;
   }
 }
 
@@ -238,7 +238,7 @@ export class LogCounterAttack {
   }
 }
 
-export enum RAID_RESULT {
+export enum RaidResult {
   UNK = -1,
   RAID_RESULT = 0, // Raid ended; Not sure when it procs
   GUARDIAN_DEAD = 1, // Guardian died; Also procs on every Argos phase
