@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts">
-import { Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
+import { Entity, EntityType } from "@/interfaces/session.interface";
 import { EChartsOption, SeriesOption } from "echarts/types/dist/shared";
 import { defineComponent, ref } from "vue";
 
@@ -60,7 +60,7 @@ export default defineComponent({
     generateSeries(entities: Entity[]) {
       const series: SeriesOption[] = [];
       const players = entities?.filter(
-        (e: Entity) => e.type === ENTITY_TYPE.PLAYER
+        (e: Entity) => e.type === EntityType.PLAYER
       );
 
       players.forEach((e) => {

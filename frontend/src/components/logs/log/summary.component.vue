@@ -261,7 +261,7 @@
 </template>
 
 <script lang="ts">
-import { Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
+import { Entity, EntityType } from "@/interfaces/session.interface";
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
 import { mapGetters } from "vuex";
@@ -349,7 +349,9 @@ export default defineComponent({
 
     getTotalDeaths(entities: Entity[]) {
       let total = 0;
-      for (let entity of entities) total += entity.stats.deaths;
+      for (let entity of entities) {
+        if (entity.type === EntityType.PLAYER) total += entity.stats.deaths;
+      }
 
       return total;
     },
@@ -391,7 +393,7 @@ export default defineComponent({
     getEncounter() {
       const entities = this.session?.entities as Entity[];
       const bossEntities = entities.filter(
-        (e) => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN
+        (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
       );
       const hasBoss = bossEntities.length > 0;
       if (!hasBoss) return;

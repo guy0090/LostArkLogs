@@ -1,6 +1,6 @@
 import { SimpleSession } from "@/log-parsing/lib/objects";
 
-export enum ENTITY_TYPE {
+export enum EntityType {
   UNKNOWN = -1,
   MONSTER = 0,
   BOSS = 1,
@@ -25,7 +25,7 @@ export interface UEntity {
   npcId: number | undefined;
   name?: string;
   lastUpdate: number;
-  type: ENTITY_TYPE;
+  type: EntityType;
   classId: number;
   gearLevel: string | number;
   skills: { [key: string]: Skill } | Skill[];
@@ -51,7 +51,7 @@ export interface Session {
 export interface Entity {
   id: string;
   npcId: number | undefined;
-  type: ENTITY_TYPE;
+  type: EntityType;
   classId: number;
   gearLevel: number;
   skills: Skill[];

@@ -419,7 +419,7 @@
 </template>
 
 <script lang="ts">
-import { ENTITY_TYPE, Session } from "@/interfaces/session.interface";
+import { EntityType, Session } from "@/interfaces/session.interface";
 import {
   LogFilter,
   SupportedRaid,
@@ -715,7 +715,7 @@ export default defineComponent({
         for (const boss of tracked) {
           let name = this.$t(`monsters.${boss.id}`);
           switch (boss.type) {
-            case ENTITY_TYPE.GUARDIAN:
+            case EntityType.GUARDIAN:
               if (argosRgx.test(name)) {
                 supported.push({
                   name: name,
@@ -732,7 +732,7 @@ export default defineComponent({
                 });
               }
               break;
-            case ENTITY_TYPE.BOSS:
+            case EntityType.BOSS:
               if (this.isLegionRaidBoss(boss.id)) {
                 supported.push({
                   name: this.$t(`monsters.${boss.id}`),

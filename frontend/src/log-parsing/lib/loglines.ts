@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { tryParseNum } from "./util";
-import { ENTITY_TYPE } from "./objects";
+import { EntityType } from "./objects";
 
 export const LINE_SPLIT_CHAR = "|";
 
@@ -56,7 +56,7 @@ export class LogNewPc {
   gearLevel: number;
   currentHp: number;
   maxHp: number;
-  type: ENTITY_TYPE;
+  type: EntityType;
 
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
@@ -68,7 +68,7 @@ export class LogNewPc {
     this.gearLevel = tryParseNum(lineSplit[7], true);
     this.currentHp = tryParseNum(lineSplit[8]);
     this.maxHp = tryParseNum(lineSplit[9]);
-    this.type = ENTITY_TYPE.PLAYER;
+    this.type = EntityType.PLAYER;
   }
 }
 
@@ -80,7 +80,7 @@ export class LogNewNpc {
   name: string;
   currentHp: number;
   maxHp: number;
-  type: ENTITY_TYPE;
+  type: EntityType;
 
   constructor(lineSplit: string[]) {
     this.timestamp = +new Date(lineSplit[1]);
@@ -89,7 +89,7 @@ export class LogNewNpc {
     this.name = lineSplit[4] || "Unknown Entity";
     this.currentHp = tryParseNum(lineSplit[5]);
     this.maxHp = tryParseNum(lineSplit[6]);
-    this.type = ENTITY_TYPE.UNKNOWN;
+    this.type = EntityType.UNKNOWN;
   }
 }
 

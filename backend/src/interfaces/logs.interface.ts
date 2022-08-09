@@ -1,7 +1,7 @@
 import { LogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
 
-export enum ENTITY_TYPE {
+export enum EntityType {
   UNKNOWN = -1,
   MONSTER = 0,
   BOSS = 1,
@@ -58,7 +58,7 @@ export interface LogEntity {
   id: string;
   npcId: number | undefined;
   name: string;
-  type: ENTITY_TYPE;
+  type: EntityType;
   classId: number;
   gearLevel: number;
   currentHp: number;
@@ -93,8 +93,10 @@ export interface LogEntityStats {
   counters: number;
   damageDealt: number;
   healing: number;
+  shielding: number;
   damageTaken: number;
   deaths: number;
+  deathTime: number;
   dps: number;
   dpsOverTime: number[];
 }
@@ -104,6 +106,10 @@ export interface LogDamageStatistics {
   topDamageDealt: number;
   totalDamageTaken: number;
   topDamageTaken: number;
+  totalHealingDone: number;
+  topHealingDone: number;
+  totalShieldDone: number;
+  topShieldDone: number;
   dps: number;
   dpsIntervals: number[];
 }

@@ -17,7 +17,7 @@ import {
 
 import {
   Entity,
-  ENTITY_TYPE,
+  EntityType,
   Session,
   SimpleSession,
   Skill,
@@ -150,8 +150,8 @@ export class PacketParser extends EventEmitter {
   hasBoss(entities: Entity[], mustBeAlive = true) {
     return entities.some(
       (entity) =>
-        (entity.type === ENTITY_TYPE.BOSS ||
-          entity.type === ENTITY_TYPE.GUARDIAN) &&
+        (entity.type === EntityType.BOSS ||
+          entity.type === EntityType.GUARDIAN) &&
         (mustBeAlive ? entity.currentHp > 0 : true)
     );
   }
@@ -159,7 +159,7 @@ export class PacketParser extends EventEmitter {
   getBoss() {
     const bosses = this.session.entities.filter(
       (entity) =>
-        entity.type === ENTITY_TYPE.BOSS || entity.type === ENTITY_TYPE.GUARDIAN
+        entity.type === EntityType.BOSS || entity.type === EntityType.GUARDIAN
     );
 
     if (bosses.length > 0) {
@@ -266,7 +266,7 @@ export class PacketParser extends EventEmitter {
 
     // Create DPS over time data for ECharts for each player entity
     for (const e of this.session.entities) {
-      if (e.type === ENTITY_TYPE.PLAYER) {
+      if (e.type === EntityType.PLAYER) {
         e.stats.dpsOverTime = getEntityData(
           intervals,
           e,
@@ -302,7 +302,7 @@ export class PacketParser extends EventEmitter {
       user.id = packet.id;
       user.class = packet.class;
       user.classId = packet.classId;
-      user.type = ENTITY_TYPE.PLAYER;
+      user.type = EntityType.PLAYER;
 
       if (packet.id === this.activeUser.id) {
         user.name = this.activeUser.name;
@@ -319,9 +319,9 @@ export class PacketParser extends EventEmitter {
     const isBoss = this.isBossEntity(packet.npcId);
     const isGuardian = this.isGuardianEntity(packet.npcId);
 
-    if (isBoss) packet.type = ENTITY_TYPE.BOSS;
-    else if (isGuardian) packet.type = ENTITY_TYPE.GUARDIAN;
-    else packet.type = ENTITY_TYPE.MONSTER;
+    if (isBoss) packet.type = EntityType.BOSS;
+    else if (isGuardian) packet.type = EntityType.GUARDIAN;
+    else packet.type = EntityType.MONSTER;
 
     // TODO: name is passed in korean
     if (packet.npcId === 42060070) packet.name = "Ravaged Tyrant of Beasts";
@@ -348,10 +348,10 @@ export class PacketParser extends EventEmitter {
   // logId = 5 | On: Death of any NPC or PC
   onDeath(packet: LogDeath) {
     const target = this.getEntity(packet.id);
-    const skipFilter = [ENTITY_TYPE.GUARDIAN, ENTITY_TYPE.BOSS];
+    const skipFilter = [EntityType.GUARDIAN, EntityType.BOSS];
 
     if (target && !skipFilter.includes(target.type)) {
-      if (target.type === ENTITY_TYPE.PLAYER) {
+      if (target.type === EntityType.PLAYER) {
         target.stats.deaths += 1;
         target.lastUpdate = packet.timestamp;
       } else {
@@ -366,7 +366,7 @@ export class PacketParser extends EventEmitter {
     const source = this.getEntity(packet.id);
     if (
       source &&
-      source.type === ENTITY_TYPE.PLAYER &&
+      source.type === EntityType.PLAYER &&
       this.session.firstPacket > 0
     ) {
       source.stats.casts += 1;
@@ -426,8 +426,8 @@ export class PacketParser extends EventEmitter {
     // Only process damage events if a boss is present in session
     // Don't count damage if session is paused
     if (
-      target.type === ENTITY_TYPE.MONSTER ||
-      target.type === ENTITY_TYPE.UNKNOWN ||
+      target.type === EntityType.MONSTER ||
+      target.type === EntityType.UNKNOWN ||
       !this.hasBossEntity ||
       this.session.paused
     ) {
@@ -441,7 +441,7 @@ export class PacketParser extends EventEmitter {
     source.lastUpdate = packet.timestamp;
 
     if (
-      target.type !== ENTITY_TYPE.PLAYER &&
+      target.type !== EntityType.PLAYER &&
       this.removeOverkillDamage &&
       packet.currentHp < 0
     ) {
@@ -457,7 +457,7 @@ export class PacketParser extends EventEmitter {
     }
 
     const activeSkill = source.skills[packet.skillId];
-    if (source.type === ENTITY_TYPE.PLAYER && source.classId === 0) {
+    if (source.type === EntityType.PLAYER && source.classId === 0) {
       trySetClassFromSkills(source);
     }
 
@@ -465,13 +465,13 @@ export class PacketParser extends EventEmitter {
     if (
       sourceMissing &&
       source.classId === 0 &&
-      source.type === ENTITY_TYPE.UNKNOWN
+      source.type === EntityType.UNKNOWN
     ) {
       trySetClassFromSkills(source);
       if (source.classId !== 0) this.session.entities.push(source);
     }
 
-    if (target.type === ENTITY_TYPE.PLAYER && target.classId === 0) {
+    if (target.type === EntityType.PLAYER && target.classId === 0) {
       trySetClassFromSkills(target);
     }
 
@@ -504,7 +504,7 @@ export class PacketParser extends EventEmitter {
     activeSkill.stats.backHits += backAttackCount;
     activeSkill.stats.frontHits += frontAttackCount;
 
-    if (source.type === ENTITY_TYPE.PLAYER) {
+    if (source.type === EntityType.PLAYER) {
       activeSkill.breakdown?.push(
         new SkillBreakdown({
           timestamp: packet.timestamp,
@@ -523,7 +523,7 @@ export class PacketParser extends EventEmitter {
       );
     }
 
-    if (target.type === ENTITY_TYPE.PLAYER) {
+    if (target.type === EntityType.PLAYER) {
       this.session.damageStatistics.totalDamageTaken += packet.damage;
       this.session.damageStatistics.topDamageTaken = Math.max(
         this.session.damageStatistics.topDamageTaken,

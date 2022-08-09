@@ -1,5 +1,5 @@
 import {
-  ENTITY_TYPE,
+  EntityType,
   Log,
   LogDamageStatistics,
   LogEntity,
@@ -46,6 +46,26 @@ export class LogDamageStatisticsObject {
   @Min(0)
   public topDamageTaken: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public totalHealingDone: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public topHealingDone: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public totalShieldDone: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public topShieldDone: number;
+
   @IsNumber()
   @Min(0)
   public dps: number;
@@ -61,6 +81,12 @@ export class LogDamageStatisticsObject {
     this.topDamageDealt = stat.topDamageDealt;
     this.totalDamageTaken = stat.totalDamageTaken;
     this.topDamageTaken = stat.topDamageTaken;
+
+    this.totalHealingDone = stat.totalHealingDone || 0;
+    this.topHealingDone = stat.topHealingDone || 0;
+    this.totalShieldDone = stat.totalShieldDone || 0;
+    this.topShieldDone = stat.topShieldDone || 0;
+
     this.dps = stat.dps;
     this.dpsIntervals = stat.dpsIntervals;
   }
@@ -166,6 +192,11 @@ export class LogEntityStatObject {
   @Min(0)
   public healing: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public shielding: number;
+
   @IsNumber()
   @Min(0)
   public damageTaken: number;
@@ -173,6 +204,11 @@ export class LogEntityStatObject {
   @IsNumber()
   @Min(0)
   public deaths: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public deathTime: number;
 
   @IsNumber()
   @Min(0)
@@ -193,8 +229,10 @@ export class LogEntityStatObject {
     this.counters = stat.counters;
     this.damageDealt = stat.damageDealt;
     this.healing = stat.healing;
+    this.shielding = stat.shielding || 0;
     this.damageTaken = stat.damageTaken;
     this.deaths = stat.deaths;
+    this.deathTime = stat.deathTime || 0;
     this.dps = stat.dps;
     this.dpsOverTime = stat.dpsOverTime;
   }
@@ -213,8 +251,8 @@ export class LogEntityObject {
   @IsString()
   public name: string | undefined;
 
-  @IsEnum(ENTITY_TYPE)
-  public type: ENTITY_TYPE;
+  @IsEnum(EntityType)
+  public type: EntityType;
 
   @IsNumber()
   @Min(0)
@@ -233,7 +271,7 @@ export class LogEntityObject {
   @IsNumber()
   public maxHp: number;
 
-  @ValidateIf(o => o.type === ENTITY_TYPE.PLAYER)
+  @ValidateIf(o => o.type === EntityType.PLAYER)
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(40)
@@ -253,25 +291,25 @@ export class LogEntityObject {
     this.gearLevel = entity.gearLevel || 0;
     this.currentHp = entity.currentHp;
     this.maxHp = entity.maxHp;
-    if (entity.skills && entity.type === ENTITY_TYPE.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
+    if (entity.skills && entity.type === EntityType.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
     else this.skills = [];
     this.stats = new LogEntityStatObject(entity.stats);
   }
 
   isPlayer() {
-    return this.type === ENTITY_TYPE.PLAYER;
+    return this.type === EntityType.PLAYER;
   }
 
   isGuardian() {
-    return this.type === ENTITY_TYPE.GUARDIAN;
+    return this.type === EntityType.GUARDIAN;
   }
 
   isMonster() {
-    return this.type === ENTITY_TYPE.MONSTER;
+    return this.type === EntityType.MONSTER;
   }
 
   isBoss() {
-    return this.type === ENTITY_TYPE.BOSS;
+    return this.type === EntityType.BOSS;
   }
 }
 

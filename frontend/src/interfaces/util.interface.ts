@@ -1,7 +1,7 @@
-import { ENTITY_TYPE } from "@/interfaces/session.interface";
+import { EntityType } from "@/interfaces/session.interface";
 
 export interface TrackedBosses {
-  type: ENTITY_TYPE;
+  type: EntityType;
   id: number;
 }
 

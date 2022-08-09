@@ -88,6 +88,10 @@ export class DamageStatistics {
   public totalDamageTaken: number;
   public topDamageDealt: number;
   public topDamageTaken: number;
+  public totalHealingDone: number;
+  public topHealingDone: number;
+  public totalShieldDone: number;
+  public topShieldDone: number;
   public dps: number;
   public dpsIntervals: number[];
 
@@ -96,6 +100,10 @@ export class DamageStatistics {
     totalDamageTaken?: number;
     topDamageDealt?: number;
     topDamageTaken?: number;
+    totalHealingDone?: number;
+    topHealingDone?: number;
+    totalShieldDone?: number;
+    topShieldDone?: number;
     dps?: number;
     dpsIntervals?: number[];
   }) {
@@ -103,6 +111,12 @@ export class DamageStatistics {
     this.totalDamageTaken = damageStatistics?.totalDamageTaken || 0;
     this.topDamageDealt = damageStatistics?.topDamageDealt || 0;
     this.topDamageTaken = damageStatistics?.topDamageTaken || 0;
+
+    this.totalHealingDone = damageStatistics.totalHealingDone || 0;
+    this.topHealingDone = damageStatistics.topHealingDone || 0;
+    this.totalShieldDone = damageStatistics.totalShieldDone || 0;
+    this.topShieldDone = damageStatistics.topShieldDone || 0;
+
     this.dps = damageStatistics?.dps || 0;
     this.dpsIntervals = damageStatistics?.dpsIntervals || [];
   }
@@ -154,8 +168,10 @@ export class Stats {
   public counters: number;
   public damageDealt: number;
   public healing: number;
+  public shielding: number;
   public damageTaken: number;
   public deaths: number;
+  public deathTime: number;
   public dps: number;
   public dpsOverTime: number[];
 
@@ -168,8 +184,10 @@ export class Stats {
     counters?: number;
     damageDealt?: number;
     healing?: number;
+    shielding?: number;
     damageTaken?: number;
     deaths?: number;
+    deathTime?: number;
     dps?: number;
     dpsOverTime?: number[];
   }) {
@@ -181,8 +199,10 @@ export class Stats {
     this.counters = stats?.counters || 0;
     this.damageDealt = stats?.damageDealt || 0;
     this.healing = stats?.healing || 0;
+    this.shielding = stats?.shielding || 0;
     this.damageTaken = stats?.damageTaken || 0;
     this.deaths = stats?.deaths || 0;
+    this.deathTime = stats?.deathTime || 0;
     this.dps = stats?.dps || 0;
     this.dpsOverTime = stats?.dpsOverTime || [];
   }

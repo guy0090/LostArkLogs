@@ -138,7 +138,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
-import { Session, Entity, ENTITY_TYPE } from "@/interfaces/session.interface";
+import { Session, Entity, EntityType } from "@/interfaces/session.interface";
 import { mapGetters } from "vuex";
 
 export default defineComponent({
@@ -225,7 +225,7 @@ export default defineComponent({
     getEncounter() {
       const entities = [...this.session?.entities] as Entity[];
       const bossEntities = entities.filter(
-        (e) => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN
+        (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
       );
       const hasBoss = bossEntities.length > 0;
       if (!hasBoss) return;

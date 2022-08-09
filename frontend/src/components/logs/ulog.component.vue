@@ -163,7 +163,7 @@ import pako from "pako";
 import { v4 as uuidv4 } from "uuid";
 import { PacketParser } from "@/log-parsing/parser";
 import {
-  ENTITY_TYPE,
+  EntityType,
   RawSessionDetails,
   SkillBreakdown,
   UEntity,
@@ -254,11 +254,11 @@ export default defineComponent({
       const clone: USession = JSON.parse(JSON.stringify(session));
 
       clone.entities = clone.entities.filter(
-        (e) => e.type !== ENTITY_TYPE.MONSTER && e.type !== ENTITY_TYPE.UNKNOWN
+        (e) => e.type !== EntityType.MONSTER && e.type !== EntityType.UNKNOWN
       );
 
       const bosses = clone.entities.filter(
-        (e) => e.type === ENTITY_TYPE.BOSS || e.type === ENTITY_TYPE.GUARDIAN
+        (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
       );
       // If multiple bosses are logged, only keep the most recent one
       if (bosses.length > 1) {
@@ -279,7 +279,7 @@ export default defineComponent({
 
       // Create DPS over time data for ECharts for each player entity
       for (const e of clone.entities) {
-        if (e.type === ENTITY_TYPE.PLAYER) {
+        if (e.type === EntityType.PLAYER) {
           e.id = uuidv4();
           e.gearLevel = parseFloat(e.gearLevel as string);
           delete e.name;

@@ -49,7 +49,7 @@ export default defineComponent({
               this.revokeTokens();
             });
 
-            this.$router.push({ name: "home" });
+            this.$router.push({ name: "user" });
           }, 1500);
         })
         .catch((err) => {

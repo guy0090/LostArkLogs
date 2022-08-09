@@ -1,5 +1,5 @@
 import { Exception } from '@/exceptions/Exception';
-import { ENTITY_TYPE, Log, LogFilter, RawLog } from '@/interfaces/logs.interface';
+import { EntityType, Log, LogFilter, RawLog } from '@/interfaces/logs.interface';
 import logsModel from '@/models/logs.model';
 import { LogFilterOptions, LogObject, RawLogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
@@ -174,8 +174,8 @@ class LogsService {
    * @param type The type of entities to get
    * @returns The list of entities
    */
-  public getUniqueEntities = async (type?: ENTITY_TYPE[] | undefined): Promise<any[]> => {
-    if (!type) type = [ENTITY_TYPE.BOSS, ENTITY_TYPE.GUARDIAN];
+  public getUniqueEntities = async (type?: EntityType[] | undefined): Promise<any[]> => {
+    if (!type) type = [EntityType.BOSS, EntityType.GUARDIAN];
 
     const cached = await RedisService.get(`uniqueEntities:${type.join(',')}`);
     if (cached) return JSON.parse(cached);
@@ -384,10 +384,10 @@ class LogsService {
         throw new Exception(400, JSON.stringify(allErrors));
       }
 
-      const players = log.entities.filter(entity => entity.type === ENTITY_TYPE.PLAYER);
+      const players = log.entities.filter(entity => entity.type === EntityType.PLAYER);
       if (players.length === 0) throw new Exception(400, 'No players found in log');
 
-      const nonPlayers = log.entities.filter(entity => entity.type !== ENTITY_TYPE.PLAYER).map(entity => entity.npcId);
+      const nonPlayers = log.entities.filter(entity => entity.type !== EntityType.PLAYER).map(entity => entity.npcId);
       const { supportedBosses } = await this.configService.getConfig();
       for (const npcId of nonPlayers) {
         if (!supportedBosses.includes(npcId)) throw new Exception(400, `${npcId} is not a supported boss`);
