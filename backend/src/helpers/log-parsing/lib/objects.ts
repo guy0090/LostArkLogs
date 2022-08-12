@@ -112,10 +112,10 @@ export class DamageStatistics {
     this.topDamageDealt = damageStatistics?.topDamageDealt || 0;
     this.topDamageTaken = damageStatistics?.topDamageTaken || 0;
 
-    this.totalHealingDone = damageStatistics.totalHealingDone || 0;
-    this.topHealingDone = damageStatistics.topHealingDone || 0;
-    this.totalShieldDone = damageStatistics.totalShieldDone || 0;
-    this.topShieldDone = damageStatistics.topShieldDone || 0;
+    this.totalHealingDone = damageStatistics?.totalHealingDone || 0;
+    this.topHealingDone = damageStatistics?.topHealingDone || 0;
+    this.totalShieldDone = damageStatistics?.totalShieldDone || 0;
+    this.topShieldDone = damageStatistics?.topShieldDone || 0;
 
     this.dps = damageStatistics?.dps || 0;
     this.dpsIntervals = damageStatistics?.dpsIntervals || [];
