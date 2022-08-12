@@ -6,6 +6,8 @@ COPY . ./app
 WORKDIR /app
 
 RUN npm install
+# Just in case
+RUN npm run lint -- --fix
 RUN npm run build
 
 FROM common-build-stage as development-build-stage

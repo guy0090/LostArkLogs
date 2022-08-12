@@ -59,14 +59,16 @@ export class Session {
     }
 
     this.entities = this.entities.filter((e) => {
-      if (e.type === EntityType.BOSS || e.type == EntityType.GUARDIAN)
+      if (e.type === EntityType.BOSS || e.type == EntityType.GUARDIAN) {
         return true;
-      else if (
+      } else if (
         e.type === EntityType.PLAYER &&
         Object.keys(e.skills).length > 0
-      )
+      ) {
         return true;
-      else return false;
+      } else {
+        return false;
+      }
     });
   }
 
@@ -300,14 +302,16 @@ export class SimpleSession {
 
     // Only keep players with skills
     this.entities = this.entities.filter((e) => {
-      if (e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN)
+      if (e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN) {
         return true;
-      else if (
+      } else if (
         e.type === EntityType.PLAYER &&
         Object.keys(e.skills).length > 2
-      )
+      ) {
         return true;
-      else return false;
+      } else {
+        return false;
+      }
     });
 
     this.damageStatistics = session.damageStatistics;

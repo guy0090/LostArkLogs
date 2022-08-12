@@ -12,6 +12,8 @@ services:
     volumes:
       - ./:/app
       - /app/node_modules
+      # SSL for Express
+      - ./certs:/certs
     restart: 'unless-stopped'
     networks:
       - backend
@@ -33,10 +35,13 @@ services:
     image: mongo:latest
     container_name: mongo
     ports:
-      - '27017:27017'
+      - '27016:27017'
+    volumes:
+      # Location for MongoDB data
+      - ./mongo/data:/data/db
     networks:
       - backend
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "loa" ]
+    command: --bind_ip_all --replSet loa
 
 networks:
   backend:
