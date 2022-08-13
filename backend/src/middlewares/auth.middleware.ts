@@ -1,7 +1,7 @@
 import { NextFunction, RequestHandler, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
-import { HttpException } from '@exceptions/HttpException';
+import { HttpException, WsException } from '@exceptions/Exception';
 import { RequestWithUser } from '@interfaces/auth.interface';
 import SocketService from '@/controllers/socket.controller';
 import { logger } from '@/utils/logger';
@@ -11,7 +11,6 @@ import { User } from '@/interfaces/users.interface';
 import { hashMatch } from '@/utils/crypto';
 import UserService from '@/services/users.service';
 import PermissionsService from '@/services/permissions.service';
-import { WsException } from '@/exceptions/WsException';
 import SocketController from '@/controllers/socket.controller';
 import { DataStoredInToken } from '@/objects/auth.object';
 

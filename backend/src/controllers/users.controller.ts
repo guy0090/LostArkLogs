@@ -4,7 +4,7 @@ import UserService from '@services/users.service';
 import LogsService from '@/services/logs.service';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { UserObject } from '@/objects/user.object';
-import { HttpException } from '@/exceptions/HttpException';
+import { HttpException } from '@/exceptions/Exception';
 import PermissionsService from '@/services/permissions.service';
 import DiscordService from '@/services/discord.service';
 

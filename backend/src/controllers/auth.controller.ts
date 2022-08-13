@@ -3,7 +3,7 @@ import { verify } from 'jsonwebtoken';
 import { User } from '@interfaces/users.interface';
 import { SECRET_KEY, CLIENT_DOMAIN, SERVER_DOMAIN } from '@config';
 import AuthService from '@services/auth.service';
-import { HttpException } from '@/exceptions/HttpException';
+import { HttpException } from '@/exceptions/Exception';
 import UserService from '@/services/users.service';
 import { hashMatch } from '@/utils/crypto';
 import { DataStoredInToken, TokenData } from '@/objects/auth.object';

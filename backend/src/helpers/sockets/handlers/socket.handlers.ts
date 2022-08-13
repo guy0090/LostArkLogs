@@ -1,6 +1,6 @@
 import { LogFilterDTO } from '@/dtos/logs.dto';
 import { GetLogDTO, GetUserPermissionsDTO, GetUsersDTO, HasPermissionsDTO, PageAccessDTO } from '@/dtos/sockets.dto';
-import { WsException } from '@/exceptions/WsException';
+import { WsException } from '@/exceptions/Exception';
 import { LogFilter } from '@/interfaces/logs.interface';
 import { User } from '@/interfaces/users.interface';
 import { DataStoredInToken } from '@/objects/auth.object';

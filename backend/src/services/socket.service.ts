@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io';
 import AuthService from '@/services/auth.service';
 import cookie from 'cookie';
-import { WsException } from '@/exceptions/WsException';
+import { WsException } from '@/exceptions/Exception';
 import { SECRET_KEY } from '@/config';
 import { verify } from 'jsonwebtoken';
 import SocketController from '@/controllers/socket.controller';

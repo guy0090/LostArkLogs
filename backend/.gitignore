@@ -131,3 +131,6 @@ dist
 
 # Extra docker-compose
 docker-compose.*.yml
+
+# Mongo Persist
+mongo/data

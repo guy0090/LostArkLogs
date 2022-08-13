@@ -1,6 +1,6 @@
 import { sign } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
-import { HttpException } from '@exceptions/HttpException';
+import { HttpException } from '@exceptions/Exception';
 import { User } from '@interfaces/users.interface';
 import { DiscordOAuthGrant, DiscordOAuth, DiscordUser } from '@interfaces/discord.interface';
 import DiscordService from '@/services/discord.service';

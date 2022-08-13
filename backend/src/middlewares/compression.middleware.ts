@@ -1,4 +1,4 @@
-import { HttpException } from '@/exceptions/HttpException';
+import { HttpException } from '@/exceptions/Exception';
 import { RequestWithUserAndLog } from '@/interfaces/auth.interface';
 import { logger } from '@/utils/logger';
 import { Response, NextFunction } from 'express';

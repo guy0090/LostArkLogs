@@ -1,5 +1,5 @@
 import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from '@/config';
-import { HttpException } from '@/exceptions/HttpException';
+import { HttpException } from '@/exceptions/Exception';
 import { DiscordOAuth, DiscordOAuthGrant, DiscordUser } from '@/interfaces/discord.interface';
 import discordAuthModel from '@/models/discordAuth.model';
 import axios from 'axios';

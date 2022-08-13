@@ -4,7 +4,7 @@ import { socketAuthMiddleware } from '@/middlewares/auth.middleware';
 import SocketService from '@/services/socket.service';
 import PageService from '@/services/pages.service';
 import PermissionsService from '@/services/permissions.service';
-import { WsException } from '@/exceptions/WsException';
+import { WsException } from '@/exceptions/Exception';
 import LogsService from '@/services/logs.service';
 import SocketHandler from '@/helpers/sockets/handlers/socket.handlers';
 import { socketEvents } from '@/helpers/sockets/events/socket.events';
