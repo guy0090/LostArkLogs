@@ -45,6 +45,7 @@ export const resources: Module<any, any> = {
             480009, // Dark Mountain Predator (Lucas/Lugaru single form)
             480010, // Dark Mountain Predator (^)
             480011, // Dark Mountain Predator (^)
+            42060070, // Ravaged Tyrant of Beasts (Valtan Ghost)
           ],
         },
         {
