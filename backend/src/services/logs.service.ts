@@ -442,6 +442,7 @@ class LogsService {
    * @param upload The upload object to compare against
    * @param range The time range to allow between session creation and duration
    * @returns A list of similar logs if any are found
+   * @throws Exception if there is an error finding a the boss of the log
    */
   public async findDuplicateUploads(upload: LogObject, range = 15000) {
     const filter = {
@@ -455,8 +456,9 @@ class LogsService {
       },
     };
 
-    const { npcId } = upload.getBoss();
-    if (npcId) filter['entities.npcId'] = npcId;
+    const boss = upload.getBoss();
+    if (!boss) throw new Exception(400, 'No boss found in log');
+    filter['entities.npcId'] = boss.npcId;
 
     const res: Log[] = await this.logs.find(filter).lean();
     return res;
