@@ -12345,6 +12345,9 @@ export default {
   },
   skills: {
     "0": "Bleed",
+    "32241": "Dark Grenade",
+    "32141": "Destruction Bomb",
+    "32311": "Whirlwind Grenade",
     "16000": "Basic Attack",
     "16010": "Fist Attack",
     "16020": "Basic Attack",
