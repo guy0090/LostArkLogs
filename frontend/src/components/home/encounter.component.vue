@@ -374,9 +374,15 @@ export default defineComponent({
         setTimeout(() => {
           this.uploaded = true;
         }, 25);
-      } catch (err) {
-        this.uploadErr = (err as Error).message;
-        this.uploadFailed = true;
+      } catch (err: any) {
+        const response = err.response;
+        if (response) {
+          this.uploadErr = response.data.message;
+          this.uploadFailed = true;
+        } else {
+          this.uploadErr = err.message;
+          this.uploadFailed = true;
+        }
       }
     },
   },
