@@ -17,11 +17,15 @@ export class Exception extends Error {
 export class HttpException extends Exception {
   constructor(status: number, message: string) {
     super(status, message);
+
+    this.uuid = uuidv4().replace(/-/g, '');
   }
 }
 
 export class WsException extends Exception {
   constructor(status: number, message: string) {
     super(status, message);
+
+    this.uuid = uuidv4().replace(/-/g, '');
   }
 }

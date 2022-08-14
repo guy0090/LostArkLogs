@@ -385,18 +385,21 @@ class LogsService {
       }
 
       const players = log.entities.filter(entity => entity.type === EntityType.PLAYER);
-      if (players.length === 0) throw new Exception(400, 'No players found in log');
+      if (players.length === 0) throw new Exception(418, 'No players found in log');
 
       const nonPlayers = log.entities.filter(entity => entity.type !== EntityType.PLAYER).map(entity => entity.npcId);
       const { supportedBosses } = await this.configService.getConfig();
       for (const npcId of nonPlayers) {
-        if (!supportedBosses.includes(npcId)) throw new Exception(400, `${npcId} is not a supported boss`);
+        if (!supportedBosses.includes(npcId)) throw new Exception(418, `${npcId} is not a supported boss`);
       }
+
+      const boss = log.getBoss();
+      if (!boss || boss.stats.damageTaken === 0 || boss.currentHp > 0) throw new Exception(418, 'Boss is invalid');
 
       return;
     } catch (err) {
       logger.error(`Error validating log: ${err.message}`);
-      throw new Exception(400, err.message);
+      throw err;
     }
   }
 
