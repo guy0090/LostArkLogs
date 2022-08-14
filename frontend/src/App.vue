@@ -140,11 +140,15 @@
           </v-list-item-avatar>
           <v-list-item-title>Encounters</v-list-item-title>
         </v-list-item>
-        <v-list-item value="ulog" v-on:click="$router.push({ name: 'ulog' })">
+        <v-list-item
+          v-if="user && uploadToken"
+          value="ulog"
+          v-on:click="$router.push({ name: 'ulog' })"
+        >
           <v-list-item-avatar>
             <v-icon color="white"> mdi-upload </v-icon>
           </v-list-item-avatar>
-          <v-list-item-title>View File</v-list-item-title>
+          <v-list-item-title>Upload Logs</v-list-item-title>
         </v-list-item>
         <v-list-item disabled value="stats">
           <v-list-item-avatar>

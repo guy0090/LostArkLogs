@@ -4,15 +4,11 @@
       class="mx-auto"
       border="indigo"
       rounded="sm"
-      hover
       @click="openLog(session?.id)"
       @contextmenu="openLogNewTab(session?.id)"
+      v-if="!raw"
     >
-      <v-progress-linear
-        model-value="100"
-        height="7"
-        :color="raw ? 'green-darken-3' : 'indigo'"
-      >
+      <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
       <v-card-content class="pa-3" v-if="!$vuetify.display.xs">
         <v-row :class="$vuetify.display.xs ? 'pb-2' : 'py-1'">
@@ -132,6 +128,98 @@
         </v-row>
       </v-card-content>
     </v-card>
+    <v-card class="mx-auto" border="indigo" rounded="sm" v-else>
+      <v-progress-linear model-value="100" height="7" color="indigo">
+      </v-progress-linear>
+      <v-card-content class="pa-3" v-if="!$vuetify.display.xs">
+        <v-row :class="$vuetify.display.xs ? 'pb-2' : 'py-1'">
+          <v-col cols="auto" class="align-self-center">
+            <v-avatar
+              rounded="0"
+              :image="`/img/sprites/${encounterName}.webp`"
+            />
+          </v-col>
+          <v-col cols="auto" class="align-self-center">
+            <v-row
+              ><h3>{{ bossName.toUpperCase() }}</h3></v-row
+            >
+            <v-row class="mt-3">
+              <v-chip label density="comfortable" color="error px-2">
+                <v-icon icon="mdi-sword" class="pe-1" />
+                {{ getTotalDPS(getPlayerEntities()) }}/s
+              </v-chip>
+              &nbsp;
+              <v-chip label density="comfortable" color="success px-2">
+                <v-icon icon="mdi-timer-outline" class="pe-1" />
+                {{ getDuration(session?.duration) }}
+              </v-chip>
+              &nbsp;
+              <v-chip label density="comfortable" color="info">
+                <v-icon icon="mdi-cloud-upload-outline" class="pe-1" />{{
+                  timeSince(session?.createdAt)
+                }}
+              </v-chip>
+            </v-row>
+          </v-col>
+          <v-col class="align-self-center pt-1 pb-1">
+            <v-chip
+              label
+              v-for="(entity, i) in getPlayerEntities()"
+              :key="i"
+              :class="`mx-1 ${
+                colors ? `c-${entity.classId}` : 'bg-blue-grey-darken-2'
+              }`"
+              :style="i >= 4 ? 'display: none' : ''"
+            >
+              <v-avatar
+                rounded="0"
+                :image="`/img/sprites/${entity.classId}.webp`"
+              />
+              <span v-if="!$vuetify.display.sm"
+                >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
+              >
+            </v-chip>
+            <v-chip v-if="getPlayerEntities().length > 4" label class="mx-1"
+              >+{{ getPlayerEntities().length - 4 }} more</v-chip
+            >
+          </v-col>
+        </v-row>
+        <v-divider class="mt-3 mb-2"></v-divider>
+        <v-row>
+          <v-col cols="auto" align-self="center">
+            <v-btn
+              v-if="!uploaded && !uploadFailed"
+              color="indigo"
+              v-on:click="tryUploadLog"
+              :disabled="uploading"
+              >{{ uploading ? "Uploading" : "Upload" }}</v-btn
+            >
+            <v-btn v-else-if="uploadFailed" color="error"> Failed </v-btn>
+            <v-btn v-else color="success"> Uploaded </v-btn>
+          </v-col>
+          <v-col cols="auto" class="py-0 px-1" align-self="center">
+            <v-checkbox
+              v-model="unlistedUpload"
+              label="Unlisted"
+              color="success"
+              hide-details
+            ></v-checkbox>
+          </v-col>
+          <v-col cols="auto" v-if="uploadFailed">
+            <span>Upload failed: {{ uploadErr }} </span>
+          </v-col>
+          <v-spacer v-if="uploaded"></v-spacer>
+          <v-col cols="auto" v-if="uploaded">
+            <v-btn
+              color="indigo"
+              prepend-icon="mdi-export-variant"
+              @click="openLogNewTab(uploadedId, true)"
+              >Open</v-btn
+            >
+          </v-col>
+        </v-row>
+      </v-card-content>
+    </v-card>
   </v-col>
 </template>
 
@@ -139,7 +227,8 @@
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
 import { Session, Entity, EntityType } from "@/interfaces/session.interface";
-import { mapGetters } from "vuex";
+import { mapActions, mapGetters } from "vuex";
+import { SimpleSession } from "@/log-parsing/lib/objects";
 
 export default defineComponent({
   name: "EncounterCard",
@@ -155,9 +244,23 @@ export default defineComponent({
     let bossName = "UNKNOWN BOSS";
     let encounterName = "UNKNOWN ENCOUNTER";
 
+    // If raw
+    let unlistedUpload = false;
+    let uploading = false;
+    let uploaded = false;
+    let uploadFailed = false;
+    let uploadErr = "";
+    let uploadedId = "";
+
     return {
       bossName,
       encounterName,
+      unlistedUpload,
+      uploading,
+      uploaded,
+      uploadFailed,
+      uploadErr,
+      uploadedId,
     };
   },
 
@@ -166,13 +269,14 @@ export default defineComponent({
   },
 
   methods: {
+    ...mapActions(["uploadLog"]),
     openLog(id: string) {
       if (this.$props.raw || this.$props.result) return;
 
       this.$router.push({ path: `/logs/${id}` });
     },
-    openLogNewTab(id: string) {
-      if (this.$props.raw) return;
+    openLogNewTab(id: string, overrideRaw = false) {
+      if (!overrideRaw && this.$props.raw) return;
       window.open(`/logs/${id}`);
     },
     getDuration(duration: number) {
@@ -257,6 +361,23 @@ export default defineComponent({
       for (let entity of entities)
         total += this.getDamageDealtPerSecond(entity);
       return this.abbrNum(Math.round(total), 2);
+    },
+    async tryUploadLog() {
+      try {
+        const encounter = JSON.parse(
+          JSON.stringify(this.session)
+        ) as SimpleSession;
+        encounter.unlisted = this.unlistedUpload;
+
+        const res = await this.uploadLog(encounter);
+        this.uploadedId = res;
+        setTimeout(() => {
+          this.uploaded = true;
+        }, 25);
+      } catch (err) {
+        this.uploadErr = (err as Error).message;
+        this.uploadFailed = true;
+      }
     },
   },
   computed: {

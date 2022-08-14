@@ -31,6 +31,7 @@
             </h3>
           </v-col>
         </v-row>
+        <!--
         <v-row>
           <v-spacer />
           <v-col cols="auto">
@@ -75,7 +76,8 @@
             </v-alert>
           </v-col>
         </v-row>
-        <v-row class="mt-2 mb-2 px-1">
+        -->
+        <v-row class="mt-3 mb-2 px-1">
           <h3 style="color: grey">
             Parsed
             <span style="color: white">{{ rawDetails.found }}</span>
@@ -84,6 +86,46 @@
             valid encounter{{ rawDetails.parsed === 1 ? "" : "s" }}.
           </h3>
         </v-row>
+        <v-row class="my-3">
+          <v-card
+            min-width="100%"
+            max-width="100%"
+            class="mx-auto"
+            rounded="sm"
+          >
+            <v-progress-linear model-value="100" height="7" color="indigo">
+            </v-progress-linear>
+            <v-card-content>
+              <v-row>
+                <v-col cols="auto">
+                  <v-avatar color="indigo" icon="mdi-upload"></v-avatar>
+                </v-col>
+                <v-col class="align-self-center">
+                  <v-row>
+                    <h2>Valid Encounters</h2>
+                  </v-row>
+                  <v-row class="pt-3">
+                    Encounters listed here were successfully parsed and can be
+                    uploaded
+                  </v-row>
+                </v-col>
+              </v-row>
+            </v-card-content>
+          </v-card>
+        </v-row>
+        <v-row
+          class="mt-2"
+          v-for="(session, index) in rawDetails.encounters"
+          :key="index"
+        >
+          <EncounterCard
+            class="mb-1"
+            :session="session"
+            :raw="true"
+            :colors="false"
+          />
+        </v-row>
+        <!--
         <v-row class="my-3">
           <v-expansion-panels>
             <v-expansion-panel v-if="rawDetails.results.length === 0">
@@ -105,11 +147,13 @@
                 </v-row>
               </v-expansion-panel-title>
               <v-expansion-panel-text>
-                <v-row class="mt-1">
+                <v-row
+                  class="mt-2"
+                  v-for="(session, index) in rawDetails.encounters"
+                  :key="index"
+                >
                   <EncounterCard
                     class="mb-1"
-                    v-for="(session, index) in rawDetails.encounters"
-                    :key="index"
                     :session="session"
                     :raw="true"
                     :colors="false"
@@ -151,6 +195,7 @@
             </v-expansion-panel>
           </v-expansion-panels>
         </v-row>
+        -->
       </v-col>
     </v-row>
   </v-container>
