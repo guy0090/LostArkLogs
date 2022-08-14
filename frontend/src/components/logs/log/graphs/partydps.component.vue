@@ -46,6 +46,7 @@ export default defineComponent({
     this.legend = entities.map(
       (e) => `${this.$t(`classes.${e.classId}`)} (${e.iid})`
     );
+    this.legend = ["Party DPS", ...this.legend];
 
     entities.sort((a, b) => a.stats.damageDealt - b.stats.damageDealt);
 
@@ -63,20 +64,41 @@ export default defineComponent({
         (e: Entity) => e.type === EntityType.PLAYER
       );
 
+      let partySeries = this.intervals.map(() => 0);
       players.forEach((e) => {
         let entityName = `${this.$t(`classes.${e.classId}`)} (${e.iid})`;
+
+        e.stats.dpsOverTime = e.stats.dpsOverTime.map((dps) => dps ?? 0);
         series.push({
           name: entityName,
           type: "line",
-          stack: "Total",
           color: this.classColors[e.classId],
-          areaStyle: {},
+          // areaStyle: {
+          //   opacity: 0.1,
+          // },
           emphasis: {
             focus: "series",
           },
+          symbol: "none",
+          // symbolSize: 5,
           data: e.stats.dpsOverTime,
         } as SeriesOption);
+
+        partySeries = partySeries.map((dps, i) =>
+          parseFloat((dps + e.stats.dpsOverTime[i]).toFixed(2))
+        );
       });
+
+      series.push({
+        name: "Party DPS",
+        type: "line",
+        emphasis: {
+          focus: "series",
+        },
+        symbol: "roundRect",
+        symbolSize: 5,
+        data: partySeries,
+      } as SeriesOption);
 
       return series;
     },
@@ -116,6 +138,8 @@ export default defineComponent({
       },
       legend: {
         data: legend as any,
+        top: 25,
+        type: "scroll",
       },
       toolbox: {
         feature: {
