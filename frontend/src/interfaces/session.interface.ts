@@ -51,6 +51,7 @@ export interface Session {
 export interface Entity {
   id: string;
   npcId: number | undefined;
+  lastUpdate: number;
   type: EntityType;
   classId: number;
   gearLevel: number;

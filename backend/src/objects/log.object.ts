@@ -254,6 +254,11 @@ export class LogEntityObject {
   @IsEnum(EntityType)
   public type: EntityType;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  public lastUpdate: number;
+
   @IsNumber()
   @Min(0)
   public classId: number;
@@ -288,6 +293,7 @@ export class LogEntityObject {
     this.npcId = entity.npcId;
     this.type = entity.type;
     this.classId = entity.classId;
+    this.lastUpdate = entity.lastUpdate || 0;
     this.gearLevel = entity.gearLevel || 0;
     this.currentHp = entity.currentHp;
     this.maxHp = entity.maxHp;
@@ -387,6 +393,10 @@ export class LogObject {
     }
 
     return boss;
+  }
+
+  getBosses() {
+    return this.entities.filter(e => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN);
   }
 }
 

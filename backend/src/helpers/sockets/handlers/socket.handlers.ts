@@ -112,6 +112,21 @@ class SocketHandler {
     // #endregion
 
     // #region | User (all) events
+
+    /**
+     * Event for getting a single user
+     */
+    get_user: async (args: any, callback: any) => {
+      const userId = args.userId;
+      try {
+        if (!userId || userId.length !== 24) throw new WsException(404, 'User ID Missing');
+        const user = await this.userService.findUserById(userId);
+        callback(new UserObject(user));
+      } catch (err) {
+        callback(null);
+      }
+    },
+
     /**
      * Event for getting users.
      */

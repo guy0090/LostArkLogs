@@ -393,8 +393,15 @@ class LogsService {
         if (!supportedBosses.includes(npcId)) throw new Exception(418, `${npcId} is not a supported boss`);
       }
 
-      const boss = log.getBoss();
-      if (!boss || boss.stats.damageTaken === 0 || boss.currentHp > 0) throw new Exception(418, 'Boss is invalid');
+      const bosses = log.getBosses();
+      if (bosses.length > 0) {
+        const totalHp = [...bosses].sort((a, b) => b.maxHp - a.maxHp)[0].maxHp;
+        const totalTaken = bosses.reduce((p, c) => p + c.stats.damageTaken, 0);
+
+        if (totalTaken < totalHp * 0.95) throw new Exception(418, "Bosses aren't dead or didn't take enough damage");
+      } else {
+        throw new Exception(418, 'Encounter has no bosses');
+      }
 
       return;
     } catch (err) {

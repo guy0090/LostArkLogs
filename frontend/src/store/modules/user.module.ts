@@ -78,5 +78,20 @@ export const user: Module<any, any> = {
 
       return avatar;
     },
+    getUser({ rootGetters }, userId: string) {
+      const app = rootGetters.app;
+      const io = app.config.globalProperties.$io;
+
+      return new Promise((resolve, reject) => {
+        io.timeout(5000).emit(
+          "get_user",
+          { userId: userId },
+          (err: Error, res: { user: User }) => {
+            if (res && res.user) resolve(user);
+            else reject(err ?? new Error("Failed to grab user"));
+          }
+        );
+      });
+    },
   },
 };

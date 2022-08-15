@@ -88,9 +88,19 @@ export class PacketParser extends EventEmitter {
       const lines = logData.slice(phaseRange[0], phaseRange[1] + 1);
       lines.forEach((line) => this.parse(line));
 
-      const boss = this.session.getBoss();
+      const bosses = this.session.getBosses();
+      const boss = bosses.find((e) => e.currentHp <= 0);
+
       if (this.session.firstPacket > 0 && boss && boss.currentHp <= 0) {
         encounters.push(this.session.toSimpleObject());
+      } else if (bosses.length > 0) {
+        const totalHp = [...bosses].sort((a, b) => b.maxHp - a.maxHp)[0].maxHp;
+        const totalTaken = bosses.reduce((p, c) => p + c.stats.damageTaken, 0);
+
+        // If damage taken is at least 95% of total, keep the encounter
+        if (totalTaken >= totalHp * 0.95) {
+          encounters.push(this.session.toSimpleObject());
+        }
       }
 
       this.session = new Session();
@@ -562,7 +572,6 @@ export class PacketParser extends EventEmitter {
       packet.buffName ===
       "하얗게 불사르고 망령화_마수군단장의 근성 감소 버프 제거 인보크 버프"
     ) {
-      console.log("Setting ghost ID", this.valtanGhostId, packet.sourceId);
       this.valtanGhostId = packet.sourceId;
     }
   }

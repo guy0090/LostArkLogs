@@ -328,11 +328,11 @@ export default defineComponent({
     },
     getEncounter() {
       const entities = [...this.session?.entities] as Entity[];
-      const bossEntities = entities.filter(
-        (e) =>
-          (e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN) &&
-          e.currentHp <= 0
-      );
+      const bossEntities = entities
+        .filter(
+          (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
+        )
+        .sort((a, b) => b.lastUpdate - a.lastUpdate);
       const hasBoss = bossEntities.length > 0;
       if (!hasBoss) return;
 

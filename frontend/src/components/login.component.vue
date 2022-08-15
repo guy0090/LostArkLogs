@@ -39,18 +39,20 @@ export default defineComponent({
           this.setPageLoading(false);
 
           if (loggedInH)
-            loggedInH.innerText = `Logged in as ${user.username}#${user.discriminator}`;
+            loggedInH.innerText = `Logged in as ${user.username}#${user.discriminator} - Redirecting`;
 
           // Reconnect socket to update new headers
           this.$io.disconnect().connect();
-          setTimeout(() => {
-            this.getTokensWS().catch((err) => {
+          this.getTokensWS()
+            .then(() => {
+              setTimeout(() => {
+                this.$router.push({ name: "user" });
+              }, 1000);
+            })
+            .catch((err) => {
               this.info(`[WS] Refreshing auth tokens failed: ${err.message}`);
               this.revokeTokens();
             });
-
-            this.$router.push({ name: "user" });
-          }, 1500);
         })
         .catch((err) => {
           this.error(err);

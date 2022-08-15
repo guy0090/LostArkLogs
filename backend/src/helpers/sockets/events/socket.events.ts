@@ -10,6 +10,7 @@ export const socketEvents = [
   new SocketEvent('has_permissions', true, []),
 
   // User (all)
+  new SocketEvent('get_user', false, []),
   new SocketEvent('get_users', true, ['users.manage']),
   new SocketEvent('get_user_permissions', true, ['users.manage.permissions']),
 

@@ -81,19 +81,10 @@ export class Session {
     return damage / duration;
   }
 
-  getBoss(): Entity | undefined {
-    const bosses = this.entities.filter(
+  getBosses() {
+    return this.entities.filter(
       (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
     );
-
-    let boss: Entity | undefined = undefined;
-    if (bosses.length > 1) {
-      boss = bosses.find((boss) => boss.currentHp <= 0);
-    } else if (bosses.length === 1) {
-      boss = bosses[0];
-    }
-
-    return boss;
   }
 
   toSimpleObject() {

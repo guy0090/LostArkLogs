@@ -7,6 +7,7 @@ import { HttpException } from '@/exceptions/Exception';
 import UserService from '@/services/users.service';
 import { hashMatch } from '@/utils/crypto';
 import { DataStoredInToken, TokenData } from '@/objects/auth.object';
+import { UserObject } from '@/objects/user.object';
 
 class AuthController {
   public authService = new AuthService();
@@ -62,16 +63,7 @@ class AuthController {
         domain: CLIENT_DOMAIN,
       });
 
-      const returnUser: any = {
-        id: user.discordId,
-        username: user.username,
-        discriminator: user.discriminator,
-        avatar: user.avatar,
-        registered: user.registered,
-        lastSeen: user.lastSeen,
-      };
-
-      res.status(200).json({ message: 'logged in', when: Date.now(), user: returnUser });
+      res.status(200).json({ message: 'logged in', when: Date.now(), user: new UserObject(user) });
     } catch (error) {
       next(error);
     }
