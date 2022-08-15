@@ -150,7 +150,7 @@ export const logs: Module<any, any> = {
               dispatch("error", err.message);
               reject(err);
             } else {
-              if (res.created) resolve(res.id);
+              if (res && res.created) resolve(res.id);
               else reject(new Error(`Failed to upload log`));
             }
           }
