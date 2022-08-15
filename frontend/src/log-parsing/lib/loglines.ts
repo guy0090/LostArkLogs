@@ -201,7 +201,6 @@ export class LogBuff {
   name: string;
   buffId: string;
   buffName: string;
-  isNew: boolean;
   sourceId: string;
   sourceName: string;
   shieldAmount: number;
@@ -212,10 +211,9 @@ export class LogBuff {
     this.name = lineSplit[3] || "Unknown Entity";
     this.buffId = lineSplit[4];
     this.buffName = lineSplit[5] || "Unknown Buff";
-    this.isNew = lineSplit[6] === "1";
-    this.sourceId = lineSplit[7];
-    this.sourceName = lineSplit[8] || "Unknown Entity";
-    this.shieldAmount = tryParseNum(lineSplit[9], true, 0);
+    this.sourceId = lineSplit[6];
+    this.sourceName = lineSplit[7] || "Unknown Entity";
+    this.shieldAmount = tryParseNum(lineSplit[8], true, 0);
   }
 }
 

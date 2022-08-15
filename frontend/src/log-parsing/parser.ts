@@ -8,6 +8,7 @@ import {
   LogDamage,
   LogNewNpc,
   LogInitEnv,
+  LogBuff,
   LogCounterAttack,
   /*LogPhaseTransition,*/
   LogSkillStart,
@@ -53,6 +54,9 @@ export class PacketParser extends EventEmitter {
   private supportedBosses: number[];
   private guardians: number[];
 
+  // TODO: Temp workaround for valtan ghost phase
+  private valtanGhostId: string | undefined = undefined;
+
   constructor(supportedBosses: number[], guardians: number[]) {
     // Extend
     super();
@@ -88,7 +92,9 @@ export class PacketParser extends EventEmitter {
       if (this.session.firstPacket > 0 && boss && boss.currentHp <= 0) {
         encounters.push(this.session.toSimpleObject());
       }
+
       this.session = new Session();
+      this.valtanGhostId = "";
       this.hasBossEntity = false;
     }
     console.log(
@@ -215,11 +221,11 @@ export class PacketParser extends EventEmitter {
         case 9:
           this.onHeal(new LogHeal(lineSplit));
           break;
-        /* TODO:
         case 10:
-          this.onBuff(lineSplit);
+          this.onBuff(new LogBuff(lineSplit));
           break;
-        case 11
+        /**
+          case 11
           this.onBuffRemove(linesplit);
           break;
         */
@@ -325,7 +331,10 @@ export class PacketParser extends EventEmitter {
     else packet.type = EntityType.MONSTER;
 
     // TODO: name is passed in korean
-    if (packet.npcId === 42060070) packet.name = "Ravaged Tyrant of Beasts";
+    if (packet.npcId === 42060070) {
+      packet.name = "Ravaged Tyrant of Beasts";
+      packet.id = this.valtanGhostId as string;
+    }
 
     let npc = this.getEntity(packet.id); // || this.getEntity(packet.name, true);
     if (npc) {
@@ -544,6 +553,17 @@ export class PacketParser extends EventEmitter {
     if (source) {
       source.lastUpdate = packet.timestamp;
       source.stats.healing += packet.healAmount;
+    }
+  }
+
+  onBuff(packet: LogBuff) {
+    // TODO: Workaround for valtan ghost damage
+    if (
+      packet.buffName ===
+      "하얗게 불사르고 망령화_마수군단장의 근성 감소 버프 제거 인보크 버프"
+    ) {
+      console.log("Setting ghost ID", this.valtanGhostId, packet.sourceId);
+      this.valtanGhostId = packet.sourceId;
     }
   }
 

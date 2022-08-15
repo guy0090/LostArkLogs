@@ -57,6 +57,8 @@ export interface Entity {
   skills: Skill[];
   stats: Stats;
   iid?: number;
+  currentHp: number;
+  maxHp: number;
 }
 
 export interface Skill {
