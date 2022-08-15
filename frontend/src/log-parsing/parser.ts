@@ -84,9 +84,10 @@ export class PacketParser extends EventEmitter {
       const lines = logData.slice(phaseRange[0], phaseRange[1] + 1);
       lines.forEach((line) => this.parse(line));
 
-      if (this.session.firstPacket > 0)
+      const boss = this.session.getBoss();
+      if (this.session.firstPacket > 0 && boss && boss.currentHp <= 0) {
         encounters.push(this.session.toSimpleObject());
-
+      }
       this.session = new Session();
       this.hasBossEntity = false;
     }

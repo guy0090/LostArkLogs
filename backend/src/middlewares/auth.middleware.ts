@@ -302,7 +302,7 @@ export const socketAuthMiddleware = async (socket: Socket, event: Event, next: {
             logger.info(
               `[WS] Socket ${socket.id} (${findUser._id}:${findUser.username}) authenticated for event '${event[0]}' with message: ${JSON.stringify(
                 event[1],
-              )}`,
+              ).substring(0, 50)}...`,
             );
 
             event[1].u = findUser;

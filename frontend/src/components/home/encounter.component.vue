@@ -205,11 +205,11 @@
               hide-details
             ></v-checkbox>
           </v-col>
-          <v-col cols="auto" v-if="uploadFailed">
+          <v-col cols="auto" v-if="uploadFailed" align-self="center">
             <span>Upload failed: {{ uploadErr }} </span>
           </v-col>
           <v-spacer v-if="uploaded"></v-spacer>
-          <v-col cols="auto" v-if="uploaded">
+          <v-col cols="auto" v-if="uploaded" align-self="center">
             <v-btn
               color="indigo"
               prepend-icon="mdi-export-variant"

@@ -354,15 +354,15 @@ export default defineComponent({
       const lines = data.trim().replace(/\r?\n/g, "\n").split("\n");
       const { encounters, parsed, found, dropped } = parser.parseLog(lines);
 
+      this.rawDetails.found = found;
+      this.rawDetails.dropped = dropped;
       if (encounters.length > 0) {
         this.rawDetails.date = new Date(encounters[0].firstPacket);
         this.rawDetails.parsed = parsed;
-        this.rawDetails.found = found;
-        this.rawDetails.dropped = dropped;
-        this.rawDetails.encounters = encounters;
 
-        this.fileLoaded = true;
+        this.rawDetails.encounters = encounters;
       }
+      this.fileLoaded = true;
     },
     async readSession(data: ArrayBuffer) {
       try {

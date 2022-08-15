@@ -377,7 +377,16 @@ export class LogObject {
   }
 
   getBoss() {
-    return this.entities.find(entity => entity.isBoss() || entity.isGuardian());
+    const bosses = this.entities.filter(e => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN);
+
+    let boss: LogEntityObject | undefined = undefined;
+    if (bosses.length > 1) {
+      boss = bosses.find(boss => boss.currentHp <= 0);
+    } else if (bosses.length === 1) {
+      boss = bosses[0];
+    }
+
+    return boss;
   }
 }
 

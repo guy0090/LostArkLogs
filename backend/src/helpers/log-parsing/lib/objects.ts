@@ -68,11 +68,9 @@ export class Session {
 
     let boss: Entity | undefined = undefined;
     if (bosses.length > 1) {
-      boss = bosses.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+      boss = bosses.find(boss => boss.currentHp <= 0);
     } else if (bosses.length === 1) {
       boss = bosses[0];
-    } else {
-      boss = undefined;
     }
 
     return boss;
