@@ -126,6 +126,32 @@ class UserService {
   }
 
   /**
+   * Find a user by their Discord ID.
+   *
+   * @param username The Discord username of the user to find
+   * @param discriminator The Discord discriminator of the user to find
+   * @param byPassCache Whether to bypass the cache
+   * @returns The found user
+   */
+  public async findUserByDiscordName(username: string, discriminator: number, byPassCache = false): Promise<User> {
+    try {
+      let user: User = undefined;
+      const cached = await RedisService.get(`user:${username}#${discriminator}`);
+      if (cached && !byPassCache) {
+        user = JSON.parse(cached);
+      } else {
+        user = await this.users.findOne({ username, discriminator });
+        if (!user) throw new Exception(404, 'Error finding user');
+
+        await RedisService.set(`user:${username}#${discriminator}`, JSON.stringify(user), 'PX', ms('10m'));
+      }
+      return user;
+    } catch (err) {
+      throw new Exception(400, err.message);
+    }
+  }
+
+  /**
    * Find a user by their API key.
    *
    * @param apiKey The API key of the user to find

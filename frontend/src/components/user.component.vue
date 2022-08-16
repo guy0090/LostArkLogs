@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <InfoPanel v-if="user" class="my-5" />
+    <InfoPanel v-if="user" :profileOf="user" class="my-5" />
     <v-row justify="center">
       <v-col v-if="user" lg="8" md="12" sm="12" cols="12" align-self="center">
         <v-row justify="center" class="mb-2">

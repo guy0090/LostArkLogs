@@ -1,5 +1,5 @@
 import { LogFilterDTO } from '@/dtos/logs.dto';
-import { GetLogDTO, GetUserPermissionsDTO, GetUsersDTO, HasPermissionsDTO, PageAccessDTO } from '@/dtos/sockets.dto';
+import { GetLogDTO, GetUserDTO, GetUserPermissionsDTO, GetUsersDTO, HasPermissionsDTO, PageAccessDTO } from '@/dtos/sockets.dto';
 import { WsException } from '@/exceptions/Exception';
 import { LogFilter } from '@/interfaces/logs.interface';
 import { User } from '@/interfaces/users.interface';
@@ -117,12 +117,21 @@ class SocketHandler {
      * Event for getting a single user
      */
     get_user: async (args: any, callback: any) => {
-      const userId = args.userId;
       try {
-        if (!userId || userId.length !== 24) throw new WsException(404, 'User ID Missing');
-        const user = await this.userService.findUserById(userId);
+        await this.validateArgs(args, true, GetUserDTO);
+
+        let user = undefined;
+        if (args.userId) {
+          user = await this.userService.findUserById(args.userId);
+        } else {
+          const { username, discriminator } = args;
+          user = await this.userService.findUserByDiscordName(username, discriminator);
+        }
+
+        if (!user) throw new WsException(404, 'User not found');
         callback(new UserObject(user));
       } catch (err) {
+        logger.error(`[WS] Error getting user => ${err.message}`);
         callback(null);
       }
     },

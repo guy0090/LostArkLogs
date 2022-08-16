@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid v-if="!$route.params.id || $route.params.id.length !== 24">
+  <v-container fluid v-if="!loadingSessions && !profileOf">
     <v-row justify="center">
       <v-col cols="auto">
         <h1>Error loading: User is invalid or doesn't exist</h1>
@@ -12,7 +12,7 @@
     </v-row>
   </v-container>
   <v-container fluid v-else>
-    <InfoPanel class="my-5" />
+    <InfoPanel :profileOf="profileOf" class="my-5" />
     <v-row class="mt-2" v-if="foundSessions.length > 0" justify="center">
       <v-col lg="8" md="12" sm="12" cols="12" align-self="center">
         <v-row class="mb-2">
@@ -50,11 +50,12 @@
 import { Session } from "@/interfaces/session.interface";
 import axios from "axios";
 import { defineComponent, ref } from "vue";
-import { mapGetters, mapMutations } from "vuex";
+import { mapActions, mapGetters, mapMutations } from "vuex";
 import ms from "ms";
 
 import InfoPanel from "@/components/user/info.component.vue";
 import EncounterCard from "@/components/home/encounter.component.vue";
+import { User } from "@/interfaces/user.interface";
 
 export default defineComponent({
   name: "UserLookup",
@@ -71,6 +72,8 @@ export default defineComponent({
     let pages = ref(0);
     let foundSessions = ref([] as Session[]);
     let resultsFound = ref(0);
+    let discodRgx = /^@.{2,32}#[0-9]{4,4}$/;
+    let profileOf = ref(undefined as unknown as User);
 
     return {
       page,
@@ -79,25 +82,48 @@ export default defineComponent({
       pages,
       foundSessions,
       resultsFound,
+      discodRgx,
+      profileOf,
     };
   },
-
-  mounted() {
+  async mounted() {
     this.setPageLoading(true);
 
-    if (this.$route.params.id && this.$route.params.id.length === 24) {
-      this.getFilteredSessions();
-    } else {
+    let user: User | undefined = undefined;
+    try {
+      let id = this.$route.params.id as string;
+      if (id.startsWith("@")) id = `${id}${this.$route.hash}`;
+
+      if (this.discodRgx.test(id)) {
+        const [username, discriminator] = id.split("#");
+        user = await this.getUser({
+          username: username.substring(1),
+          discriminator: parseInt(discriminator),
+        });
+      } else if (this.$route.params.id && this.$route.params.id.length === 24) {
+        user = await this.getUser({ userId: id });
+      } else {
+        this.setPageLoading(false);
+      }
+      if (user) {
+        this.profileOf = user;
+        this.getFilteredSessions();
+      } else {
+        this.loadingSessions = false;
+        this.setPageLoading(false);
+      }
+    } catch (e) {
+      this.error(e);
+      this.loadingSessions = false;
       this.setPageLoading(false);
     }
   },
 
   methods: {
+    ...mapActions(["getUser", "error"]),
     ...mapMutations(["setPageLoading"]),
     async getFilteredSessions() {
       try {
-        const creator = this.$route.params.id;
-
         const { data } = await axios({
           method: "POST",
           url: `${this.apiUrl}/logs/filter`,
@@ -115,7 +141,7 @@ export default defineComponent({
             server: "any",
             region: "any",
             sort: ["createdAt", -1],
-            creator: creator,
+            creator: this.profileOf.id,
             limit: 50,
           },
         });

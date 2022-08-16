@@ -12,7 +12,7 @@
         </h4>
       </v-row>
       <v-row class="pt-2">
-        <span class="detail">
+        <span class="detail" style="display: none !important">
           <span v-if="!isXS()">Casts:</span>
           <span v-else>C:</span>
           {{ skill?.stats.casts }}&nbsp;&nbsp;

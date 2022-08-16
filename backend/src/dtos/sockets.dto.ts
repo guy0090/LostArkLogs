@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsDefined, IsString, Length } from 'class-validator';
+import { ArrayMinSize, IsArray, IsDefined, IsNumber, IsString, Length, Max, Min, ValidateIf } from 'class-validator';
 
 export class PageAccessDTO {
   @IsDefined()
@@ -11,6 +11,24 @@ export class HasPermissionsDTO {
   @IsArray()
   @ArrayMinSize(1)
   public permissions: string[];
+}
+
+export class GetUserDTO {
+  @ValidateIf(o => o.discriminator)
+  @IsString()
+  @Length(2, 32)
+  public username: string;
+
+  @ValidateIf(o => o.username)
+  @IsNumber()
+  @Min(1)
+  @Max(9999)
+  public discriminator: number;
+
+  @ValidateIf(o => !o.username || !o.discriminator)
+  @IsString()
+  @Length(24)
+  public userId: string;
 }
 
 export class GetUsersDTO {

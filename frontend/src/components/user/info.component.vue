@@ -10,10 +10,10 @@
           </v-col>
           <v-col cols="auto" align-self="center">
             <v-row>
-              <h2>{{ profileOf.username }}#{{ profileOf.discriminator }}</h2>
+              <h2>{{ profileOf?.username }}#{{ profileOf?.discriminator }}</h2>
             </v-row>
             <v-row class="mt-1">
-              <span style="color: grey">{{ profileOf.id }} </span>
+              <span style="color: grey">{{ profileOf?.id }} </span>
             </v-row>
           </v-col>
           <v-spacer v-if="!$route.params.id" />
@@ -34,33 +34,26 @@
 
 <script lang="ts">
 import { User } from "@/interfaces/user.interface";
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import { mapActions, mapGetters } from "vuex";
 
 export default defineComponent({
   name: "InfoPanel",
 
+  props: {
+    profileOf: Object as PropType<User>,
+  },
+
   data() {
     return {
       copied: false,
-      profileOf: {} as User,
       avatar: "",
       revealToken: false,
     };
   },
 
   async mounted() {
-    const userId = this.$route.params.id;
-
-    if (!userId || (this.user && this.user.id === userId)) {
-      this.avatar = await this.parseDiscordAvatarHash(this.user);
-      this.profileOf = this.user;
-    } else if (userId && userId.length === 24) {
-      const user = await this.getUser(userId);
-
-      this.avatar = await this.parseDiscordAvatarHash(user);
-      this.profileOf = user;
-    }
+    this.avatar = await this.parseDiscordAvatarHash(this.profileOf);
   },
 
   methods: {
