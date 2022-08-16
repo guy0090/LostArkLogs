@@ -13,18 +13,34 @@
   </v-container>
   <v-container fluid v-else>
     <InfoPanel class="my-5" />
-    <v-row class="mt-2" v-if="pages > 1" justify="center">
+    <v-row class="mt-2" v-if="foundSessions.length > 0" justify="center">
       <v-col lg="8" md="12" sm="12" cols="12" align-self="center">
         <v-row class="mb-2">
           <h2>
             <v-icon icon="mdi-cloud-upload" /><span class="ms-2 me-2"
-              >Last 50 Uploads</span
+              >Last 50
+              <small style="color: grey; display: none">
+                {{ foundSessions.length }}
+              </small>
+              Uploads</span
             >
           </h2>
         </v-row>
-        <v-row v-for="(session, index) in getPagedResults(page)" :key="index">
+        <v-row v-for="(session, index) of foundSessions" :key="index">
           <EncounterCard class="my-2" :session="session"></EncounterCard
         ></v-row>
+      </v-col>
+    </v-row>
+    <v-row v-else class="mt-2" justify="center">
+      <v-col lg="8" md="12" sm="12" cols="12" align-self="center">
+        <v-row class="mt-3" justify="center">
+          <img src="/img/sprites/e404.webp" />
+        </v-row>
+        <v-row class="mt-2" justify="center">
+          <h2>
+            <span class="ms-2 me-2">No Recent Uploads</span>
+          </h2>
+        </v-row>
       </v-col>
     </v-row>
   </v-container>
