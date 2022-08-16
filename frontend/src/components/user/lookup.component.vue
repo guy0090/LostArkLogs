@@ -135,7 +135,7 @@ export default defineComponent({
             classes: [] as number[],
             bosses: [] as number[],
             gearLevel: [0, 1625],
-            range: [+new Date() - ms("1d"), +new Date()],
+            range: [],
             level: [0, 60],
             partyDps: 0,
             server: "any",
