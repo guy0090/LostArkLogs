@@ -1,46 +1,31 @@
 <template>
   <v-row justify="center">
-    <v-card rounded="sm" width="400px">
+    <v-card rounded="sm" width="600px">
       <v-progress-linear model-value="100" height="7" color="indigo">
       </v-progress-linear>
-      <v-card-content class="mx-3 mb-2">
+      <v-card-content class="mx-3 mb-1 mt-1">
         <v-row>
-          <h2>{{ user.username }}#{{ user.discriminator }}</h2>
-        </v-row>
-        <v-row class="mt-1">
-          <span style="color: grey">ID: {{ user.id }}</span>
-        </v-row>
-        <v-row class="mt-3">
-          <span style="color: grey"
-            ><span style="color: white !important">Registered:</span>
-            {{
-              new Intl.DateTimeFormat("en-US", {
-                dateStyle: "full",
-                timeStyle: "short",
-              }).format(new Date(user.registered))
-            }}</span
-          >
-        </v-row>
-        <v-row class="mt-3">
-          <span style="font-size: 11pt" v-if="uploadToken">
-            <span style="color: white !important">API Key: </span>
-            <span style="color: grey" v-if="!revealToken">
-              {{
-                Array.from(uploadToken)
-                  .map((c) => "*")
-                  .join("")
-              }}
-            </span>
-            <span v-else>{{ uploadToken }} </span>
+          <v-col cols="auto" align-self="center" class="ps-1">
+            <v-avatar :image="avatar"></v-avatar>
+          </v-col>
+          <v-col cols="auto" align-self="center">
+            <v-row>
+              <h2>{{ profileOf.username }}#{{ profileOf.discriminator }}</h2>
+            </v-row>
+            <v-row class="mt-1">
+              <span style="color: grey">{{ profileOf.id }} </span>
+            </v-row>
+          </v-col>
+          <v-spacer v-if="!$route.params.id" />
+          <v-col v-if="!$route.params.id" cols="auto" align-self="center">
             <v-btn
-              v-on:click="revealToken = !revealToken"
-              size="small"
               color="indigo"
-              style="margin-left: 5px"
-              ><span v-if="!revealToken">Reveal</span
-              ><span v-else>Hide</span></v-btn
+              :append-icon="!copied ? 'mdi-content-copy' : 'mdi-check'"
+              @click="copyToClipboard"
             >
-          </span>
+              {{ !copied ? "Copy API Key" : "Copied" }}</v-btn
+            >
+          </v-col>
         </v-row>
       </v-card-content>
     </v-card>
@@ -48,16 +33,47 @@
 </template>
 
 <script lang="ts">
+import { User } from "@/interfaces/user.interface";
 import { defineComponent } from "vue";
-import { mapGetters } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default defineComponent({
   name: "InfoPanel",
 
   data() {
     return {
+      copied: false,
+      profileOf: {} as User,
+      avatar: "",
       revealToken: false,
     };
+  },
+
+  async mounted() {
+    const userId = this.$route.params.id;
+
+    if (!userId || (this.user && this.user.id === userId)) {
+      this.avatar = await this.parseDiscordAvatarHash(this.user);
+      this.profileOf = this.user;
+    } else if (userId && userId.length === 24) {
+      const user = await this.getUser(userId);
+
+      this.avatar = await this.parseDiscordAvatarHash(user);
+      this.profileOf = user;
+    }
+  },
+
+  methods: {
+    ...mapActions(["parseDiscordAvatarHash", "getUser"]),
+    copyToClipboard() {
+      if (this.copied) return;
+      setTimeout(() => {
+        this.copied = false;
+      }, 2000);
+
+      navigator.clipboard.writeText(this.uploadToken);
+      this.copied = true;
+    },
   },
 
   computed: {

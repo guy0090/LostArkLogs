@@ -11,28 +11,36 @@
           <small v-if="!isXS()" style="color: grey">{{ skill?.id }}</small>
         </h4>
       </v-row>
-      <v-row class="pt-1">
+      <v-row class="pt-2">
+        <span class="detail">
+          <span v-if="!isXS()">Casts:</span>
+          <span v-else>C:</span>
+          {{ skill?.stats.casts }}&nbsp;&nbsp;
+        </span>
         <span class="detail">
           <span v-if="!isXS()">Hits:</span>
           <span v-else>H:</span>
-          {{ skill?.stats.hits }}&nbsp;
+          {{ skill?.stats.hits }}&nbsp;&nbsp;
         </span>
+        <span class="detail">
+          <span> HPM: {{ getSkillHitsPerMinute() }} </span>
+        </span>
+      </v-row>
+      <v-row style="padding-top: 7px">
         <span class="detail">
           <span v-if="!isXS()"
             >Crits: {{ skill?.stats.crits }}
             <span class="detail-percent">{{ getSkillCritRate() }}%</span></span
           >
-          <span v-else>C.R: {{ getSkillCritRate(0) }}%</span>
-        </span>
-      </v-row>
-      <v-row class="pt-1">
+          <span v-else>C.R: {{ getSkillCritRate(0) }}%</span> </span
+        >&nbsp;&nbsp;
         <span class="detail">
           <span v-if="!isXS()">B. Hits:</span>
           <span v-else>B.H:</span>
           {{ skill?.stats.backHits }}
           <span class="hide-on-sm detail-percent"
             >{{ getSkillBackHitRate() }}%</span
-          >&nbsp;
+          >&nbsp;&nbsp;
         </span>
         <span class="detail">
           <span v-if="!isXS()">F. Hits:</span>
@@ -58,7 +66,7 @@
           >
         </span>
       </v-row>
-      <v-row class="pt-1 text-right">
+      <v-row class="text-right pt-1">
         <span class="flex-grow-1 detail">
           <span v-if="!isXS()">Max:</span>
           <span v-else>M:</span>
@@ -96,6 +104,11 @@ export default defineComponent({
   },
 
   methods: {
+    getSkillHitsPerMinute() {
+      const duration = this.duration || 0;
+
+      return (this.skill?.stats.hits / (duration / 60)).toFixed(2);
+    },
     getSkillDps() {
       const skill = this.skill as Skill;
       const damageDealt = skill.stats.damageDealt;
@@ -151,8 +164,7 @@ export default defineComponent({
         return "0";
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onImgMissing(_event: Event) {
+    onImgMissing() {
       this.missingImage = true;
     },
     getSkillName() {

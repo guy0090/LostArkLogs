@@ -50,9 +50,12 @@
               }`"
               :style="i >= 4 ? 'display: none' : ''"
             >
-              <v-avatar
+              <img
                 rounded="0"
-                :image="`/img/sprites/${entity.classId}.webp`"
+                width="24"
+                height="24"
+                :src="classIcon(entity.id, entity.classId)"
+                v-on:error="() => onImgMissing(entity.id)"
               />
               <span v-if="!$vuetify.display.sm"
                 >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
@@ -114,9 +117,12 @@
               }`"
               :style="i >= 4 ? 'display: none' : ''"
             >
-              <v-avatar
+              <img
                 rounded="0"
-                :image="`/img/sprites/${entity.classId}.webp`"
+                width="24"
+                height="24"
+                :src="classIcon(entity.id, entity.classId)"
+                v-on:error="() => onImgMissing(entity.id)"
               />
             </v-chip>
           </v-col>
@@ -171,9 +177,12 @@
               }`"
               :style="i >= 4 ? 'display: none' : ''"
             >
-              <v-avatar
+              <img
                 rounded="0"
-                :image="`/img/sprites/${entity.classId}.webp`"
+                width="24"
+                height="24"
+                :src="classIcon(entity.id, entity.classId)"
+                v-on:error="() => onImgMissing(entity.id)"
               />
               <span v-if="!$vuetify.display.sm"
                 >&nbsp;{{ $t(`classes.${entity.classId}`) }}</span
@@ -251,6 +260,7 @@ export default defineComponent({
     let uploadFailed = false;
     let uploadErr = "";
     let uploadedId = "";
+    let missingClassImgs = {} as { [key: string]: boolean };
 
     return {
       bossName,
@@ -261,6 +271,7 @@ export default defineComponent({
       uploadFailed,
       uploadErr,
       uploadedId,
+      missingClassImgs,
     };
   },
 
@@ -328,6 +339,13 @@ export default defineComponent({
     },
     getEncounter() {
       const entities = [...this.session?.entities] as Entity[];
+
+      entities
+        .filter((e) => e.type === EntityType.PLAYER)
+        .forEach((e) => {
+          this.missingClassImgs[e.id] = false;
+        });
+
       const bossEntities = entities
         .filter(
           (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
@@ -386,6 +404,14 @@ export default defineComponent({
           this.uploadFailed = true;
         }
       }
+    },
+    onImgMissing(id: string) {
+      this.missingClassImgs[id] = true;
+    },
+    classIcon(id: string, classId: number) {
+      return this.missingClassImgs[id]
+        ? "/img/sprites/e400.webp"
+        : `/img/sprites/${classId}.webp`;
     },
   },
   computed: {

@@ -134,6 +134,12 @@ export class LogFilterDTO {
   @Min(1)
   @Max(20)
   public pageSize?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(200)
+  public limit?: number;
 }
 
 export class RawLogIdDTO {

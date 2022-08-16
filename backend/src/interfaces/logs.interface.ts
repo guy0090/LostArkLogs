@@ -24,6 +24,7 @@ export interface LogFilter {
   creator?: string;
   page?: number;
   pageSize?: number;
+  limit?: number;
 }
 
 export interface LogFilterResult {

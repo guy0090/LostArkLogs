@@ -350,8 +350,8 @@ export class LogObject {
   public createdAt: number;
 
   @IsArray()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(12) // 8 Players, up to 4 bosses i.e.: G1 Valtan 3 bosses, G1 Vykas 2 bosses, etc.
+  @ArrayMinSize(2)
+  @ArrayMaxSize(20) // 8 Players, up to 12 bosses; mostly relevant in Brelshaza G1
   @ValidateNested({ each: true })
   @Type(() => LogEntityObject)
   public entities: LogEntityObject[];

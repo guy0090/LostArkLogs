@@ -7,7 +7,7 @@
           <v-col align="left">
             <h2>
               <span class="me-2">Your Recent Uploads</span>
-              <small style="font-size: 11pt">(Last 24 hours)</small>
+              <small style="font-size: 11pt">Last 24 hours</small>
             </h2>
           </v-col>
           <v-spacer></v-spacer>
@@ -73,7 +73,7 @@ import EncounterCard from "@/components/home/encounter.component.vue";
 import { Session } from "@/interfaces/session.interface";
 
 export default defineComponent({
-  name: "UserPage",
+  name: "UserProfile",
 
   components: {
     InfoPanel,
@@ -99,7 +99,7 @@ export default defineComponent({
 
         retries--;
       }, 200);
-    }
+    } else if (!this.$route.params.id) this.$router.push({ name: "home" });
   },
 
   setup() {
@@ -142,7 +142,7 @@ export default defineComponent({
   },
 
   computed: {
-    ...mapGetters(["uploadToken", "user"]),
+    ...mapGetters(["uploadToken", "apiUrl", "user", "uploadToken"]),
   },
 });
 </script>

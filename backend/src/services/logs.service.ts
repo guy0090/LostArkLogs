@@ -328,7 +328,8 @@ class LogsService {
 
       aggrPipeline[0] = { $match: firstMatch };
       aggrPipeline[2] = { $match: secondMatch };
-      aggrPipeline.push({ $limit: 200 });
+
+      aggrPipeline.push({ $limit: filter.limit ?? 200 });
 
       const hash = md5(JSON.stringify(aggrPipeline));
       const cached = await RedisService.get(`filteredLogs:${hash}`);

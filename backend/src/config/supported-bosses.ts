@@ -21,6 +21,30 @@ export const bosses = [
   480209, // Nightmarish Morphe
   480210, // Covetous Devourer Vykas (?)
   480211, // Covetous Legion Commander Vykas
+  // Kakul-Saydon Legion Raid
+  480601, // Saydon
+  480611, // Kakul
+  480631, // Kakul-Saydon
+  480635, // Encore-Desiring Kakul-Saydon
+  // Brelshaza Legion Raid
+  480815, // Brelshaza, Monarch of Nightmares
+  480805, // Crushing Phantom Wardog
+  480874, // Molting Phantom Wardog
+  480875, // Echoing Phantom Wardog
+  480876, // Raging Phantom Wardog
+  480806, // Grieving Statue
+  480807, // Furious Statue
+  480877, // Despairing Statue
+  480878, // Eroded Statue
+  480803, // Nightmare Gehenna
+  480804, // Nightmare Helkasirs
+  480802, // Gehenna Helkasirs
+  480808, // Prokel
+  480809, // Prokel's Spiritual Echo
+  480810, // Ashtarot
+  480811, // Primal Nightmare
+  480813, // Brelshaza, Monarch of Nightmares
+  480814, // Phantom Legion Commander Brelshaza
   /* Argos */
   634000, // P1?
   634010, // P2?

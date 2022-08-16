@@ -86,8 +86,8 @@ export const user: Module<any, any> = {
         io.timeout(5000).emit(
           "get_user",
           { userId: userId },
-          (err: Error, res: { user: User }) => {
-            if (res && res.user) resolve(user);
+          (err: Error, res: User) => {
+            if (res) resolve(res);
             else reject(err ?? new Error("Failed to grab user"));
           }
         );

@@ -328,18 +328,10 @@ export default defineComponent({
       );
     },
 
-    getTotalCrits(entities: Entity[]) {
-      let totalCrits = 0;
-      entities.forEach((entity: Entity) => {
-        totalCrits += entity.stats.crits;
-      });
-      return totalCrits;
-    },
-
     getTotalAttacks(entities: Entity[], type: string) {
       let total = 0;
 
-      for (let entity of entities) {
+      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         total += (entity.stats as any)[type];
       }
@@ -349,8 +341,8 @@ export default defineComponent({
 
     getTotalDeaths(entities: Entity[]) {
       let total = 0;
-      for (let entity of entities) {
-        if (entity.type === EntityType.PLAYER) total += entity.stats.deaths;
+      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
+        total += entity.stats.deaths;
       }
 
       return total;
@@ -364,16 +356,18 @@ export default defineComponent({
     getTotalDPS(entities: Entity[]) {
       let total = 0;
 
-      for (let entity of entities)
-        total += this.getDamageDealtPerSecond(entity);
+      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
+        total += entity.stats.dps;
+      }
 
       return Math.round(total);
     },
 
     getAverageDPS(entities: Entity[]) {
       let total = 0;
-      for (let entity of entities)
+      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
         total += this.getDamageDealtPerSecond(entity);
+      }
 
       return Math.round(total / entities.length);
     },
@@ -385,7 +379,9 @@ export default defineComponent({
 
     getAverageCritRate(entities: Entity[]) {
       let total = 0;
-      for (let entity of entities) total += this.getCritRate(entity);
+      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
+        total += this.getCritRate(entity);
+      }
 
       return Math.round(total / entities.length);
     },

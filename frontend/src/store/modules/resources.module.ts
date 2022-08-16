@@ -40,11 +40,11 @@ export const resources: Module<any, any> = {
           bosses: [
             480005, // Leader Lugaru
             480006, // Destroyer Lucas
-            480007, // Demon Beast Commander Valtan
-            480008, // Torn Demon Beast Lord (Valtan ghost phase?)
             480009, // Dark Mountain Predator (Lucas/Lugaru single form)
             480010, // Dark Mountain Predator (^)
             480011, // Dark Mountain Predator (^)
+            480007, // Demon Beast Commander Valtan
+            480008, // Torn Demon Beast Lord (Valtan ghost phase?)
             42060070, // Ravaged Tyrant of Beasts (Valtan Ghost)
           ],
         },
@@ -54,8 +54,42 @@ export const resources: Module<any, any> = {
           bosses: [
             480208, // Incubus Morphe
             480209, // Nightmarish Morphe
-            480210, // Covetous Devourer Vykas (?)
-            480211, // Covetous Devourer Vykas (?)
+            480210, // Covetous Devourer Vykas
+            480211, // Covetous Legion Commander Vykas
+          ],
+        },
+        {
+          dungeonName: "Kakul-Saydon",
+          disabled: false,
+          bosses: [
+            480601, // Saydon
+            480611, // Kakul
+            480631, // Kakul-Saydon
+            480635, // Encore-Desiring Kakul-Saydon
+          ],
+        },
+        {
+          dungeonName: "Brelshaza",
+          disabled: false,
+          bosses: [
+            480815, // Brelshaza, Monarch of Nightmares
+            480805, // Crushing Phantom Wardog
+            480874, // Molting Phantom Wardog
+            480875, // Echoing Phantom Wardog
+            480876, // Raging Phantom Wardog
+            480806, // Grieving Statue
+            480807, // Furious Statue
+            480877, // Despairing Statue
+            480878, // Eroded Statue
+            480803, // Nightmare Gehenna
+            480804, // Nightmare Helkasirs
+            480802, // Gehenna Helkasirs
+            480808, // Prokel
+            480809, // Prokel's Spiritual Echo
+            480810, // Ashtarot
+            480811, // Primal Nightmare
+            480813, // Brelshaza, Monarch of Nightmares
+            480814, // Phantom Legion Commander Brelshaza
           ],
         },
       ],

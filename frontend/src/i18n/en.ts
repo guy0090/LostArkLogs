@@ -4333,6 +4333,15 @@ export default {
     "480002": "Frenzied Flame Demon Beast",
     "480003": "Frenzied Troll",
     "480004": "Demon Beast of Destruction",
+    // Legion Raid
+    // "480005": "Valtan G1",
+    // "480006": "Valtan G1",
+    // "480007": "Valtan G2",
+    // "480008": "Valtan G2",
+    // "42060070": "Valtan G2",
+    // "480009": "Valtan G1",
+    // "480010": "Valtan G1",
+    // "480011": "Valtan G1",
     "480005": "Leader Lugaru",
     "480006": "Destroyer Lucas",
     "480007": "Demon Beast Commander Valtan",
@@ -4341,6 +4350,7 @@ export default {
     "480009": "Dark Mountain Predator",
     "480010": "Dark Mountain Predator",
     "480011": "Dark Mountain Predator",
+    // End
     "480012": "Demon Giant Soldier",
     "480013": "Frenzied Agarus",
     "480014": "Frenzied Troll",
@@ -4354,10 +4364,16 @@ export default {
     "480205": "Rekiel of Avarice",
     "480206": "Covetous Soul",
     "480207": "Thirsting Covetous Soul",
+    // Legion Raid
+    // "480208": "Vykas G1",
+    // "480209": "Vykas G1",
+    // "480210": "Vykas G2",
+    // "480211": "Vykas G3",
     "480208": "Incubus Morphe",
     "480209": "Nightmarish Morphe",
     "480210": "Covetous Devourer Vykas",
     "480211": "Covetous Legion Commander Vykas",
+    // End
     "480212": "1 Gate_Invisible Monster_For Level",
     "480213": "Desire Devourer Vykas",
     "480214": "Desire Devourer Vykas",
@@ -4408,21 +4424,27 @@ export default {
     "480265": "Covetous Monster",
     "480266": "Covetous Monster",
     "480267": "Covetous Monster",
+    // Legion Raid
+    // "480601": "Kakul-Saydon G1",
+    // "480611": "Kakul-Saydon G2",
+    // "480631": "Kakul-Saydon G3",
+    // "480635": "Kakul-Saydon G3",
     "480601": "Saydon",
+    "480611": "Kakul",
+    "480631": "Kakul-Saydon",
+    "480635": "Encore-Desiring Kakul-Saydon",
+    // End
     "480602": "Circus Ball",
     "480603": "Saydon",
     "480604": "Saydon",
     "480605": "Saydon",
     "480606": "Saydon",
     "480607": "Saydon",
-    "480611": "Kakul",
     "480612": "Kakul",
     "480621": "Saydon",
-    "480631": "Kakul-Saydon",
     "480632": "Kakul-Saydon",
     "480633": "Kakul-Saydon",
     "480634": "Kakul-Saydon",
-    "480635": "Encore-Desiring Kakul-Saydon",
     "480636": "Kakul-Saydon",
     "480637": "Kakul-Saydon",
     "480638": "Kakul-Saydon",
@@ -4522,20 +4544,61 @@ export default {
     "480751": "XL Circus Hammer",
     "480753": "Kakul-Saydon",
     "480775": "Skeleton Bomb",
-    "480802": "Gehenna Helkasirs",
-    "480803": "Nightmare Gehenna",
-    "480804": "Nightmare Helkasirs",
+    "480812": "Prokel's Spiritual Echo",
+    // Legion Raid
+    // G0
+    "480815": "Brelshaza, Monarch of Nightmares",
+    // G1
     "480805": "Crushing Phantom Wardog",
+    "480874": "Molting Phantom Wardog",
+    "480875": "Echoing Phantom Wardog",
+    "480876": "Raging Phantom Wardog",
     "480806": "Grieving Statue",
     "480807": "Furious Statue",
+    "480877": "Despairing Statue",
+    "480878": "Eroded Statue",
+    "480803": "Nightmare Gehenna",
+    "480804": "Nightmare Helkasirs",
+    "480802": "Gehenna Helkasirs",
+    // G2
     "480808": "Prokel",
     "480809": "Prokel's Spiritual Echo",
+    // G3
     "480810": "Ashtarot",
+    // G4
     "480811": "Primal Nightmare",
-    "480812": "Prokel's Spiritual Echo",
+    // G5
     "480813": "Brelshaza, Monarch of Nightmares",
+    // G6
     "480814": "Phantom Legion Commander Brelshaza",
-    "480815": "Brelshaza, Monarch of Nightmares",
+    /*
+    // G0
+    "480815": "Brelshaza G0",
+    // G1
+    "480805": "Brelshaza G1",
+    "480874": "Brelshaza G1",
+    "480875": "Brelshaza G1",
+    "480876": "Brelshaza G1",
+    "480806": "Brelshaza G1",
+    "480807": "Brelshaza G1",
+    "480877": "Brelshaza G1",
+    "480878": "Brelshaza G1",
+    "480803": "Brelshaza G1",
+    "480804": "Brelshaza G1",
+    "480802": "Brelshaza G1",
+    // G2
+    "480808": "Brelshaza G2",
+    "480809": "Brelshaza G2",
+    // G3
+    "480810": "Brelshaza G3",
+    // G4
+    "480811": "Brelshaza G4",
+    // G5
+    "480813": "Brelshaza G5",
+    // G6
+    "480814": "Brelshaza G6",
+    */
+    // End
     "480820": "Phantom Apostle",
     "480821": "Phantom Summoner",
     "480822": "2nd Gate Inside Placement",
@@ -4565,11 +4628,6 @@ export default {
     "480871": "Phantom Guard",
     "480872": "Phantom Guard",
     "480873": "Phantom Knight",
-    "480874": "Molting Phantom Wardog",
-    "480875": "Echoing Phantom Wardog",
-    "480876": "Raging Phantom Wardog",
-    "480877": "Despairing Statue",
-    "480878": "Eroded Statue",
     "480879": "Invisible Monster_Phantom Temporary Soldier Control",
     "480880": "Invisible Monster_Gate 6 Level Signal",
     "480881": "Phantom Attis",
@@ -13078,5 +13136,7 @@ export default {
     504: "Artillerist",
     505: "Scouter",
     512: "Gunslinger",
+    602: "Artist",
+    603: "Aeromancer",
   },
 };

@@ -26,7 +26,8 @@
               <img
                 width="52"
                 height="52"
-                :src="'/img/sprites/' + entity?.classId + '.webp'"
+                :src="classIcon"
+                v-on:error="onImgMissing"
               />
             </v-col>
             <v-col cols="auto" class="align-self-center">
@@ -185,6 +186,10 @@ export default defineComponent({
     mvp: Boolean || false,
   },
 
+  data() {
+    return { missingImage: false };
+  },
+
   methods: {
     getPercentDamageDealt(
       totalSessionDamage: number,
@@ -275,9 +280,17 @@ export default defineComponent({
     isXS() {
       return this.$vuetify.display.xs;
     },
+    onImgMissing() {
+      this.missingImage = true;
+    },
   },
   computed: {
     ...mapGetters(["abbrNum"]),
+    classIcon: function () {
+      return this.missingImage
+        ? "/img/sprites/e400.webp"
+        : `/img/sprites/${this.entity?.classId}.webp`;
+    },
   },
 });
 </script>

@@ -12,6 +12,9 @@ import UserView from "@/views/user.view.vue";
 import LogsView from "@/views/logs.view.vue";
 import AdminView from "@/views/admin.view.vue";
 
+import UserProfile from "@/components/user.component.vue";
+import UserLookup from "@/components/user/lookup.component.vue";
+
 import LogsBase from "@/components/logs/base.component.vue";
 import Log from "@/components/logs/log.component.vue";
 import ULog from "@/components/logs/ulog.component.vue";
@@ -37,6 +40,20 @@ const routes: Array<RouteRecordRaw> = [
     name: "user",
     component: UserView,
     props: true,
+    children: [
+      {
+        path: "",
+        name: "profile",
+        component: UserProfile,
+        props: true,
+      },
+      {
+        path: ":id",
+        name: "lookup",
+        component: UserLookup,
+        props: true,
+      },
+    ],
   },
   {
     path: "/logs",

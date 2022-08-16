@@ -124,7 +124,7 @@
         <v-list-item
           v-if="user && uploadToken"
           value="user"
-          v-on:click="$router.push({ name: 'user' })"
+          v-on:click="$router.push({ name: 'profile' })"
         >
           <v-list-item-avatar>
             <v-icon color="white"> mdi-account </v-icon>

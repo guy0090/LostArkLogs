@@ -6,7 +6,7 @@
           <v-col align="left">
             <h2>
               Recent Uploads
-              <small style="font-size: 11pt">(Last 24 hours)</small>
+              <small style="font-size: 11pt">Last 24 hours</small>
             </h2>
           </v-col>
           <v-spacer></v-spacer>

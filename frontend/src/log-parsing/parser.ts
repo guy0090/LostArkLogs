@@ -89,11 +89,7 @@ export class PacketParser extends EventEmitter {
       lines.forEach((line) => this.parse(line));
 
       const bosses = this.session.getBosses();
-      const boss = bosses.find((e) => e.currentHp <= 0);
-
-      if (this.session.firstPacket > 0 && boss && boss.currentHp <= 0) {
-        encounters.push(this.session.toSimpleObject());
-      } else if (bosses.length > 0) {
+      if (bosses.length > 0) {
         const totalHp = [...bosses].sort((a, b) => b.maxHp - a.maxHp)[0].maxHp;
         const totalTaken = bosses.reduce((p, c) => p + c.stats.damageTaken, 0);
 
@@ -103,9 +99,13 @@ export class PacketParser extends EventEmitter {
         }
       }
 
-      this.session = new Session();
+      // If session has started, reset it
+      if (this.session.firstPacket > 0) {
+        this.session = new Session();
+        this.hasBossEntity = false;
+      }
+
       this.valtanGhostId = "";
-      this.hasBossEntity = false;
     }
     console.log(
       `Parser found ${encounters.length} encounters (dropped ${

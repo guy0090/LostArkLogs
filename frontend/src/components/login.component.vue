@@ -46,7 +46,7 @@ export default defineComponent({
           this.getTokensWS()
             .then(() => {
               setTimeout(() => {
-                this.$router.push({ name: "user" });
+                this.$router.push({ name: "profile" });
               }, 1000);
             })
             .catch((err) => {
