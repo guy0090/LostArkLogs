@@ -86,11 +86,7 @@
               <v-row>PARTY DPS</v-row>
               <v-row style="padding-top: 2px"
                 ><h3>
-                  {{
-                    new Intl.NumberFormat().format(
-                      getTotalDPS(session?.entities)
-                    )
-                  }}/s
+                  {{ new Intl.NumberFormat().format(getTotalDPS(players)) }}/s
                 </h3></v-row
               >
             </v-col>
@@ -111,11 +107,7 @@
               <v-row> AVG. PARTY DPS</v-row>
               <v-row style="padding-top: 2px"
                 ><h3>
-                  {{
-                    new Intl.NumberFormat().format(
-                      getAverageDPS(session?.entities)
-                    )
-                  }}/s
+                  {{ new Intl.NumberFormat().format(getAverageDPS(players)) }}/s
                 </h3></v-row
               >
             </v-col>
@@ -140,9 +132,7 @@
               <v-row style="padding-top: 2px"
                 ><h3>
                   {{
-                    new Intl.NumberFormat().format(
-                      getAverageCritRate(session?.entities)
-                    )
+                    new Intl.NumberFormat().format(getAverageCritRate(players))
                   }}%
                 </h3></v-row
               >
@@ -164,11 +154,7 @@
               <v-row>DEATHS</v-row>
               <v-row style="padding-top: 2px"
                 ><h3>
-                  {{
-                    new Intl.NumberFormat().format(
-                      getTotalDeaths(session?.entities)
-                    )
-                  }}
+                  {{ new Intl.NumberFormat().format(getTotalDeaths(players)) }}
                 </h3></v-row
               >
             </v-col>
@@ -194,7 +180,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      getTotalAttacks(session?.entities, "frontHits")
+                      getTotalAttacks(players, "frontHits")
                     )
                   }}
                 </h3></v-row
@@ -222,7 +208,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      getTotalAttacks(session?.entities, "backHits")
+                      getTotalAttacks(players, "backHits")
                     )
                   }}
                 </h3></v-row
@@ -247,7 +233,7 @@
                 ><h3>
                   {{
                     new Intl.NumberFormat().format(
-                      getTotalAttacks(session?.entities, "counters")
+                      getTotalAttacks(players, "counters")
                     )
                   }}
                 </h3></v-row
@@ -277,15 +263,21 @@ export default defineComponent({
     let bossName = "UNKNOWN BOSS";
     let encounterName = "UNKNOWN ENCOUNTER";
     let encounterShort = "ue";
+    let players = [] as Entity[];
 
     return {
       bossName,
       encounterName,
       encounterShort,
+      players,
     };
   },
 
   mounted() {
+    this.players = this.session?.entities.filter(
+      (e: Entity) => e.type === EntityType.PLAYER
+    );
+
     this.getEncounter();
   },
 
@@ -331,7 +323,7 @@ export default defineComponent({
     getTotalAttacks(entities: Entity[], type: string) {
       let total = 0;
 
-      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
+      for (let entity of entities) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         total += (entity.stats as any)[type];
       }
@@ -341,7 +333,7 @@ export default defineComponent({
 
     getTotalDeaths(entities: Entity[]) {
       let total = 0;
-      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
+      for (let entity of entities) {
         total += entity.stats.deaths;
       }
 
@@ -353,21 +345,19 @@ export default defineComponent({
       return entity?.stats.damageDealt / (duration || 0);
     },
 
-    getTotalDPS(entities: Entity[]) {
+    getTotalDPS(entities: Entity[], round = true) {
       let total = 0;
 
-      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
-        total += entity.stats.dps;
+      for (let entity of entities) {
+        total += this.getDamageDealtPerSecond(entity);
       }
 
-      return Math.round(total);
+      if (round) return Math.round(total);
+      else return total;
     },
 
     getAverageDPS(entities: Entity[]) {
-      let total = 0;
-      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
-        total += this.getDamageDealtPerSecond(entity);
-      }
+      const total = this.getTotalDPS(entities, false);
 
       return Math.round(total / entities.length);
     },
@@ -379,7 +369,7 @@ export default defineComponent({
 
     getAverageCritRate(entities: Entity[]) {
       let total = 0;
-      for (let entity of entities.filter((e) => e.type === EntityType.PLAYER)) {
+      for (let entity of entities) {
         total += this.getCritRate(entity);
       }
 
