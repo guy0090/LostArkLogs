@@ -135,6 +135,26 @@ class LogsService {
   };
 
   /**
+   * Update a DPS log.
+   *
+   * @param id The ID of the log to update
+   * @param update The update object
+   * @returns The updated log
+   */
+  public updateLog = async (id: mongoose.Types.ObjectId | string, update: any) => {
+    try {
+      const log = await this.logs.findByIdAndUpdate(id, { $set: update }, { new: true, upsert: false });
+      if (!log) throw new Exception(500, 'Error updating log');
+
+      RedisService.set(`log:${log._id}`, JSON.stringify(log), 'PX', ms('5m'));
+
+      return new LogObject(log);
+    } catch (err) {
+      throw new Exception(400, err.message);
+    }
+  };
+
+  /**
    * Delete a log by its ID.
    *
    * @param id The ID of the log to delete

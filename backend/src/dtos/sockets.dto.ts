@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsDefined, IsNumber, IsString, Length, Max, Min, ValidateIf } from 'class-validator';
+import { ArrayMinSize, IsArray, IsBoolean, IsDefined, IsNumber, IsString, Length, Max, Min, ValidateIf } from 'class-validator';
 
 export class PageAccessDTO {
   @IsDefined()
@@ -50,4 +50,15 @@ export class GetLogDTO {
   @IsString()
   @Length(24, 24)
   public logId: string;
+}
+
+export class UpdateLogVisibilityDTO {
+  @IsDefined()
+  @IsString()
+  @Length(24, 24)
+  public logId: string;
+
+  @IsDefined()
+  @IsBoolean()
+  public visibility: boolean;
 }

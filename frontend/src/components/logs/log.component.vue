@@ -1,8 +1,20 @@
 <template>
   <v-container fluid v-if="JSON.stringify(session) !== '{}'">
+    <v-snackbar
+      v-model="notify"
+      :timeout="5000"
+      :color="notifyColor"
+      variant="contained"
+    >
+      <v-row justify="center">
+        <v-col cols="auto">
+          <h3>{{ notifyMsg }}</h3>
+        </v-col>
+      </v-row>
+    </v-snackbar>
     <v-row id="title">
       <v-col class="mx-0 px-0" sm="auto" md="auto" lg="1" xl="1"></v-col>
-      <v-col cols="auto" class="align-self-center">
+      <v-col cols="auto" align-self="center">
         <v-chip
           v-if="!isUpload && !session.unlisted"
           variant="contained-text"
@@ -26,12 +38,85 @@
           UNLISTED
         </v-chip>
       </v-col>
+      <v-col
+        cols="auto"
+        class="ps-0"
+        v-if="session.region?.toLowerCase() !== 'unknown'"
+        align-self="center"
+      >
+        <v-chip
+          v-if="session.region?.toLowerCase() === 'steam'"
+          variant="contained-text"
+          label
+          rounded="sm"
+          prepend-icon="mdi-steam"
+        >
+          STEAM
+        </v-chip>
+        <v-chip
+          v-else-if="session.region?.toLowerCase() === 'korea'"
+          variant="contained-text"
+          label
+          rounded="sm"
+          class="ps-2"
+        >
+          <v-img width="18" height="18" src="/img/kor.webp" />
+          <span class="ps-2">KOREA</span>
+        </v-chip>
+      </v-col>
       <v-spacer v-if="!$vuetify.display.sm && !$vuetify.display.xs"></v-spacer>
       <v-col
         cols="auto"
         class="me-2"
         v-if="uploadToken !== null && !isUpload && session.creator === user.id"
       >
+        <v-dialog v-model="dialog">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              color="orange-darken-2"
+              class="me-2"
+              style="color: #fff !important"
+              v-bind="props"
+            >
+              Edit
+            </v-btn>
+          </template>
+
+          <v-card width="300">
+            <v-toolbar>
+              <v-icon>mdi-pencil</v-icon>
+              <v-toolbar-title class="ps-2">Edit Session</v-toolbar-title>
+            </v-toolbar>
+            <v-card-content>
+              <v-row>
+                <v-col cols="auto">
+                  <h3><v-icon icon="mdi-eye" /> Visibility</h3>
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col cols="12">
+                  <v-select
+                    v-model="visibility"
+                    :items="['Unlisted', 'Public']"
+                    label="Public | Unlisted"
+                    variant="outlined"
+                    hide-details
+                  ></v-select>
+                </v-col>
+              </v-row>
+            </v-card-content>
+            <v-card-actions>
+              <v-btn color="red darken-3" text @click="cancelEdit">
+                Cancel
+              </v-btn>
+              <v-spacer></v-spacer>
+              <v-btn color="green accent-3" text @click="saveEdit">
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
         <v-btn color="red-darken-3" v-on:click="tryDelete">
           <span v-if="deleting === 0">Delete</span>
           <span v-if="deleting === 1">Confirm</span>
@@ -108,6 +193,35 @@ export default defineComponent({
     PartyDPSGraph,
   },
 
+  props: {
+    uSession: Object || undefined,
+    isUpload: false || Boolean,
+  },
+
+  setup() {
+    const notify = ref(false);
+    const notifyMsg = ref("");
+    const notifyColor = ref("success");
+    const dialog = ref(false);
+    const visibility = ref("Public");
+    const players = ref([] as Entity[]);
+    const deleting = ref(0);
+    const loadingMessage = ref("LOADING");
+    const session = ref({} as unknown as Session);
+
+    return {
+      notify,
+      notifyMsg,
+      notifyColor,
+      dialog,
+      visibility,
+      players,
+      deleting,
+      loadingMessage,
+      session,
+    };
+  },
+
   mounted() {
     this.setPageLoading(true);
     if (this.$props.uSession) {
@@ -118,27 +232,8 @@ export default defineComponent({
     }
   },
 
-  props: {
-    uSession: Object || undefined,
-    isUpload: false || Boolean,
-  },
-
-  setup() {
-    const players = ref([] as Entity[]);
-    const deleting = ref(0);
-
-    return { players, deleting };
-  },
-
-  data() {
-    return {
-      loadingMessage: "LOADING",
-      session: {} as Session,
-    };
-  },
-
   methods: {
-    ...mapActions(["info", "error", "uploadLog", "deleteOwnLog"]),
+    ...mapActions(["info", "error", "uploadLog", "deleteOwnLog", "updateLog"]),
     ...mapMutations(["setPageLoading", "addCachedLog"]),
     getSession() {
       const id = this.$route.params.id;
@@ -147,6 +242,8 @@ export default defineComponent({
       if (exists) {
         this.setPageLoading(false);
         this.session = exists;
+
+        this.visibility = this.session.unlisted ? "Unlisted" : "Public";
         this.players = this.getPlayerEntities(false);
         return;
       }
@@ -161,6 +258,8 @@ export default defineComponent({
             this.session = session;
 
             this.addCachedLog(JSON.parse(JSON.stringify(session)));
+
+            this.visibility = this.session.unlisted ? "Unlisted" : "Public";
             this.players = this.getPlayerEntities(false);
           }, 200);
         })
@@ -282,12 +381,40 @@ export default defineComponent({
       this.$router.push({ path: `/logs/${createdId}` });
     },
     async tryDelete() {
+      setTimeout(() => {
+        this.deleting = 0;
+      }, 2000);
+
       if (this.deleting === 1) {
         await this.deleteOwnLog(this.session.id);
         this.$router.push({ name: "home" });
       } else {
         this.deleting += 1;
       }
+    },
+    cancelEdit() {
+      this.visibility = this.session.unlisted ? "Unlisted" : "Public";
+      this.dialog = false;
+    },
+    saveEdit() {
+      const visibility = this.visibility === "Unlisted" ? true : false;
+      this.updateLog({ id: this.session.id, visibility })
+        .then((update) => {
+          this.session = update;
+
+          this.notifyColor = "success";
+          this.notifyMsg = "Successfully updated log";
+
+          this.notify = true;
+          this.dialog = false;
+        })
+        .catch(() => {
+          this.notifyColor = "error";
+          this.notifyMsg = "Failed to update log";
+
+          this.notify = true;
+          this.dialog = false;
+        });
     },
   },
   computed: {

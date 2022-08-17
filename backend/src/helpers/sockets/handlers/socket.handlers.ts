@@ -1,5 +1,13 @@
 import { LogFilterDTO } from '@/dtos/logs.dto';
-import { GetLogDTO, GetUserDTO, GetUserPermissionsDTO, GetUsersDTO, HasPermissionsDTO, PageAccessDTO } from '@/dtos/sockets.dto';
+import {
+  GetLogDTO,
+  GetUserDTO,
+  GetUserPermissionsDTO,
+  GetUsersDTO,
+  HasPermissionsDTO,
+  PageAccessDTO,
+  UpdateLogVisibilityDTO,
+} from '@/dtos/sockets.dto';
 import { WsException } from '@/exceptions/Exception';
 import { LogFilter } from '@/interfaces/logs.interface';
 import { User } from '@/interfaces/users.interface';
@@ -262,6 +270,30 @@ class SocketHandler {
       } catch (err) {
         logger.error(`[WS] Error filtering logs: ${err.message}`);
         callback({ found: 0, pageSize: 0, logs: [] });
+      }
+    },
+
+    /**
+     * Event for setting a logs visibility.
+     */
+    update_log_visibility: async (args: any, callback: any) => {
+      try {
+        const update = args.update;
+        await this.validateArgs(update, true, UpdateLogVisibilityDTO);
+
+        const user: User = args.u;
+        const log = await this.logService.getLogById(update.logId);
+
+        const overrides = this.permissionService.userHasPermissions(user._id, ['logs.manage']);
+        if (log.creator === `${user._id}` || overrides) {
+          const newLog = await this.logService.updateLog(log.id, { unlisted: update.visibility });
+          callback(newLog);
+        } else {
+          callback(null);
+        }
+      } catch (err) {
+        logger.error(`[WS] Error updating log visibility: ${err.message}`);
+        callback(null);
       }
     },
     // #endregion

@@ -199,6 +199,26 @@ export const logs: Module<any, any> = {
         return false;
       }
     },
+    async updateLog(context, { id, visibility }) {
+      const { dispatch, rootGetters } = context;
+      const app = rootGetters.app;
+
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+        io.timeout(5000).emit(
+          "update_log_visibility",
+          { update: { logId: id, visibility } },
+          (err: Error, res: Session) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              resolve(res);
+            }
+          }
+        );
+      });
+    },
     async filterLogs(context, filter: LogFilter) {
       const { dispatch, getters, rootGetters } = context;
       const app = rootGetters.app;
