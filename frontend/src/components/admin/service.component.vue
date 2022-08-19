@@ -229,7 +229,6 @@ export default defineComponent({
       return this.cachedKeys.slice((page - 1) * pageSize, page * pageSize);
     },
   },
-
   computed: {
     ...mapGetters(["cachedKeys", "pageSize"]),
     cachedKeysHeader() {

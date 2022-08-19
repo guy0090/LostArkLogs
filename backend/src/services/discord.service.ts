@@ -140,7 +140,7 @@ class DiscordService {
    */
   public async updateGrant(userId: mongoose.Types.ObjectId, update: any): Promise<DiscordOAuth> {
     try {
-      const updateGrant = await this.grants.findByIdAndUpdate(userId, { $set: update }, { returnDocument: 'after' });
+      const updateGrant = await this.grants.findByIdAndUpdate(userId, { $set: update }, { new: true });
       return updateGrant;
     } catch (err) {
       throw new HttpException(500, 'Error updating Discord auth');

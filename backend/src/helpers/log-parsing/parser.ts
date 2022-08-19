@@ -221,6 +221,7 @@ export class PacketParser extends EventEmitter {
     this.session.damageStatistics.dps = ParserUtils.getTotalDps(this.session);
 
     this.session.entities.forEach(e => {
+      if (e.type !== EntityType.PLAYER) return;
       e.stats.dps = ParserUtils.getEntityDps(e, this.session.firstPacket, this.session.lastPacket);
     });
 

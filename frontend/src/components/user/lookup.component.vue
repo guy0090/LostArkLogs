@@ -67,7 +67,6 @@ export default defineComponent({
 
   setup() {
     let loadingSessions = ref(true);
-    let pageSize = ref(10);
     let page = ref();
     let pages = ref(0);
     let foundSessions = ref([] as Session[]);
@@ -78,7 +77,6 @@ export default defineComponent({
     return {
       page,
       loadingSessions,
-      pageSize,
       pages,
       foundSessions,
       resultsFound,
@@ -137,7 +135,7 @@ export default defineComponent({
             gearLevel: [0, 1625],
             range: [],
             level: [0, 60],
-            partyDps: 0,
+            partyDps: 1,
             server: "any",
             region: "any",
             sort: ["createdAt", -1],
@@ -146,17 +144,15 @@ export default defineComponent({
           },
         });
 
-        const { found, pageSize, logs } = data;
-        this.pageSize = pageSize;
+        const { found, logs } = data;
         this.resultsFound = found;
-        this.pages = Math.ceil(found / pageSize);
+        this.pages = Math.ceil(found / this.pageSize);
 
         this.foundSessions = (logs as Session[]).sort(
           (a, b) => b.createdAt - a.createdAt
         );
       } catch (err) {
         this.foundSessions = [];
-        this.pageSize = 0;
         this.resultsFound = 0;
         this.pages = 0;
       }
@@ -176,7 +172,7 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters(["uploadToken", "apiUrl", "user", "uploadToken"]),
+    ...mapGetters(["uploadToken", "apiUrl", "user", "uploadToken", "pageSize"]),
   },
 });
 </script>

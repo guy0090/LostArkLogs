@@ -28,7 +28,7 @@ class ConfigService {
 
   public async updateConfig(config: Service): Promise<Service> {
     try {
-      const updateConfig = await this.config.findByIdAndUpdate(0, { $set: config }, { returnDocument: 'after' });
+      const updateConfig = await this.config.findByIdAndUpdate(0, { $set: config }, { new: true });
       if (!updateConfig) throw new Error('Error updating config');
 
       return updateConfig;

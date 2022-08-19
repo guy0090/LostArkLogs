@@ -269,7 +269,7 @@ class SocketHandler {
         callback(result);
       } catch (err) {
         logger.error(`[WS] Error filtering logs: ${err.message}`);
-        callback({ found: 0, pageSize: 0, logs: [] });
+        callback({ found: 0, logs: [] });
       }
     },
 

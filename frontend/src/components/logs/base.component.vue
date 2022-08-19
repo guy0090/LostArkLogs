@@ -454,14 +454,13 @@ export default defineComponent({
       // range: [+new Date() - ms("23h"), +new Date()],
       range: ["", ""],
       level: [0, 60],
-      partyDps: 0,
+      partyDps: 1,
       server: "any",
       region: "any",
       sort: ["dps", -1],
     } as LogFilter);
     const page = ref();
     const pages = ref(0);
-    const pageSize = ref(0);
     const resultsFound = ref(0);
     const lastFilter = ref({} as LogFilter);
     const savedFilters = ref([]);
@@ -478,7 +477,6 @@ export default defineComponent({
       filter,
       page,
       pages,
-      pageSize,
       resultsFound,
       lastFilter,
       savedFilters,
@@ -519,7 +517,7 @@ export default defineComponent({
         this.filter.gearLevel = filter.gearLevel || [302, 1625];
         this.filter.range = filter.range || ["", ""];
         this.filter.level = filter.level || [0, 60];
-        this.filter.partyDps = filter.partyDps || 0;
+        this.filter.partyDps = filter.partyDps || 1;
         this.filter.server = filter.server || "any";
         this.filter.region = filter.region || "any";
         if (filter.creator) {
@@ -552,7 +550,7 @@ export default defineComponent({
       // this.filter.range = [+new Date() - ms("1d"), +new Date()];
       this.filter.range = ["", ""];
       this.filter.level = [0, 60];
-      this.filter.partyDps = 0;
+      this.filter.partyDps = 1;
       this.filter.region = "any";
       this.filter.server = "any";
       this.filter.sort = ["dps", -1];
@@ -566,7 +564,6 @@ export default defineComponent({
 
       this.page = undefined;
       this.pages = 0;
-      this.pageSize = 0;
       this.resultsFound = 0;
       this.filtered = [];
       this.lastFilter = {} as LogFilter;
@@ -630,7 +627,7 @@ export default defineComponent({
         this.filter.partyDps = newVal;
       } catch (err) {
         this.error(err);
-        this.filter.partyDps = 0;
+        this.filter.partyDps = 1;
       }
     },
     updateSortBy(v: string) {
@@ -824,16 +821,15 @@ export default defineComponent({
           data: { ...filter },
         });
 
-        const { found, pageSize, logs } = data;
-        this.pageSize = pageSize;
+        const { found, logs } = data;
         this.resultsFound = found;
-        this.pages = Math.ceil(found / pageSize);
+        this.pages = Math.ceil(found / this.pageSize);
 
-        this.filtered = this.sortResults(logs);
+        this.filtered = logs;
+        // this.filtered = this.sortResults(logs);
         this.loading = false;
       } catch (err) {
         this.filtered = [];
-        this.pageSize = 0;
         this.resultsFound = 0;
         this.pages = 0;
         this.loading = false;
@@ -897,6 +893,7 @@ export default defineComponent({
       "apiUrl",
       "user",
       "uploadToken",
+      "pageSize",
     ]),
   },
 });

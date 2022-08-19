@@ -220,7 +220,7 @@ export class LogEntityStatObject {
   @IsNumber({}, { each: true })
   dpsOverTime: number[];
 
-  constructor(stat: LogEntityStats) {
+  constructor(stat: LogEntityStats, duration?: number) {
     this.casts = stat.casts || 0;
     this.hits = stat.hits;
     this.crits = stat.crits;
@@ -234,6 +234,10 @@ export class LogEntityStatObject {
     this.deaths = stat.deaths;
     this.deathTime = stat.deathTime || 0;
     this.dps = stat.dps;
+    if (duration && (!this.dps || this.dps <= 0)) {
+      this.dps = this.damageDealt / (duration / 1000);
+    }
+
     this.dpsOverTime = stat.dpsOverTime;
   }
 }
@@ -288,7 +292,7 @@ export class LogEntityObject {
   @Type(() => LogEntityStatObject)
   public stats: LogEntityStatObject;
 
-  constructor(entity: LogEntity) {
+  constructor(entity: LogEntity, duration?: number) {
     this.id = getRandomString(32);
     this.npcId = entity.npcId;
     this.type = entity.type;
@@ -299,7 +303,7 @@ export class LogEntityObject {
     this.maxHp = entity.maxHp;
     if (entity.skills && entity.type === EntityType.PLAYER) this.skills = Object.values(entity.skills).map(skill => new LogEntitySkillObject(skill));
     else this.skills = [];
-    this.stats = new LogEntityStatObject(entity.stats);
+    this.stats = new LogEntityStatObject(entity.stats, duration);
   }
 
   isPlayer() {
@@ -334,7 +338,7 @@ export class LogObject {
   public creator: string;
 
   @IsNumber()
-  @Min(0)
+  @Min(1)
   public duration: number;
 
   @IsOptional()
@@ -374,12 +378,24 @@ export class LogObject {
       this.server = log.server || 'Unknown';
       this.region = log.region || 'Unknown';
       this.createdAt = log.createdAt;
-      this.entities = log.entities.map(entity => new LogEntityObject(entity));
+      this.entities = log.entities.map(entity => new LogEntityObject(entity, this.duration));
       this.damageStatistics = new LogDamageStatisticsObject(log.damageStatistics);
+
+      if (this.damageStatistics.dps <= 0) {
+        this.damageStatistics.dps = this.getPartyDps();
+      }
     } catch (err) {
       logger.error(err.message);
       throw err;
     }
+  }
+
+  getPartyDps() {
+    const players = this.entities.filter(entity => entity.isPlayer());
+    const duration = this.duration / 1000;
+
+    const total = players.reduce((p, player) => (p += player.stats.damageDealt / duration), 0);
+    return total;
   }
 
   getBoss() {
@@ -427,11 +443,9 @@ export class RawLogObject {
  */
 
 export class LogFilterOptions {
-  public pageSize?: number;
   public includeUnlisted?: boolean;
 
   constructor(options: LogFilterOptions) {
-    this.pageSize = options.pageSize || 10;
     this.includeUnlisted = options.includeUnlisted || false;
   }
 }

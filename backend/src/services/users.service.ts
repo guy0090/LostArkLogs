@@ -233,7 +233,7 @@ class UserService {
     try {
       if (update._id) delete update._id;
 
-      const updateUserById: User = await this.users.findByIdAndUpdate(userId, { $set: update }, { returnDocument: 'after' });
+      const updateUserById: User = await this.users.findByIdAndUpdate(userId, { $set: update }, { new: true });
       if (!updateUserById) throw new Exception(400, 'Error updating user');
 
       const cached = await RedisService.get(`user:${userId}`);

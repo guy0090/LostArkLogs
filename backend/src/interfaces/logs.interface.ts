@@ -22,19 +22,15 @@ export interface LogFilter {
   removeBreakdowns?: boolean;
   sort?: ['dps' | 'createdAt', -1 | 1]; // -1 = desc, 1 = asc
   creator?: string;
-  page?: number;
-  pageSize?: number;
   limit?: number;
 }
 
 export interface LogFilterResult {
   found: number;
-  pageSize: number;
   logs: LogObject[];
 }
 
 export interface LogFilterOptions {
-  pageSize?: number;
   includeUnlisted?: boolean;
 }
 

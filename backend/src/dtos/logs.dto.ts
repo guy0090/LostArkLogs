@@ -127,17 +127,6 @@ export class LogFilterDTO {
   @IsOptional()
   @IsNumber()
   @Min(1)
-  public page?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(20)
-  public pageSize?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
   @Max(200)
   public limit?: number;
 }

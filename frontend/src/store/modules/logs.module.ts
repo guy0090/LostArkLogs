@@ -50,10 +50,8 @@ export const logs: Module<any, any> = {
             gearLevel: [0, 1625],
             level: [0, 60],
             range: [+new Date() - ms("23h"), +new Date()],
-            partyDps: 0,
+            partyDps: 1,
             key: key,
-            page: 1,
-            pageSize: 20,
           },
           headers: {
             "Content-Type": "application/json",
@@ -82,9 +80,8 @@ export const logs: Module<any, any> = {
             gearLevel: [0, 1625],
             level: [0, 60],
             range: [+new Date() - ms("23h"), +new Date()],
-            partyDps: 0,
-            page: 1,
-            pageSize: 20,
+            partyDps: 1,
+            limit: 50,
           },
           headers: {
             "Content-Type": "application/json",

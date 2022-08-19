@@ -49,7 +49,7 @@ class PermissionsService {
    */
   public async setPermissions(userId: mongoose.Types.ObjectId, setPermissions: string[]): Promise<Permissions> {
     try {
-      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { permissions: setPermissions }, { returnDocument: 'after' });
+      const updatePermissions = await this.permissions.findByIdAndUpdate(userId, { permissions: setPermissions }, { new: true });
       if (!updatePermissions) throw new Error('Error setting permissions: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
@@ -73,7 +73,7 @@ class PermissionsService {
       const updatePermissions = await this.permissions.findByIdAndUpdate(
         userId,
         { $addToSet: { permissions: { $each: newPermissions } } },
-        { returnDocument: 'after' },
+        { new: true },
       );
       if (!updatePermissions) throw new Error('Error adding permissions: update failed');
 
@@ -98,7 +98,7 @@ class PermissionsService {
       const updatePermissions = await this.permissions.findByIdAndUpdate(
         userId,
         { $pull: { permissions: { $in: removePermissions } } },
-        { returnDocument: 'after' },
+        { new: true },
       );
       if (!updatePermissions) throw new Error('Error removing permissions: update failed');
 
@@ -214,7 +214,7 @@ class PermissionsService {
    */
   public async setUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
     try {
-      const update = await this.permissions.findByIdAndUpdate(userId, { $set: { roles } }, { returnDocument: 'after' });
+      const update = await this.permissions.findByIdAndUpdate(userId, { $set: { roles } }, { new: true });
       if (!update) throw new Error('Error setting roles: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
@@ -235,7 +235,7 @@ class PermissionsService {
    */
   public async addUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
     try {
-      const update = await this.permissions.findByIdAndUpdate(userId, { $addToSet: { roles: { $each: roles } } }, { returnDocument: 'after' });
+      const update = await this.permissions.findByIdAndUpdate(userId, { $addToSet: { roles: { $each: roles } } }, { new: true });
       if (!update) throw new Error('Error adding roles: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);
@@ -256,7 +256,7 @@ class PermissionsService {
    */
   public async removeUserRoles(userId: mongoose.Types.ObjectId, roles: number[]): Promise<number[]> {
     try {
-      const update = await this.permissions.findByIdAndUpdate(userId, { $pull: { roles: { $in: roles } } }, { returnDocument: 'after' });
+      const update = await this.permissions.findByIdAndUpdate(userId, { $pull: { roles: { $in: roles } } }, { new: true });
       if (!update) throw new Error('Error removing roles: update failed');
 
       const cached = await RedisService.get(`permissions:${userId}`);

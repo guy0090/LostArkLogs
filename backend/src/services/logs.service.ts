@@ -8,7 +8,6 @@ import { logger } from '@/utils/logger';
 import UserService from '@/services/users.service';
 import RedisService from '@/services/redis.service';
 import ms from 'ms';
-import { md5 } from '@/utils/crypto';
 import ConfigService from './config.service';
 import rawLogsModel from '@/models/rawlogs.model';
 import { PacketParser } from '@/helpers/log-parsing/parser';
@@ -252,38 +251,12 @@ class LogsService {
   public getFilteredLogs = async (filter: LogFilter, options?: LogFilterOptions) => {
     options = new LogFilterOptions(options);
     // eslint-disable-next-line prefer-const
-    let { pageSize, includeUnlisted } = options;
+    let { includeUnlisted } = options;
 
     try {
-      const aggrPipeline: any[] = [
-        {
-          // Match for filtered bosses, creator and creation date first
-          $match: {},
-        },
-        {
-          // Unwind entities to allow specific filters
-          $unwind: {
-            path: '$entities',
-            preserveNullAndEmptyArrays: false,
-          },
-        },
-        {
-          // Add specific entity filters
-          $match: {},
-        },
-        {
-          // Group by ID and DPS
-          $group: {
-            _id: {
-              id: '$_id',
-              createdAt: '$createdAt',
-              dps: '$damageStatistics.dps',
-            },
-          },
-        },
-      ];
+      const aggrPipeline: any[] = [];
 
-      const firstMatch = {
+      const match = {
         // Only include publicly listed logs
         unlisted: false,
       };
@@ -294,89 +267,59 @@ class LogsService {
         if (typeof userId === 'string') userId = new mongoose.Types.ObjectId(userId);
 
         // If a user is requesting their own logs, include all logs
-        delete firstMatch.unlisted;
+        delete match.unlisted;
       } else if (filter.creator) {
         userId = new mongoose.Types.ObjectId(filter.creator);
       }
 
       // If the requesting user has access to view unlisted logs, show them as well
-      if (includeUnlisted && firstMatch.unlisted !== undefined) delete firstMatch.unlisted;
+      if (includeUnlisted && match.unlisted !== undefined) delete match.unlisted;
 
       if (userId) {
-        firstMatch['creator'] = userId;
+        match['creator'] = userId;
       }
 
+      match['entities.gearLevel'] = {
+        $gte: filter.gearLevel[0], // default 302
+        $lte: filter.gearLevel[1], // default 1625
+      };
+
+      match['damageStatistics.dps'] = {
+        $gte: filter.partyDps, // default 1
+      };
+
       if (filter.bosses.length > 0) {
-        firstMatch['entities.npcId'] = {
+        match['entities.npcId'] = {
           $in: filter.bosses,
         };
       }
 
+      if (filter.classes.length > 0) {
+        match['entities.classId'] = { $in: filter.classes };
+      }
+
+      aggrPipeline.push({ $match: match });
+      // If sorting is requested, sort by the specified field
+      // else sort by creation date descending by default (newest first)
       if (filter.sort) {
-        const field = `_id.${filter.sort[0]}`;
+        let field = filter.sort[0] as string;
+        if (field === 'dps') field = `damageStatistics.${field}`;
         const order = filter.sort[1];
 
         aggrPipeline.push({ $sort: { [field]: order } });
-      }
-
-      // If the filter contains a time range, sort by creation date (by most recent)
-      // If it doesn't contain a time range, sort by DPS (by highest)
-      // TODO: Add an option to sort by either
-      if (filter.range.length > 0) {
-        firstMatch['createdAt'] = {
-          $gte: filter.range[0],
-          $lte: filter.range[1],
-        };
-        if (!filter.sort) aggrPipeline.push({ $sort: { '_id.createdAt': -1 } });
       } else {
-        if (!filter.sort) aggrPipeline.push({ $sort: { '_id.dps': -1 } });
+        aggrPipeline.push({ $sort: { createdAt: -1 } });
       }
-
-      const secondMatch = {
-        'entities.gearLevel': {
-          $gte: filter.gearLevel[0], // default 302
-          $lte: filter.gearLevel[1], // default 1625
-        },
-        'damageStatistics.dps': {
-          $gte: filter.partyDps, // default 0
-        },
-      };
-
-      if (filter.classes.length > 0) {
-        secondMatch['entities.classId'] = { $in: filter.classes };
-      }
-
-      aggrPipeline[0] = { $match: firstMatch };
-      aggrPipeline[2] = { $match: secondMatch };
 
       aggrPipeline.push({ $limit: filter.limit ?? 200 });
 
-      const hash = md5(JSON.stringify(aggrPipeline));
-      const cached = await RedisService.get(`filteredLogs:${hash}`);
-      let foundIds = [];
-      if (cached !== null) {
-        foundIds = JSON.parse(cached);
+      const result = await this.logs.aggregate(aggrPipeline);
+      const count = result.length;
+      if (count > 0) {
+        const remapped = result.map(log => new LogObject(log));
+        return { found: count, logs: remapped };
       } else {
-        foundIds = await this.logs.aggregate(aggrPipeline);
-        RedisService.set(`filteredLogs:${hash}`, JSON.stringify(foundIds), 'PX', ms('5m'));
-      }
-
-      const count = foundIds.length;
-      const page = filter.page;
-      if (filter.pageSize) pageSize = filter.pageSize;
-
-      // If page exists, it must be greater than 0, therefore we 0 index before slicing
-      if (page) foundIds = foundIds.slice((page - 1) * pageSize, page * pageSize);
-
-      if (foundIds.length > 0) {
-        const logIds = foundIds.map(grp => grp._id.id);
-        const findQuery = { _id: { $in: logIds } };
-        const foundLogs = await this.logs.find(findQuery).lean();
-        const remapped = foundLogs.map(log => new LogObject(log));
-
-        return { found: count, pageSize, logs: remapped };
-      } else {
-        return { found: 0, pageSize: 0, logs: [] };
+        return { found: 0, logs: [] };
       }
     } catch (err) {
       logger.error(`Error filtering for logs: ${err.message}`);
