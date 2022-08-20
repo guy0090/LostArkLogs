@@ -393,9 +393,14 @@ export class LogObject {
         this.damageStatistics.dps = this.getPartyDps();
       }
 
-      const zoneInfo = this.getZone();
-      this.zoneId = zoneInfo.id;
-      this.zoneType = zoneInfo.type;
+      if (!log.zoneId || !log.zoneType) {
+        const zoneInfo = this.getZone();
+        this.zoneId = zoneInfo.id;
+        this.zoneType = zoneInfo.type;
+      } else {
+        this.zoneId = log.zoneId;
+        this.zoneType = log.zoneType;
+      }
     } catch (err) {
       logger.error(err.message);
       throw err;
