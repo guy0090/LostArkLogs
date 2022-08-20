@@ -74,11 +74,11 @@ export class LogFilterDTO {
   @ArrayMaxSize(2)
   public gearLevel!: [number, number];
 
-  @IsDefined()
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(2)
   @ArrayMaxSize(2)
-  public level!: [number, number];
+  public level?: [number, number];
 
   @IsDefined()
   @IsArray()

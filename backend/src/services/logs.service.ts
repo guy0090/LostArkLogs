@@ -298,6 +298,17 @@ class LogsService {
         match['entities.classId'] = { $in: filter.classes };
       }
 
+      if (filter.range.length > 0) {
+        match['createdAt'] = {
+          $gte: filter.range[0],
+          $lte: filter.range[1],
+        };
+      }
+
+      if (filter.region !== 'any') {
+        match['region'] = filter.region;
+      }
+
       aggrPipeline.push({ $match: match });
       // If sorting is requested, sort by the specified field
       // else sort by creation date descending by default (newest first)
