@@ -43,6 +43,14 @@ const logsSchema: Schema = new Schema({
     type: Object,
     required: true,
   },
+  zoneId: {
+    type: Number,
+    required: false,
+  },
+  zoneType: {
+    type: Number,
+    required: false,
+  },
 });
 
 const logsModel = model<Log & Document>('Logs', logsSchema);

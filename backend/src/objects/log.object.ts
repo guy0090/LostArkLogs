@@ -1,3 +1,4 @@
+import { zones, ZoneType } from '@/config/zones';
 import {
   EntityType,
   Log,
@@ -368,6 +369,13 @@ export class LogObject {
   @IsBoolean()
   public unlisted: boolean;
 
+  @IsNumber()
+  @Min(0)
+  public zoneId: number;
+
+  @IsEnum(ZoneType)
+  public zoneType: ZoneType;
+
   constructor(log: Log) {
     try {
       this.id = log._id ? `${log._id}` : undefined;
@@ -384,6 +392,10 @@ export class LogObject {
       if (this.damageStatistics.dps <= 0) {
         this.damageStatistics.dps = this.getPartyDps();
       }
+
+      const zoneInfo = this.getZone();
+      this.zoneId = zoneInfo.id;
+      this.zoneType = zoneInfo.type;
     } catch (err) {
       logger.error(err.message);
       throw err;
@@ -413,6 +425,18 @@ export class LogObject {
 
   getBosses() {
     return this.entities.filter(e => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN);
+  }
+
+  getZone() {
+    const bosses = this.getBosses();
+    if (bosses.length > 0) {
+      const boss = bosses.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+      const zone = zones.find(zone => zone.bosses.includes(boss.npcId));
+
+      if (zone) return { id: zone.id, type: zone.type };
+    }
+
+    return { id: -1, type: ZoneType.Unknown };
   }
 }
 

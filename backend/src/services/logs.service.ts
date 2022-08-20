@@ -305,7 +305,7 @@ class LogsService {
         };
       }
 
-      if (filter.region !== 'any') {
+      if (filter.region && filter.region !== 'any') {
         match['region'] = filter.region;
       }
 
@@ -460,6 +460,35 @@ class LogsService {
     const dupes = await this.rawLogs.find({ hash: rawLog.hash }).count();
 
     return dupes;
+  }
+
+  /**
+   * Add missing zone fields to any logs that are missing them.
+   */
+  public async fixLogZones() {
+    try {
+      const logs = await this.logs.find({ zoneId: null }).lean();
+
+      const updates = [];
+
+      for (const log of logs) {
+        const logObj = new LogObject(log);
+        updates.push({
+          updateOne: {
+            filter: { _id: log._id },
+            update: {
+              $set: { zoneId: logObj.zoneId, zoneType: logObj.zoneType },
+            },
+          },
+        });
+      }
+      await this.logs.bulkWrite(updates);
+
+      return updates.length;
+    } catch (err) {
+      logger.error(`Error fixing logs: ${err.message}`);
+      throw err;
+    }
   }
 }
 

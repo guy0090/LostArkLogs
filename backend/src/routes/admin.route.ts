@@ -108,6 +108,7 @@ class AdminRoute implements Routes {
       [validationMiddleware(LogDeleteAdminDTO, 'body'), httpAuthMiddleware(['logs.manage'])],
       this.logsController.deleteLog,
     );
+    this.router.post(`${this.path}${this.logsPath}/fixZones`, httpAuthMiddleware(['logs.manage']), this.logsController.fixLogZones);
     // TODO: Updating individual fields of the log soon tm
 
     // Misc. service management

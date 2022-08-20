@@ -219,6 +219,25 @@ class LogsController {
       next(error);
     }
   };
+
+  /**
+   * Add the zone ID and type to logs missing the fields.
+   *
+   * @param req The passed request from express middleware with the user
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
+  public fixLogZones = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      if (!user || user.banned) throw new Exception(403, 'You do not have permission to do this');
+
+      const fixed = await this.logService.fixLogZones();
+      res.status(200).json({ fixed: fixed });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default LogsController;

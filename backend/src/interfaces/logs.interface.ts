@@ -1,3 +1,4 @@
+import { ZoneType } from '@/config/zones';
 import { LogObject } from '@/objects/log.object';
 import mongoose from 'mongoose';
 
@@ -48,6 +49,8 @@ export interface Log {
   createdAt: number;
   entities: LogEntity[];
   damageStatistics: LogDamageStatistics;
+  zoneId?: number;
+  zoneType?: ZoneType;
 }
 
 export interface LogEntity {
