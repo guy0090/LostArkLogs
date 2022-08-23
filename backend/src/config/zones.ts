@@ -16,6 +16,7 @@ export interface Zone {
 }
 
 export const zones: Zone[] = [
+  /*
   {
     id: 0,
     type: ZoneType.Guardian,
@@ -38,6 +39,7 @@ export const zones: Zone[] = [
     name: 'Challenge Guardian',
     bosses: [],
   },
+  */
   {
     id: 2,
     type: ZoneType.AbyssRaid,
@@ -67,7 +69,7 @@ export const zones: Zone[] = [
     type: ZoneType.AbyssalDungeon,
     name: 'Airas Oculus (NM)',
     bosses: [
-      494209, // Frenzied Cicerra
+      494206, // Frenzied Cicerra
       494207, // Lost Seto
     ],
   },
@@ -236,5 +238,173 @@ export const zones: Zone[] = [
     bosses: [
       480814, // Phantom Legion Commander Brelshaza
     ],
+  },
+  {
+    id: 24,
+    type: ZoneType.Guardian,
+    name: 'Vertus',
+    bosses: [509006, 512015, 620010, 622080, 630210, 632910, 633410, 634140],
+  },
+  {
+    id: 25,
+    type: ZoneType.Guardian,
+    name: 'Dark Legoros',
+    bosses: [512002, 620050, 620051, 620052, 622040, 622110, 624020, 630530, 630810, 632730, 633720],
+  },
+  {
+    id: 26,
+    type: ZoneType.Guardian,
+    name: 'Lumerus',
+    bosses: [512004, 512014, 620210, 622010, 624010, 632830, 633230, 633620, 720011],
+  },
+  {
+    id: 27,
+    type: ZoneType.Guardian,
+    name: "Ur'nil",
+    bosses: [512006, 512013, 620200, 622020, 632630, 633820],
+  },
+  {
+    id: 28,
+    type: ZoneType.ChallengeGuardian,
+    name: 'Icy Legoros+',
+    bosses: [512008, 634130],
+  },
+  {
+    id: 29,
+    type: ZoneType.ChallengeGuardian,
+    name: 'Dark Legoros+',
+    bosses: [512009, 634190],
+  },
+  {
+    id: 30,
+    type: ZoneType.ChallengeGuardian,
+    name: 'Lumerus+',
+    bosses: [512011, 634120],
+  },
+  {
+    id: 31,
+    type: ZoneType.ChallengeGuardian,
+    name: "Ur'nil+",
+    bosses: [512012, 634110],
+  },
+  {
+    id: 32,
+    type: ZoneType.Guardian,
+    name: 'Frost Helgaia',
+    bosses: [512016, 620040, 622160, 630110, 630830, 632810, 633210, 633610, 634220],
+  },
+  {
+    id: 33,
+    type: ZoneType.Guardian,
+    name: 'Icy Legoros',
+    bosses: [512017, 620060, 620061, 622030, 622100, 624021, 630820, 632930, 633430, 633630],
+  },
+  {
+    id: 34,
+    type: ZoneType.Guardian,
+    name: 'Flame Fox Yoho',
+    bosses: [512019, 620190, 622150, 630320, 631820, 632710, 633520, 634170],
+  },
+  {
+    id: 35,
+    type: ZoneType.Guardian,
+    name: 'Helgaia',
+    bosses: [512020, 620020, 622070, 630310, 630510, 631830, 633530, 634200],
+  },
+  {
+    id: 36,
+    type: ZoneType.Guardian,
+    name: 'Chromanium',
+    bosses: [512022, 620030, 622050, 630330, 630930, 633330, 634150],
+  },
+  {
+    id: 37,
+    type: ZoneType.Guardian,
+    name: 'Nacrasena',
+    bosses: [512023, 620070, 620071, 622060, 630520, 630920, 632620, 633320, 634160],
+  },
+  {
+    id: 38,
+    type: ZoneType.Guardian,
+    name: 'Tytalos',
+    bosses: [512025, 620150, 622170, 630610, 633840, 634180],
+  },
+  {
+    id: 39,
+    type: ZoneType.Guardian,
+    name: 'Night Fox Yoho',
+    bosses: [512027, 620180, 622200, 630020, 633710, 634210],
+  },
+  {
+    id: 40,
+    type: ZoneType.Guardian,
+    name: 'Deskaluda',
+    bosses: [593007, 593017, 620260],
+  },
+  {
+    id: 41,
+    type: ZoneType.Guardian,
+    name: 'Levanos',
+    bosses: [620080, 622090, 630420, 630910, 632720, 633310, 634240],
+  },
+  {
+    id: 42,
+    type: ZoneType.Guardian,
+    name: 'Armored Nacrasena',
+    bosses: [620100, 622140, 630220, 632820, 633220, 633730, 634250],
+  },
+  {
+    id: 43,
+    type: ZoneType.Guardian,
+    name: 'Lava Chromanium',
+    bosses: [620110, 622130, 630620, 631810, 632610, 633510, 634230],
+  },
+  {
+    id: 44,
+    type: ZoneType.Guardian,
+    name: 'Achates',
+    bosses: [620140, 620145, 620146, 624140],
+  },
+  {
+    id: 45,
+    type: ZoneType.Guardian,
+    name: 'Caliligos',
+    bosses: [620160, 620250, 620270, 622210, 630030],
+  },
+  {
+    id: 46,
+    type: ZoneType.Guardian,
+    name: 'Calventus',
+    bosses: [620170, 622120, 623070, 630120, 630410, 632920, 633420, 633830],
+  },
+  {
+    id: 47,
+    type: ZoneType.Guardian,
+    name: 'Velganos',
+    bosses: [620220, 622190, 623031, 624030, 633810],
+  },
+  {
+    id: 48,
+    type: ZoneType.Guardian,
+    name: 'Igrexion',
+    bosses: [620230, 620237, 620238],
+  },
+  {
+    id: 49,
+    type: ZoneType.Guardian,
+    name: 'Alberhastic',
+    bosses: [620240, 620241, 620242],
+  },
+  {
+    id: 50,
+    type: ZoneType.Guardian,
+    name: 'Hanumatan',
+    bosses: [620280, 620281],
+  },
+  {
+    id: 51,
+    type: ZoneType.Guardian,
+    name: 'Kungelanium',
+    bosses: [620290, 620295],
   },
 ];

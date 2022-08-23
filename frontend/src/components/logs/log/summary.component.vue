@@ -11,7 +11,7 @@
               :image="
                 encounterShort === 'ue'
                   ? '/img/sprites/e400.webp'
-                  : `/img/sprites/${encounterShort}.webp`
+                  : `/img/zones/${session?.zoneType}.webp`
               "
             ></v-avatar>
           </v-col>
@@ -377,28 +377,8 @@ export default defineComponent({
     },
 
     getEncounter() {
-      const entities = this.session?.entities as Entity[];
-      const bossEntities = entities
-        .filter(
-          (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
-        )
-        .sort((a, b) => b.lastUpdate - a.lastUpdate);
-      const hasBoss = bossEntities.length > 0;
-      if (!hasBoss) return;
-
-      const boss = bossEntities[0];
-      const bossName = this.$t(`monsters.${boss.npcId}`);
-
-      let encounter = "UNKNOWN ENCOUNTER";
-      if (this.isSupportedBoss(boss.npcId, "abyssRaids")) {
-        encounter = "ABYSS RAID";
-      } else if (this.isSupportedBoss(boss.npcId, "abyssalDungeons")) {
-        encounter = "ABYSSAL DUNGEON";
-      } else if (this.isSupportedBoss(boss.npcId, "legionRaids")) {
-        encounter = "LEGION RAID";
-      } else if (this.isSupportedBoss(boss.npcId, "guardians")) {
-        encounter = "GUARDIAN RAID";
-      }
+      const bossName = this.$t(`zones.${this.session?.zoneId}`);
+      const encounter = this.$t(`zoneTypes.${this.session?.zoneType}`);
 
       this.bossName = bossName.toUpperCase();
       this.encounterName = encounter.toUpperCase();
@@ -407,9 +387,6 @@ export default defineComponent({
         .map((w) => w[0].toLowerCase())
         .join("");
     },
-  },
-  computed: {
-    ...mapGetters(["isSupportedBoss"]),
   },
 });
 </script>

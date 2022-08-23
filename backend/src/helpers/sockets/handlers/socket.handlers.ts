@@ -1,3 +1,4 @@
+import { zones, ZoneType } from '@/config/zones';
 import { LogFilterDTO } from '@/dtos/logs.dto';
 import {
   GetLogDTO,
@@ -9,7 +10,7 @@ import {
   UpdateLogVisibilityDTO,
 } from '@/dtos/sockets.dto';
 import { WsException } from '@/exceptions/Exception';
-import { LogFilter } from '@/interfaces/logs.interface';
+import { EntityType, LogFilter } from '@/interfaces/logs.interface';
 import { User } from '@/interfaces/users.interface';
 import { DataStoredInToken } from '@/objects/auth.object';
 import { LogObject } from '@/objects/log.object';
@@ -219,7 +220,7 @@ class SocketHandler {
       const user: User = args.u;
       try {
         const log = { ...args.data, creator: user._id, createdAt: +new Date() };
-        const toValidate = new LogObject(log);
+        const toValidate = new LogObject(log, true);
         await this.logService.validateLog(toValidate);
 
         const createdLog: LogObject = await this.logService.createLog(toValidate);
@@ -231,16 +232,26 @@ class SocketHandler {
         callback(null);
       }
     },
+
     /**
-     * Event for getting a list of unique bosses.
+     * Event for getting all available encounter zones.
      */
-    unique_bosses: async (_args: any, callback: any) => {
+    zones: (_args: any, callback: any) => {
+      callback(zones);
+    },
+
+    /**
+     * Event for getting a list of distinct encounter zones (names excluded).
+     */
+    tracked_zones: async (_args: any, callback: any) => {
       try {
-        const bosses = await this.logService.getUniqueEntities();
-        callback({ bosses });
+        const trackedZones = await this.logService.getTrackedZones();
+        trackedZones.forEach(z => delete z.name);
+
+        callback(trackedZones);
       } catch (err) {
         logger.error(`[WS] Error getting unique bosses: ${err.message}`);
-        callback({ bosses: [] });
+        callback([]);
       }
     },
 
@@ -250,10 +261,10 @@ class SocketHandler {
     supported_bosses: async (_args: any, callback: any) => {
       try {
         const { supportedBosses } = await this.configService.getConfig();
-        callback({ supportedBosses });
+        callback(supportedBosses);
       } catch (err) {
         logger.error(`[WS] Error getting supported bosses: ${err.message}`);
-        callback({ supportedBosses: [] });
+        callback([]);
       }
     },
 

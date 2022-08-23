@@ -65,7 +65,7 @@ export class LogFilterDTO {
   @IsDefined()
   @IsArray()
   @ArrayMinSize(0)
-  @ArrayMaxSize(100)
+  @ArrayMaxSize(200)
   public bosses!: number[];
 
   @IsDefined()

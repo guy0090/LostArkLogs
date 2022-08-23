@@ -122,3 +122,32 @@ export interface RawSessionDetails {
   encounters: SimpleSession[];
   results: Session[];
 }
+
+export interface UniqueBosses {
+  guardians: number[];
+  bosses: Zone[];
+}
+
+export interface SupportedBosses {
+  name: string;
+  id: number;
+  zoneType: ZoneType;
+  bosses: number[];
+}
+
+export enum ZoneType {
+  Unknown = 0,
+  Guardian = 1,
+  ChallengeGuardian = 2,
+  AbyssRaid = 3,
+  AbyssalDungeon = 4,
+  ChallengeAbyssalDungeon = 5,
+  LegionRaid = 6,
+}
+
+export interface Zone {
+  id: number;
+  type: ZoneType;
+  name: string;
+  bosses: number[];
+}

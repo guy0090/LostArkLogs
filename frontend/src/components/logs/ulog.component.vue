@@ -213,6 +213,8 @@ import {
   SkillBreakdown,
   UEntity,
   USession,
+  Zone,
+  ZoneType,
 } from "@/interfaces/session.interface";
 
 import Log from "@/components/logs/log.component.vue";
@@ -268,7 +270,7 @@ export default defineComponent({
   },
 
   methods: {
-    ...mapActions(["getSupportedBosses", "info", "error", "getLogWS"]),
+    ...mapActions(["info", "error", "getLogWS"]),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async onFileChange(e: any) {
       try {
@@ -346,10 +348,7 @@ export default defineComponent({
       return clone;
     },
     async readRawSession(data: string) {
-      const bosses = await this.getSupportedBosses();
-      const guardians = this.supportedBosses.guardians;
-
-      const parser = new PacketParser(bosses, guardians);
+      const parser = new PacketParser(this.zones);
 
       const lines = data.trim().replace(/\r?\n/g, "\n").split("\n");
       const { encounters, parsed, found, dropped } = parser.parseLog(lines);
@@ -503,7 +502,7 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters(["supportedBosses", "uploadToken", "apiUrl"]),
+    ...mapGetters(["uploadToken", "apiUrl", "zones"]),
   },
 });
 </script>

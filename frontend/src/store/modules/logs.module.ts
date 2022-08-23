@@ -2,7 +2,7 @@ import { Session } from "@/interfaces/session.interface";
 import axios from "axios";
 import { Module } from "vuex";
 import ms from "ms";
-import { LogFilter, TrackedBosses } from "@/interfaces/util.interface";
+import { LogFilter } from "@/interfaces/util.interface";
 
 /**
  * Module containing log related functions and variables.
@@ -96,32 +96,6 @@ export const logs: Module<any, any> = {
             dispatch("error", err.message);
             reject(new Error(`Failed getting sessions`));
           });
-      });
-    },
-    getUniqueBosses(context) {
-      const { dispatch, rootGetters } = context;
-      const app = rootGetters.app;
-
-      dispatch("info", "[WS] Getting tracked bosses");
-      return new Promise((resolve, reject) => {
-        const io = app.config.globalProperties.$io;
-        io.timeout(5000).emit(
-          "unique_bosses",
-          {},
-          (
-            err: Error,
-            res: {
-              bosses: TrackedBosses[];
-            }
-          ) => {
-            if (err) {
-              dispatch("error", err.message);
-              reject(err);
-            } else {
-              resolve(res.bosses);
-            }
-          }
-        );
       });
     },
     uploadLog(context, log: Session) {

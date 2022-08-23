@@ -32,6 +32,7 @@ import {
   tryParseNum,
   trySetClassFromSkills,
 } from "./lib/util";
+import { Zone, ZoneType } from "@/interfaces/session.interface";
 
 export interface ActiveUser {
   id: string;
@@ -57,7 +58,7 @@ export class PacketParser extends EventEmitter {
   // TODO: Temp workaround for valtan ghost phase
   private valtanGhostId: string | undefined = undefined;
 
-  constructor(supportedBosses: number[], guardians: number[]) {
+  constructor(zones: Zone[]) {
     // Extend
     super();
 
@@ -74,8 +75,18 @@ export class PacketParser extends EventEmitter {
     };
 
     // Init
-    this.supportedBosses = supportedBosses;
-    this.guardians = guardians;
+    this.supportedBosses = zones
+      .filter(
+        (z) =>
+          z.type !== ZoneType.Guardian && z.type !== ZoneType.ChallengeGuardian
+      )
+      .reduce((acc, zone) => [...acc, ...zone.bosses], [] as number[]);
+    this.guardians = zones
+      .filter(
+        (z) =>
+          z.type === ZoneType.Guardian || z.type === ZoneType.ChallengeGuardian
+      )
+      .reduce((acc, zone) => [...acc, ...zone.bosses], [] as number[]);
     this.session = new Session();
   }
 

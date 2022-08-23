@@ -1,16 +1,3 @@
-import { EntityType } from "@/interfaces/session.interface";
-
-export interface TrackedBosses {
-  type: EntityType;
-  id: number;
-}
-
-export interface SupportedRaid {
-  dungeonName: string;
-  disabled: boolean;
-  bosses: number[];
-}
-
 export interface LogFilter {
   classes: number[];
   bosses: number[];

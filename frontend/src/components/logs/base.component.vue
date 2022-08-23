@@ -25,7 +25,7 @@
                   <v-row class="hide-on-sm mt-4">
                     <h4 style="font-weight: 400">
                       Filter for specific encounters by class, encounter name,
-                      gear score and level
+                      gear score and more
                     </h4>
                   </v-row>
                 </v-col>
@@ -98,14 +98,20 @@
                 <v-col>
                   <v-row class="my-1">
                     <h3>
-                      <v-icon icon="mdi-space-invaders"></v-icon>&nbsp;Bosses
+                      <v-icon icon="mdi-space-invaders"></v-icon
+                      >&nbsp;Encounters
                       <v-btn
                         flat
                         class="ms-1"
                         color="indigo"
                         size="small"
                         variant="contained"
-                        v-on:click="filter.bosses = supported.map((s) => s.id)"
+                        v-on:click="
+                          filter.bosses = supported.reduce(
+                            (c, b) => [...c, ...b.bosses],
+                            []
+                          )
+                        "
                         >All</v-btn
                       >
                       <v-btn
@@ -123,36 +129,35 @@
                     <v-col
                       cols="auto"
                       class="pa-0"
-                      v-for="(boss, i) in supported"
+                      v-for="(zone, i) in supported"
                       :key="i"
                     >
                       <v-chip
                         :class="`ma-2 ps-1  ${
-                          filter.bosses.includes(boss.id)
+                          zone.bosses.some((id) => filter.bosses.includes(id))
                             ? `bg-indigo-darken-3`
                             : ''
                         }`"
                         label
-                        :id="boss.id"
+                        :id="zone.id"
                         :ripple="false"
                         style="user-select: none"
-                        v-on:click="toggleBossFilter(boss.id)"
+                        v-on:click="toggleBossFilter(zone.bosses)"
                       >
                         <v-avatar
                           class="me-1"
-                          :image="`/img/sprites/${boss.type}.webp`"
+                          :image="`/img/zones/${zone.zoneType}.webp`"
                           style="user-select: none"
                           rounded="0"
                         ></v-avatar>
                         <span style="user-select: none">{{
-                          $t(`monsters.${boss.id}`)
+                          $t(`zones.${zone.id}`)
                         }}</span>
                       </v-chip>
                     </v-col>
                   </v-row>
                 </v-col>
               </v-row>
-              <!--END TODO: MOVE THIS TO COMPONENT - CHANGE TO VUEX -->
               <v-divider class="my-2"></v-divider>
               <v-row justify="space-around">
                 <v-col cols="12" md="3" lg="3" xl="3">
@@ -419,12 +424,14 @@
 </template>
 
 <script lang="ts">
-import { EntityType, Session } from "@/interfaces/session.interface";
 import {
-  LogFilter,
-  SupportedRaid,
-  TrackedBosses,
-} from "@/interfaces/util.interface";
+  Session,
+  SupportedBosses,
+  UniqueBosses,
+  Zone,
+  ZoneType,
+} from "@/interfaces/session.interface";
+import { LogFilter } from "@/interfaces/util.interface";
 import { defineComponent, reactive, ref } from "vue";
 import { mapActions, mapGetters, mapMutations } from "vuex";
 import axios from "axios";
@@ -445,8 +452,7 @@ export default defineComponent({
 
   setup() {
     const open = ref([] as string[]);
-    const supported = ref([] as any[]);
-    const tracked = ref([] as TrackedBosses[]);
+    const supported = ref([] as SupportedBosses[]);
     const filter = reactive({
       classes: [] as number[],
       bosses: [] as number[],
@@ -473,7 +479,6 @@ export default defineComponent({
     return {
       open,
       supported,
-      tracked,
       filter,
       page,
       pages,
@@ -494,7 +499,7 @@ export default defineComponent({
     const lastFilter = localStorage.getItem("lastFilter");
     if (lastFilter) this.loadFilter(JSON.parse(lastFilter));
 
-    this.getSupportedBosses(this.onlyTracked).then((s) => {
+    this.getSupportedBosses().then((s) => {
       this.setPageLoading(false);
       this.supported = s;
 
@@ -503,7 +508,7 @@ export default defineComponent({
   },
 
   methods: {
-    ...mapActions(["error", "info", "getUniqueBosses", "filterLogs"]),
+    ...mapActions(["error", "info", "getTrackedZones", "filterLogs"]),
     ...mapMutations(["setPageLoading"]),
     loadFilters() {
       const filters = localStorage.getItem("filters");
@@ -584,10 +589,20 @@ export default defineComponent({
         this.filter.classes.splice(this.filter.classes.indexOf(id), 1);
       else this.filter.classes.push(id);
     },
-    toggleBossFilter(id: number) {
-      if (this.filter.bosses.includes(id))
-        this.filter.bosses.splice(this.filter.bosses.indexOf(id), 1);
-      else this.filter.bosses.push(id);
+    toggleBossFilter(id: number | number[]) {
+      if (typeof id === "number") {
+        if (this.filter.bosses.includes(id))
+          this.filter.bosses.splice(this.filter.bosses.indexOf(id), 1);
+        else this.filter.bosses.push(id);
+      } else {
+        if (this.filter.bosses.some((b) => id.includes(b))) {
+          this.filter.bosses = this.filter.bosses.filter(
+            (b) => !id.includes(b)
+          );
+        } else {
+          this.filter.bosses = this.filter.bosses.concat(id);
+        }
+      }
     },
     updateRangeFilter(
       key: "gearLevel" | "level",
@@ -638,136 +653,26 @@ export default defineComponent({
       if (v === "Ascending") this.filter.sort[1] = 1;
       else this.filter.sort[1] = -1;
     },
-    async getTrackedBosses() {
+    async getSupportedBosses(): Promise<SupportedBosses[]> {
       try {
-        const bosses = await this.getUniqueBosses();
-        return bosses as TrackedBosses[];
-      } catch (err) {
-        this.error(err);
-        return [];
-      }
-    },
-    async reformatStoreBosses() {
-      const argosRgx = /^(argos)?$/i;
-      const stored = this.supportedBosses;
+        const trackedZones: Zone[] = await this.getTrackedZones();
+        const supported = [];
 
-      const reformatted = [];
-      for (const [type, values] of Object.entries(stored)) {
-        switch (type) {
-          case "legionRaid":
-            for (const raid of values as SupportedRaid[]) {
-              if (raid.disabled) continue;
-              for (const boss of raid.bosses) {
-                reformatted.push({
-                  name: this.$t(`monsters.${boss}`),
-                  id: boss,
-                  type: "lr",
-                });
-              }
-            }
-            break;
-          case "abyssal":
-            for (const raid of values as SupportedRaid[]) {
-              for (const boss of raid.bosses) {
-                reformatted.push({
-                  name: this.$t(`monsters.${boss}`),
-                  id: boss,
-                  type: "ad",
-                });
-              }
-            }
-            break;
-          case "guardians":
-            for (const boss of values as number[]) {
-              let name = this.$t(`monsters.${boss}`);
-
-              if (argosRgx.test(name)) {
-                reformatted.push({
-                  name: name,
-                  id: boss,
-                  type: "ar",
-                });
-              } else {
-                reformatted.push({
-                  name: name,
-                  id: boss,
-                  type: "gr",
-                });
-              }
-            }
-            break;
+        for (const zone of trackedZones) {
+          const name = this.$t(`zones.${zone.id}`);
+          supported.push({
+            name: name,
+            id: zone.id,
+            zoneType: zone.type,
+            bosses: zone.bosses,
+          });
         }
-      }
-      return reformatted;
-    },
-    async getSupportedBosses(
-      onlyTracked = "1"
-    ): Promise<{ name: string; id: number; type: string; typeId?: number }[]> {
-      const supported = [];
-      if (onlyTracked === "0") return this.reformatStoreBosses();
 
-      const argosRgx = /(argos)/i;
-      try {
-        const tracked = await this.getTrackedBosses();
-        for (const boss of tracked) {
-          let name = this.$t(`monsters.${boss.id}`);
-          switch (boss.type) {
-            case EntityType.GUARDIAN:
-              if (argosRgx.test(name)) {
-                supported.push({
-                  name: name,
-                  id: boss.id,
-                  type: "ar",
-                  typeId: boss.type,
-                });
-              } else {
-                supported.push({
-                  name: name,
-                  id: boss.id,
-                  type: "gr",
-                  typeId: boss.type,
-                });
-              }
-              break;
-            case EntityType.BOSS:
-              if (this.isLegionRaidBoss(boss.id)) {
-                supported.push({
-                  name: this.$t(`monsters.${boss.id}`),
-                  id: boss.id,
-                  type: "lr",
-                  typeId: boss.type,
-                });
-              } else if (this.isAbyssalDungeon(boss.id)) {
-                supported.push({
-                  name: this.$t(`monsters.${boss.id}`),
-                  id: boss.id,
-                  type: "ad",
-                  typeId: boss.type,
-                });
-              }
-              break;
-          }
-        }
-        supported.sort(
-          (a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name)
-        );
         return supported;
       } catch (err) {
         this.error(err);
         return [];
       }
-    },
-    isAbyssRaid(id: number) {
-      const abyssRaids = this.supportedBosses.abyssRaids;
-      return abyssRaids.find((r: SupportedRaid) => r.bosses.includes(id));
-    },
-    isLegionRaidBoss(id: number) {
-      const legionRaids = this.supportedBosses.legionRaids;
-      return legionRaids.find((r: SupportedRaid) => r.bosses.includes(id));
-    },
-    isAbyssalDungeon(id: number) {
-      const abyssals = this.supportedBosses.abyssalDungeons;
-      return abyssals.find((r: SupportedRaid) => r.bosses.includes(id));
     },
     async filterForLogs() {
       const filter = JSON.parse(JSON.stringify(this.filter)) as LogFilter;
@@ -889,11 +794,11 @@ export default defineComponent({
     ...mapGetters([
       "pageLoading",
       "classes",
-      "supportedBosses",
       "apiUrl",
       "user",
       "uploadToken",
       "pageSize",
+      "zones",
     ]),
   },
 });

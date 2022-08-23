@@ -1,4 +1,4 @@
-import { SupportedRaid } from "@/interfaces/util.interface";
+import { Zone, ZoneType } from "@/interfaces/session.interface";
 import { Module } from "vuex";
 
 /**
@@ -6,178 +6,349 @@ import { Module } from "vuex";
  */
 export const resources: Module<any, any> = {
   state: () => ({
-    supportedBossIds: [] as number[],
-    supportedBosses: {
-      abyssRaids: [
-        {
-          dungeonName: "Argos",
-          disabled: false,
-          bosses: [634000, 634010, 634020], // P1, P2, P3
-        },
-      ],
-      abyssalDungeons: [
-        {
-          dungeonName: "Aira's Oculus (HM)",
-          disabled: false,
-          bosses: [
-            494209, // Frenzied Cicerra
-            494210, // Lost Seto
-          ],
-        },
-        {
-          dungeonName: "Oreha Prevaza (HM)",
-          disabled: false,
-          bosses: [
-            494415, // Angry Moguro Captain
-            494416, // Corrupted Albion,
-          ],
-        },
-      ],
-      legionRaids: [
-        {
-          dungeonName: "Valtan",
-          disabled: false,
-          bosses: [
-            480005, // Leader Lugaru
-            480006, // Destroyer Lucas
-            480009, // Dark Mountain Predator (Lucas/Lugaru single form)
-            480010, // Dark Mountain Predator (^)
-            480011, // Dark Mountain Predator (^)
-            480007, // Demon Beast Commander Valtan
-            480008, // Torn Demon Beast Lord (Valtan ghost phase?)
-            42060070, // Ravaged Tyrant of Beasts (Valtan Ghost)
-          ],
-        },
-        {
-          dungeonName: "Vykas",
-          disabled: false,
-          bosses: [
-            480208, // Incubus Morphe
-            480209, // Nightmarish Morphe
-            480210, // Covetous Devourer Vykas
-            480211, // Covetous Legion Commander Vykas
-          ],
-        },
-        {
-          dungeonName: "Kakul-Saydon",
-          disabled: false,
-          bosses: [
-            480601, // Saydon
-            480611, // Kakul
-            480631, // Kakul-Saydon
-            480635, // Encore-Desiring Kakul-Saydon
-          ],
-        },
-        {
-          dungeonName: "Brelshaza",
-          disabled: false,
-          bosses: [
-            480815, // Brelshaza, Monarch of Nightmares
-            480805, // Crushing Phantom Wardog
-            480874, // Molting Phantom Wardog
-            480875, // Echoing Phantom Wardog
-            480876, // Raging Phantom Wardog
-            480806, // Grieving Statue
-            480807, // Furious Statue
-            480877, // Despairing Statue
-            480878, // Eroded Statue
-            480803, // Nightmare Gehenna
-            480804, // Nightmare Helkasirs
-            480802, // Gehenna Helkasirs
-            480808, // Prokel
-            480809, // Prokel's Spiritual Echo
-            480810, // Ashtarot
-            480811, // Primal Nightmare
-            480813, // Brelshaza, Monarch of Nightmares
-            480814, // Phantom Legion Commander Brelshaza
-          ],
-        },
-      ],
-      /* Guardians */
-      guardians: [
-        509006, 512002, 512004, 512006, 512008, 512009, 512011, 512012, 512013,
-        512014, 512015, 512016, 512017, 512019, 512020, 512022, 512023, 512025,
-        512027, 593007, 593017, 620010, 620020, 620030, 620040, 620050, 620051,
-        620052, 620060, 620061, 620070, 620071, 620080, 620100, 620110, 620140,
-        620145, 620146, 620150, 620170, 620180, 620190, 620200, 620210, 620220,
-        620230, 620237, 620238, 620240, 620241, 620242, 620260, 622010, 622020,
-        622030, 622040, 622050, 622060, 622070, 622080, 622090, 622100, 622110,
-        622120, 622130, 622140, 622150, 622160, 622170, 622190, 622200, 623031,
-        623070, 624010, 624020, 624021, 624030, 624140, 630020, 630110, 630120,
-        630210, 630220, 630310, 630320, 630330, 630410, 630420, 630510, 630520,
-        630530, 630610, 630620, 630810, 630820, 630830, 630910, 630920, 630930,
-        631810, 631820, 631830, 632610, 632620, 632630, 632710, 632720, 632730,
-        632810, 632820, 632830, 632910, 632920, 632930, 633210, 633220, 633230,
-        633310, 633320, 633330, 633410, 633420, 633430, 633510, 633520, 633530,
-        633610, 633620, 633630, 633710, 633720, 633730, 633810, 633820, 633830,
-        633840, 634110, 634120, 634130, 634140, 634150, 634160, 634170, 634180,
-        634190, 634200, 634210, 634220, 634230, 634240, 634250, 720011, 620290,
-        620295, 620160, 620250, 620270, 622210, 630030, 620281, 620280,
-      ],
-    },
     classes: [
       102, 103, 104, 105, 202, 203, 204, 205, 302, 303, 304, 305, 312, 402, 403,
       404, 502, 503, 504, 505, 512,
     ],
+    zones: [
+      {
+        id: 2,
+        type: ZoneType.AbyssRaid,
+        bosses: [634000],
+      },
+      {
+        id: 3,
+        type: ZoneType.AbyssRaid,
+        bosses: [634010],
+      },
+      {
+        id: 4,
+        type: ZoneType.AbyssRaid,
+        bosses: [634020],
+      },
+      {
+        id: 5,
+        type: ZoneType.AbyssalDungeon,
+        bosses: [494206, 494207],
+      },
+      {
+        id: 6,
+        type: ZoneType.AbyssalDungeon,
+        bosses: [494209, 494210],
+      },
+      {
+        id: 7,
+        type: ZoneType.AbyssalDungeon,
+        bosses: [494407, 494408],
+      },
+      {
+        id: 8,
+        type: ZoneType.AbyssalDungeon,
+        bosses: [494415, 494416],
+      },
+      {
+        id: 9,
+        type: ZoneType.LegionRaid,
+        bosses: [480005, 480006, 480009, 480010, 480011],
+      },
+      {
+        id: 10,
+        type: ZoneType.LegionRaid,
+        bosses: [480007, 480008, 42060070],
+      },
+      {
+        id: 11,
+        type: ZoneType.LegionRaid,
+        bosses: [480208, 480209],
+      },
+      {
+        id: 12,
+        type: ZoneType.LegionRaid,
+        bosses: [480210],
+      },
+      {
+        id: 13,
+        type: ZoneType.LegionRaid,
+        bosses: [480211],
+      },
+      {
+        id: 14,
+        type: ZoneType.LegionRaid,
+        bosses: [480601],
+      },
+      {
+        id: 15,
+        type: ZoneType.LegionRaid,
+        bosses: [480611],
+      },
+      {
+        id: 16,
+        type: ZoneType.LegionRaid,
+        bosses: [480631, 480635],
+      },
+      {
+        id: 17,
+        type: ZoneType.LegionRaid,
+        bosses: [480815],
+      },
+      {
+        id: 18,
+        type: ZoneType.LegionRaid,
+        bosses: [
+          480805, 480874, 480875, 480876, 480806, 480807, 480877, 480878,
+          480803, 480804, 480802,
+        ],
+      },
+      {
+        id: 19,
+        type: ZoneType.LegionRaid,
+        bosses: [480808, 480809],
+      },
+      {
+        id: 20,
+        type: ZoneType.LegionRaid,
+        bosses: [480810],
+      },
+      {
+        id: 21,
+        type: ZoneType.LegionRaid,
+        bosses: [480811],
+      },
+      {
+        id: 22,
+        type: ZoneType.LegionRaid,
+        bosses: [480813],
+      },
+      {
+        id: 23,
+        type: ZoneType.LegionRaid,
+        bosses: [480814],
+      },
+      {
+        id: 24,
+        type: ZoneType.Guardian,
+        bosses: [
+          509006, 512015, 620010, 622080, 630210, 632910, 633410, 634140,
+        ],
+      },
+      {
+        id: 25,
+        type: ZoneType.Guardian,
+        bosses: [
+          512002, 620050, 620051, 620052, 622040, 622110, 624020, 630530,
+          630810, 632730, 633720,
+        ],
+      },
+      {
+        id: 26,
+        type: ZoneType.Guardian,
+        bosses: [
+          512004, 512014, 620210, 622010, 624010, 632830, 633230, 633620,
+          720011,
+        ],
+      },
+      {
+        id: 27,
+        type: ZoneType.Guardian,
+        bosses: [512006, 512013, 620200, 622020, 632630, 633820],
+      },
+      {
+        id: 28,
+        type: ZoneType.ChallengeGuardian,
+        bosses: [512008, 634130],
+      },
+      {
+        id: 29,
+        type: ZoneType.ChallengeGuardian,
+        bosses: [512009, 634190],
+      },
+      {
+        id: 30,
+        type: ZoneType.ChallengeGuardian,
+        bosses: [512011, 634120],
+      },
+      {
+        id: 31,
+        type: ZoneType.ChallengeGuardian,
+        bosses: [512012, 634110],
+      },
+      {
+        id: 32,
+        type: ZoneType.Guardian,
+        bosses: [
+          512016, 620040, 622160, 630110, 630830, 632810, 633210, 633610,
+          634220,
+        ],
+      },
+      {
+        id: 33,
+        type: ZoneType.Guardian,
+        bosses: [
+          512017, 620060, 620061, 622030, 622100, 624021, 630820, 632930,
+          633430, 633630,
+        ],
+      },
+      {
+        id: 34,
+        type: ZoneType.Guardian,
+        bosses: [
+          512019, 620190, 622150, 630320, 631820, 632710, 633520, 634170,
+        ],
+      },
+      {
+        id: 35,
+        type: ZoneType.Guardian,
+        bosses: [
+          512020, 620020, 622070, 630310, 630510, 631830, 633530, 634200,
+        ],
+      },
+      {
+        id: 36,
+        type: ZoneType.Guardian,
+        bosses: [512022, 620030, 622050, 630330, 630930, 633330, 634150],
+      },
+      {
+        id: 37,
+        type: ZoneType.Guardian,
+        bosses: [
+          512023, 620070, 620071, 622060, 630520, 630920, 632620, 633320,
+          634160,
+        ],
+      },
+      {
+        id: 38,
+        type: ZoneType.Guardian,
+        bosses: [512025, 620150, 622170, 630610, 633840, 634180],
+      },
+      {
+        id: 39,
+        type: ZoneType.Guardian,
+        bosses: [512027, 620180, 622200, 630020, 633710, 634210],
+      },
+      {
+        id: 40,
+        type: ZoneType.Guardian,
+        bosses: [593007, 593017, 620260],
+      },
+      {
+        id: 41,
+        type: ZoneType.Guardian,
+        bosses: [620080, 622090, 630420, 630910, 632720, 633310, 634240],
+      },
+      {
+        id: 42,
+        type: ZoneType.Guardian,
+        bosses: [620100, 622140, 630220, 632820, 633220, 633730, 634250],
+      },
+      {
+        id: 43,
+        type: ZoneType.Guardian,
+        bosses: [620110, 622130, 630620, 631810, 632610, 633510, 634230],
+      },
+      {
+        id: 44,
+        type: ZoneType.Guardian,
+        bosses: [620140, 620145, 620146, 624140],
+      },
+      {
+        id: 45,
+        type: ZoneType.Guardian,
+        bosses: [620160, 620250, 620270, 622210, 630030],
+      },
+      {
+        id: 46,
+        type: ZoneType.Guardian,
+        bosses: [
+          620170, 622120, 623070, 630120, 630410, 632920, 633420, 633830,
+        ],
+      },
+      {
+        id: 47,
+        type: ZoneType.Guardian,
+        bosses: [620220, 622190, 623031, 624030, 633810],
+      },
+      {
+        id: 48,
+        type: ZoneType.Guardian,
+        bosses: [620230, 620237, 620238],
+      },
+      {
+        id: 49,
+        type: ZoneType.Guardian,
+        bosses: [620240, 620241, 620242],
+      },
+      {
+        id: 50,
+        type: ZoneType.Guardian,
+        bosses: [620280, 620281],
+      },
+      {
+        id: 51,
+        type: ZoneType.Guardian,
+        bosses: [620290, 620295],
+      },
+    ],
+    supportedBosses: [] as number[],
   }),
   getters: {
-    supportedBossIds: (state) => state.supportedBossIds,
-    supportedBosses(state) {
-      return state.supportedBosses;
-    },
     classes(state) {
       return state.classes;
     },
-    isSupportedBoss:
-      (state) =>
-      (
-        id: number,
-        type: "abyssRaids" | "abyssalDungeons" | "legionRaids" | "guardians"
-      ) => {
-        if (type === "guardians")
-          return state.supportedBosses.guardians.includes(id);
-
-        const raids: SupportedRaid[] = state.supportedBosses[type];
-
-        const bossIds = raids
-          .map((d) => d.bosses)
-          .reduce((acc, cur) => {
-            return [...cur, ...acc];
-          });
-
-        return bossIds.includes(id);
-      },
+    zones(state) {
+      return state.zones;
+    },
+    supportedBosses(state) {
+      return state.supportedBosses;
+    },
   },
   mutations: {
-    setSupportedBossIds(state, payload: number[]) {
-      state.supportedBossIds = payload;
+    setSupportedBosses(state, payload) {
+      state.supportedBosses = payload;
     },
   },
   actions: {
-    getSupportedBosses(context) {
+    getSupportedBosses(context): Promise<number[]> {
       const { dispatch, getters, rootGetters, commit } = context;
       const app = rootGetters.app;
 
-      if (getters.supportedBossIds.length > 0)
-        return JSON.parse(JSON.stringify(getters.supportedBossIds));
+      if (getters.supportedBosses.length > 0) {
+        return JSON.parse(JSON.stringify(getters.supportedBosses));
+      }
+
       dispatch("info", "[WS] Getting supported boss IDs");
       return new Promise((resolve, reject) => {
         const io = app.config.globalProperties.$io;
         io.timeout(5000).emit(
           "supported_bosses",
           {},
-          (
-            err: Error,
-            res: {
-              supportedBosses: number[];
-            }
-          ) => {
+          (err: Error, res: number[]) => {
             if (err) {
               dispatch("error", err.message);
               reject(err);
             } else {
-              commit("setSupportedBossIds", res.supportedBosses);
-              resolve(res.supportedBosses);
+              commit("setSupportedBosses", res);
+              resolve(res);
+            }
+          }
+        );
+      });
+    },
+    getTrackedZones(context) {
+      const { dispatch, rootGetters } = context;
+      const app = rootGetters.app;
+
+      dispatch("info", "[WS] Getting tracked zones");
+      return new Promise((resolve, reject) => {
+        const io = app.config.globalProperties.$io;
+        io.timeout(5000).emit(
+          "tracked_zones",
+          {},
+          (err: Error, res: Zone[]) => {
+            if (err) {
+              dispatch("error", err.message);
+              reject(err);
+            } else {
+              resolve(res);
             }
           }
         );

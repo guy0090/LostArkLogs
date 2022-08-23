@@ -11,6 +11,7 @@ import ms from 'ms';
 import ConfigService from './config.service';
 import rawLogsModel from '@/models/rawlogs.model';
 import { PacketParser } from '@/helpers/log-parsing/parser';
+import { Zone, zones } from '@/config/zones';
 
 class LogsService {
   public logs = logsModel;
@@ -64,7 +65,7 @@ class LogsService {
 
       let children = [];
       if (parsedEncounters.length > 0) {
-        const encounters = parsedEncounters.map(s => new LogObject({ ...s, creator, createdAt }));
+        const encounters = parsedEncounters.map(s => new LogObject({ ...s, creator, createdAt }, true));
         for (const encounter of encounters) {
           await this.validateLog(encounter);
           encounter.parent = `${_id}`;
@@ -237,6 +238,28 @@ class LogsService {
     } catch (err) {
       logger.error(err);
       throw new Exception(500, 'Error getting bosses');
+    }
+  };
+
+  /**
+   * Get a list of distinct encounter zones
+   *
+   * @param byPassCache Whether to bypass the cache
+   * @returns The list of distinct zones
+   */
+  public getTrackedZones = async (byPassCache = false): Promise<Zone[]> => {
+    try {
+      const cached = await RedisService.get('trackedZones');
+      if (cached && !byPassCache) return JSON.parse(cached);
+
+      const zoneIds: number[] = await this.logs.distinct('zoneId');
+      const trackedZones = zones.filter(zone => zoneIds.includes(zone.id));
+
+      await RedisService.set('trackedZones', JSON.stringify(trackedZones), 'PX', ms('5m'));
+      return trackedZones;
+    } catch (err) {
+      logger.error(err);
+      throw new Exception(500, 'Error getting zones');
     }
   };
 
@@ -465,14 +488,13 @@ class LogsService {
   /**
    * Add missing zone fields to any logs that are missing them.
    */
-  public async fixLogZones() {
+  public async fixLogZones(filter: any) {
     try {
-      const logs = await this.logs.find({ zoneId: null }).lean();
-
+      const logs = await this.logs.find(filter).lean();
       const updates = [];
 
       for (const log of logs) {
-        const logObj = new LogObject(log);
+        const logObj = new LogObject(log, true);
         updates.push({
           updateOne: {
             filter: { _id: log._id },

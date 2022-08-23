@@ -15,7 +15,7 @@
           <v-col cols="auto" class="align-self-center">
             <v-avatar
               rounded="0"
-              :image="`/img/sprites/${encounterName}.webp`"
+              :image="`/img/zones/${session?.zoneType}.webp`"
             />
           </v-col>
           <v-col cols="auto" class="align-self-center">
@@ -73,7 +73,7 @@
             <v-avatar
               rounded="0"
               size="small"
-              :image="`/img/sprites/${encounterName}.webp`"
+              :image="`/img/zones/${session?.zoneType}.webp`"
             />
           </v-col>
           <v-col cols="auto" class="align-self-center py-0 px-1">
@@ -142,7 +142,7 @@
           <v-col cols="auto" class="align-self-center">
             <v-avatar
               rounded="0"
-              :image="`/img/sprites/${encounterName}.webp`"
+              :image="`/img/zones/${getZone()?.type}.webp`"
             />
           </v-col>
           <v-col cols="auto" class="align-self-center">
@@ -235,7 +235,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import dayjs from "dayjs";
-import { Session, Entity, EntityType } from "@/interfaces/session.interface";
+import {
+  Session,
+  Entity,
+  EntityType,
+  Zone,
+} from "@/interfaces/session.interface";
 import { mapActions, mapGetters } from "vuex";
 import { SimpleSession } from "@/log-parsing/lib/objects";
 
@@ -346,30 +351,18 @@ export default defineComponent({
           this.missingClassImgs[e.id] = false;
         });
 
-      const bossEntities = entities
-        .filter(
-          (e) => e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
-        )
-        .sort((a, b) => b.lastUpdate - a.lastUpdate);
-      const hasBoss = bossEntities.length > 0;
-      if (!hasBoss) return;
+      let zoneId = this.session?.zoneId;
+      let zoneType = this.session?.zoneType;
 
-      const boss = bossEntities[0];
-      const bossName = this.$t(`monsters.${boss.npcId}`);
+      if (!zoneId || !zoneType) {
+        const zone = this.getZone();
 
-      let encounter = "ue";
-      if (this.isSupportedBoss(boss.npcId, "abyssRaids")) {
-        encounter = "ar";
-      } else if (this.isSupportedBoss(boss.npcId, "abyssalDungeons")) {
-        encounter = "ad";
-      } else if (this.isSupportedBoss(boss.npcId, "legionRaids")) {
-        encounter = "lr";
-      } else if (this.isSupportedBoss(boss.npcId, "guardians")) {
-        encounter = "gr";
+        zoneId = zone?.id;
+        zoneType = zone?.type;
       }
 
-      this.bossName = bossName;
-      this.encounterName = encounter.toLowerCase();
+      this.bossName = this.$t(`zones.${zoneId}`);
+      this.encounterName = this.$t(`zoneTypes.${zoneType}`);
     },
     getDamageDealtPerSecond(entity: Entity) {
       const duration = this.session?.duration / 1000;
@@ -413,9 +406,24 @@ export default defineComponent({
         ? "/img/sprites/e400.webp"
         : `/img/sprites/${classId}.webp`;
     },
+    getZone() {
+      const bosses: Entity[] = this.session?.entities.filter(
+        (e: Entity) =>
+          e.type === EntityType.BOSS || e.type === EntityType.GUARDIAN
+      );
+
+      if (bosses.length > 0) {
+        const boss = bosses.sort((a, b) => b.lastUpdate - a.lastUpdate)[0];
+        const zone = this.zones.find((zone: Zone) =>
+          zone.bosses.includes(boss.npcId as number)
+        );
+
+        if (zone) return { id: zone.id, type: zone.type };
+      }
+    },
   },
   computed: {
-    ...mapGetters(["isSupportedBoss", "abbrNum"]),
+    ...mapGetters(["abbrNum", "zones"]),
   },
 });
 </script>

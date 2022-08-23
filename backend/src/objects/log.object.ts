@@ -376,7 +376,7 @@ export class LogObject {
   @IsEnum(ZoneType)
   public zoneType: ZoneType;
 
-  constructor(log: Log) {
+  constructor(log: Log, refresh = false) {
     try {
       this.id = log._id ? `${log._id}` : undefined;
       this.unlisted = log.unlisted ?? true;
@@ -389,11 +389,11 @@ export class LogObject {
       this.entities = log.entities.map(entity => new LogEntityObject(entity, this.duration));
       this.damageStatistics = new LogDamageStatisticsObject(log.damageStatistics);
 
-      if (this.damageStatistics.dps <= 0) {
+      if (refresh || this.damageStatistics.dps <= 0) {
         this.damageStatistics.dps = this.getPartyDps();
       }
 
-      if (!log.zoneId || !log.zoneType) {
+      if (refresh || !log.zoneId || !log.zoneType) {
         const zoneInfo = this.getZone();
         this.zoneId = zoneInfo.id;
         this.zoneType = zoneInfo.type;

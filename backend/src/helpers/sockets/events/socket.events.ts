@@ -21,7 +21,8 @@ export const socketEvents = [
   // Logs
   new SocketEvent('get_log', false, []),
   new SocketEvent('upload_log', true, ['log.upload']),
-  new SocketEvent('unique_bosses', false, []),
+  new SocketEvent('zones', false, []),
+  new SocketEvent('tracked_zones', false, []),
   new SocketEvent('supported_bosses', false, []),
   new SocketEvent('filter_logs', true, ['ws.logs.filter']),
   new SocketEvent('update_log_visibility', true, ['log.upload']),

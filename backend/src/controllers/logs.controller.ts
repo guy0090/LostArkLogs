@@ -1,3 +1,4 @@
+import { zones } from '@/config/zones';
 import { Exception } from '@/exceptions/Exception';
 import { RequestWithUser, RequestWithUserAndLog } from '@/interfaces/auth.interface';
 import { LogFilter, LogFilterResult, RawLog } from '@/interfaces/logs.interface';
@@ -70,7 +71,7 @@ class LogsController {
       if (user.banned) throw new Exception(403, `User ${user._id} is banned: ${user.banReason}`);
 
       const log: Log = { ...req.body.data, creator: user._id, createdAt: +new Date() };
-      const toValidate = new LogObject(log);
+      const toValidate = new LogObject(log, true);
       await this.logService.validateLog(toValidate);
 
       const dupes = await this.logService.findDuplicateUploads(toValidate, 5000);
@@ -184,6 +185,24 @@ class LogsController {
   };
 
   /**
+   * Get a list of all currently tracked zones. Names are excluded.
+   *
+   * @param req The passed request from express middleware
+   * @param res The passed response from express middleware
+   * @param next The next function to be called on fail to pass along to error middleware
+   */
+  public getTrackedZones = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const distinctZones = await this.logService.getTrackedZones();
+      distinctZones.forEach(z => delete z.name);
+
+      res.status(200).json(distinctZones);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Get a list of IDs of all supported bosses
    *
    * @param req The passed request from express middleware with the filter to use
@@ -232,7 +251,7 @@ class LogsController {
       const user = req.user;
       if (!user || user.banned) throw new Exception(403, 'You do not have permission to do this');
 
-      const fixed = await this.logService.fixLogZones();
+      const fixed = await this.logService.fixLogZones({ zoneType: { $gte: 0 } });
       res.status(200).json({ fixed: fixed });
     } catch (error) {
       next(error);
