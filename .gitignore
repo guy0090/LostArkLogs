@@ -1,1 +1,3 @@
 mongo/data
+*.code-workspace
+.vscode/

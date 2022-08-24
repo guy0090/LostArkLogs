@@ -2,11 +2,12 @@ import { createStore } from "vuex";
 import { App } from "vue";
 import { auth } from "@/store/modules/auth.module";
 import { env } from "@/store/modules/env.module";
-import { user } from "./modules/user.module";
-import { socket } from "./modules/socket.module";
-import { logs } from "./modules/logs.module";
-import { resources } from "./modules/resources.module";
-import { admin } from "./modules/admin.module";
+import { user } from "@/store/modules/user.module";
+import { socket } from "@/store/modules/socket.module";
+import { logs } from "@/store/modules/logs.module";
+import { resources } from "@/store/modules/resources.module";
+import { admin } from "@/store/modules/admin.module";
+import { stats } from "@/store/modules/stats.module";
 
 export const createVuexStore = (app: App<Element>) => {
   return createStore({
@@ -18,6 +19,7 @@ export const createVuexStore = (app: App<Element>) => {
       logs: logs,
       resources: resources,
       admin: admin,
+      stats: stats,
     },
     state: {
       app: app,

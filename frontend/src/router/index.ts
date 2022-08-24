@@ -10,6 +10,7 @@ import HomeView from "@/views/home.view.vue";
 import LoginView from "@/views/login.view.vue";
 import UserView from "@/views/user.view.vue";
 import LogsView from "@/views/logs.view.vue";
+import StatsView from "@/views/stats.view.vue";
 import AdminView from "@/views/admin.view.vue";
 
 import UserProfile from "@/components/user.component.vue";
@@ -18,6 +19,11 @@ import UserLookup from "@/components/user/lookup.component.vue";
 import LogsBase from "@/components/logs/base.component.vue";
 import Log from "@/components/logs/log.component.vue";
 import ULog from "@/components/logs/ulog.component.vue";
+
+import StatsBase from "@/components/stats.component.vue";
+import StatsSummary from "@/components/stats/summary.component.vue";
+import StatsClasses from "@/components/stats/classes.component.vue";
+import StatsEncounters from "@/components/stats/encounters.component.vue";
 
 import UserAdmin from "@/components/admin/users.component.vue";
 import ServiceAdmin from "@/components/admin/service.component.vue";
@@ -78,6 +84,50 @@ const routes: Array<RouteRecordRaw> = [
     name: "ulog",
     component: ULog,
     props: true,
+  },
+  {
+    path: "/stats",
+    name: "stats",
+    component: StatsView,
+    props: true,
+    children: [
+      {
+        path: "",
+        name: "statsBase",
+        component: StatsBase,
+        children: [
+          {
+            path: "",
+            name: "statsSummary",
+            component: StatsSummary,
+            meta: {
+              tab: "summary",
+            },
+          },
+          {
+            path: "classes",
+            name: "statsClasses",
+            component: StatsClasses,
+            meta: {
+              tab: "classes",
+            },
+          },
+          {
+            path: "encounters",
+            name: "statsEncounters",
+            component: StatsEncounters,
+            meta: {
+              tab: "encounters",
+            },
+          },
+        ],
+      },
+      // {
+      //   path: ":zoneId",
+      //   name: "zoneStats",
+      //   component: StatsBase,
+      // },
+    ],
   },
   {
     path: "/a",

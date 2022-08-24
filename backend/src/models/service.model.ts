@@ -1,6 +1,8 @@
 import { model, Document, Schema } from 'mongoose';
 
 import { Service } from '@/interfaces/service.interface';
+import { bosses } from '@/config/supported-bosses';
+import { zones } from '@/config/zones';
 
 const serviceSchema: Schema = new Schema({
   _id: {
@@ -26,7 +28,12 @@ const serviceSchema: Schema = new Schema({
   supportedBosses: {
     type: [Number],
     required: true,
-    default: [],
+    default: bosses,
+  },
+  zones: {
+    type: [Object],
+    required: true,
+    default: zones,
   },
 });
 

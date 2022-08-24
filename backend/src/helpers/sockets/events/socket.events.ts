@@ -27,6 +27,11 @@ export const socketEvents = [
   new SocketEvent('filter_logs', true, ['ws.logs.filter']),
   new SocketEvent('update_log_visibility', true, ['log.upload']),
 
+  // Stats
+  new SocketEvent('log_counts', false, []),
+  new SocketEvent('class_dist', false, []),
+  new SocketEvent('dps_ranking', false, []),
+
   // Misc
   new SocketEvent('connect', false, []),
   new SocketEvent('send_command', true, []),

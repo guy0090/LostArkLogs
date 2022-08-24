@@ -1,4 +1,4 @@
-import { zones, ZoneType } from '@/config/zones';
+import { zones } from '@/config/zones';
 import { LogFilterDTO } from '@/dtos/logs.dto';
 import {
   GetLogDTO,
@@ -10,7 +10,7 @@ import {
   UpdateLogVisibilityDTO,
 } from '@/dtos/sockets.dto';
 import { WsException } from '@/exceptions/Exception';
-import { EntityType, LogFilter } from '@/interfaces/logs.interface';
+import { LogFilter } from '@/interfaces/logs.interface';
 import { User } from '@/interfaces/users.interface';
 import { DataStoredInToken } from '@/objects/auth.object';
 import { LogObject } from '@/objects/log.object';
@@ -20,6 +20,7 @@ import LogsService from '@/services/logs.service';
 import PageService from '@/services/pages.service';
 import PermissionsService from '@/services/permissions.service';
 import SocketService from '@/services/socket.service';
+import StatService from '@/services/stats.service';
 import UserService from '@/services/users.service';
 import { logger } from '@/utils/logger';
 import { plainToInstance } from 'class-transformer';
@@ -32,6 +33,7 @@ class SocketHandler {
   public static logService = new LogsService();
   public static userService = new UserService();
   public static configService = new ConfigService();
+  public static statService = new StatService();
 
   public static handlers = {
     // #region | Authentication
@@ -307,6 +309,38 @@ class SocketHandler {
         callback(null);
       }
     },
+    // #endregion
+
+    // #region | Stats
+    log_counts: async (_args: any, callback: any) => {
+      try {
+        const stats = await this.statService.getLogCounts();
+        callback(stats);
+      } catch (err) {
+        logger.error(`[WS] Error getting log counts: ${err.message}`);
+        callback(null);
+      }
+    },
+    class_dist: async (_args: any, callback: any) => {
+      try {
+        const classDist = await this.statService.getClassDistribution();
+        callback(classDist);
+      } catch (err) {
+        logger.error(`[WS] Error getting class distribution: ${err.message}`);
+        callback(null);
+      }
+    },
+    dps_ranking: async (args: any, callback: any) => {
+      const { classId, zoneId } = args;
+      try {
+        const ranking = await this.statService.getClassDpsRanking(classId, zoneId);
+        callback(ranking);
+      } catch (err) {
+        logger.error(`[WS] Error getting DPS ranking: ${err.message}`);
+        callback(null);
+      }
+    },
+
     // #endregion
 
     // #region | Miscellaneous

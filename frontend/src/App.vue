@@ -150,7 +150,10 @@
           </v-list-item-avatar>
           <v-list-item-title>Upload Logs</v-list-item-title>
         </v-list-item>
-        <v-list-item disabled value="stats">
+        <v-list-item
+          value="stats"
+          v-on:click="$router.push({ name: 'statsSummary' })"
+        >
           <v-list-item-avatar>
             <v-icon color="white"> mdi-poll </v-icon>
           </v-list-item-avatar>
