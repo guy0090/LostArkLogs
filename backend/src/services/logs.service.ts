@@ -275,6 +275,7 @@ class LogsService {
     options = new LogFilterOptions(options);
     // eslint-disable-next-line prefer-const
     let { includeUnlisted } = options;
+    let dpsByParty = filter.classes.length === 0;
 
     try {
       const aggrPipeline: any[] = [];
@@ -307,10 +308,6 @@ class LogsService {
         $lte: filter.gearLevel[1], // default 1625
       };
 
-      match['damageStatistics.dps'] = {
-        $gte: filter.partyDps, // default 1
-      };
-
       if (filter.bosses.length > 0) {
         match['entities.npcId'] = {
           $in: filter.bosses,
@@ -319,6 +316,12 @@ class LogsService {
 
       if (filter.classes.length > 0) {
         match['entities.classId'] = { $in: filter.classes };
+
+        dpsByParty = false;
+      } else {
+        match['damageStatistics.dps'] = {
+          $gte: filter.partyDps, // default 1
+        };
       }
 
       if (filter.range.length > 0) {
@@ -333,11 +336,29 @@ class LogsService {
       }
 
       aggrPipeline.push({ $match: match });
+      if (!dpsByParty) {
+        const unwind = {
+          $unwind: '$entities',
+        };
+        aggrPipeline.push(unwind);
+        aggrPipeline.push({
+          $match: {
+            'entities.npcId': 0,
+            'entities.classId': { $in: filter.classes },
+            'entities.stats.dps': {
+              $gte: filter.partyDps, // default 1
+            },
+          },
+        });
+      }
+
       // If sorting is requested, sort by the specified field
       // else sort by creation date descending by default (newest first)
       if (filter.sort) {
         let field = filter.sort[0] as string;
-        if (field === 'dps') field = `damageStatistics.${field}`;
+        if (field === 'dps') {
+          field = !dpsByParty ? 'entities.stats.dps' : 'damageStatistics.dps';
+        }
         const order = filter.sort[1];
 
         aggrPipeline.push({ $sort: { [field]: order } });
@@ -345,9 +366,22 @@ class LogsService {
         aggrPipeline.push({ $sort: { createdAt: -1 } });
       }
 
+      if (!dpsByParty) {
+        aggrPipeline.push({
+          $group: {
+            _id: '$_id',
+          },
+        });
+      }
+
       aggrPipeline.push({ $limit: filter.limit ?? 200 });
 
-      const result = await this.logs.aggregate(aggrPipeline);
+      let result: undefined | Log[] = await this.logs.aggregate(aggrPipeline);
+      if (!dpsByParty) {
+        const ids = result.map(doc => doc._id);
+        result = await this.logs.find({ _id: { $in: ids } });
+      }
+
       const count = result.length;
       if (count > 0) {
         const remapped = result.map(log => new LogObject(log));

@@ -203,9 +203,7 @@
                 </v-col>
                 <v-col cols="12" md="3" lg="3" xl="3">
                   <v-row class="my-1">
-                    <h3>
-                      <v-icon icon="mdi-sword"></v-icon>&nbsp;Min. Party DPS
-                    </h3>
+                    <h3><v-icon icon="mdi-sword"></v-icon>&nbsp;Min. DPS</h3>
                   </v-row>
                   <v-row class="pt-2">
                     <v-col cols="12" class="px-0 pb-0">
