@@ -432,6 +432,10 @@ class LogsService {
         const totalTaken = bosses.reduce((p, c) => p + c.stats.damageTaken, 0);
 
         if (totalTaken < totalHp * 0.95) throw new Exception(418, "Bosses aren't dead or didn't take enough damage");
+        // TODO: Test threshold
+        if (log.damageStatistics.totalDamageDealt > totalHp * 1.25 || log.damageStatistics.dps > totalHp * 1.25) {
+          throw new Exception(418, 'Bosses took too much damage');
+        }
       } else {
         throw new Exception(418, 'Encounter has no bosses');
       }

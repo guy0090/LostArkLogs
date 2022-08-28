@@ -204,6 +204,7 @@ export class LogEntityStatObject {
 
   @IsNumber()
   @Min(0)
+  @Max(12)
   public deaths: number;
 
   @IsOptional()
