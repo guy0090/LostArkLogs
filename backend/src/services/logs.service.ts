@@ -365,30 +365,22 @@ class LogsService {
         aggrPipeline.push({ $sort: { createdAt: -1 } });
       }
 
-      if (!dpsByParty) {
-        aggrPipeline.push({
-          $group: {
-            _id: '$_id',
-          },
-        });
-      }
-
       aggrPipeline.push({ $limit: filter.limit ?? 200 });
 
       let result: undefined | Log[] = await this.logs.aggregate(aggrPipeline);
       if (!dpsByParty) {
-        const ids = result.map(doc => doc._id);
-        if (filter.sort) {
-          let field = filter.sort[0] as string;
-          if (field === 'dps') {
-            field = !dpsByParty ? 'entities.stats.dps' : 'damageStatistics.dps';
-          }
-          const order = filter.sort[1];
-
-          result = await this.logs.find({ _id: { $in: ids } }).sort({ [field]: order });
-        } else {
-          result = await this.logs.find({ _id: { $in: ids } }).sort({ createdAt: -1 });
-        }
+        const ids = Array.from(new Set(result.map(doc => doc._id)));
+        result = await this.logs.aggregate([
+          {
+            $match: { _id: { $in: ids } },
+          },
+          {
+            $addFields: { _order: { $indexOfArray: [ids, '$_id'] } },
+          },
+          {
+            $sort: { _order: 1 },
+          },
+        ]);
       }
 
       const count = result.length;
