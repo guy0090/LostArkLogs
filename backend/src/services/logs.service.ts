@@ -337,10 +337,9 @@ class LogsService {
 
       aggrPipeline.push({ $match: match });
       if (!dpsByParty) {
-        const unwind = {
+        aggrPipeline.push({
           $unwind: '$entities',
-        };
-        aggrPipeline.push(unwind);
+        });
         aggrPipeline.push({
           $match: {
             'entities.npcId': 0,
@@ -379,7 +378,17 @@ class LogsService {
       let result: undefined | Log[] = await this.logs.aggregate(aggrPipeline);
       if (!dpsByParty) {
         const ids = result.map(doc => doc._id);
-        result = await this.logs.find({ _id: { $in: ids } });
+        if (filter.sort) {
+          let field = filter.sort[0] as string;
+          if (field === 'dps') {
+            field = !dpsByParty ? 'entities.stats.dps' : 'damageStatistics.dps';
+          }
+          const order = filter.sort[1];
+
+          result = await this.logs.find({ _id: { $in: ids } }).sort({ [field]: order });
+        } else {
+          result = await this.logs.find({ _id: { $in: ids } }).sort({ createdAt: -1 });
+        }
       }
 
       const count = result.length;
