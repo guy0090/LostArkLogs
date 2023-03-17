@@ -499,4 +499,8 @@ export default defineComponent({
 .c-512 {
   color: #6bcec2;
 }
+.c-602,
+.c-603 {
+  color: #dd4477;
+}
 </style>
