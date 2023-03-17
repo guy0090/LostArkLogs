@@ -81,7 +81,7 @@ export const logs: Module<any, any> = {
             level: [0, 60],
             range: [+new Date() - ms("23h"), +new Date()],
             partyDps: 1,
-            limit: 50,
+            limit: 20, // 50
           },
           headers: {
             "Content-Type": "application/json",
