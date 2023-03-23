@@ -13339,6 +13339,7 @@ export default {
     103: "Destroyer",
     104: "Gunlancer",
     105: "Paladin",
+    112: "Slayer",
     202: "Arcana",
     203: "Summoner",
     204: "Bard",
